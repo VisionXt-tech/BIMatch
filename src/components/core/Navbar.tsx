@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, User, LayoutDashboard, Briefcase, Building } from 'lucide-react';
+import { LogOut, User, LayoutDashboard, Briefcase, Building, Search } from 'lucide-react';
 import Logo from './Logo';
 import { ROUTES, ROLES } from '@/constants';
 import { useRouter } from 'next/navigation';
@@ -29,7 +29,7 @@ const Navbar = () => {
   const getInitials = (name: string | null | undefined) => {
     if (!name) return 'B';
     const names = name.split(' ');
-    if (names.length > 1) {
+    if (names.length > 1 && names[0] && names[names.length -1]) {
       return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
@@ -41,9 +41,9 @@ const Navbar = () => {
     <header className="bg-card shadow-sm sticky top-0 z-50">
       <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
         <Logo />
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 md:space-x-4">
           {loading ? (
-            <div className="h-10 w-20 animate-pulse bg-muted rounded-md"></div>
+            <div className="h-10 w-40 animate-pulse bg-muted rounded-md"></div>
           ) : user && userProfile ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -87,6 +87,12 @@ const Navbar = () => {
             </DropdownMenu>
           ) : (
             <>
+              <Button variant="ghost" asChild>
+                <Link href={ROUTES.PROFESSIONALS_MARKETPLACE}>
+                  <Search className="mr-0 md:mr-2 h-4 w-4" /> 
+                  <span className="hidden md:inline">Cerca Professionisti</span>
+                </Link>
+              </Button>
               <Button variant="ghost" asChild>
                 <Link href={ROUTES.LOGIN}>Accedi</Link>
               </Button>
