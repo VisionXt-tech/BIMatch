@@ -43,7 +43,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
             <div className="bg-card p-6 rounded-lg shadow-lg border border-primary/20">
               <h2 className="text-2xl font-semibold text-primary mb-3">Per Professionisti BIM</h2>
-              <p className="text-foreground/70 mb-4">Trova il tuo prossimo incarico, metti in mostra le tue competenze e fai crescere la tua carriera nel mondo BIM.</p>
+              <p className="text-foreground/70 mb-4">Trova incarichi, mostra le tue competenze e fai crescere la tua carriera BIM.</p>
               <Button size="lg" asChild className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
                 <Link href={ROUTES.REGISTER_PROFESSIONAL}>Inizia la Tua Ricerca <ArrowRight className="ml-2 h-5 w-5" /></Link>
               </Button>
