@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Briefcase, Users, Search, FileSearch, Handshake, BrainCircuit, UserCheck, SearchCheck, Building, ArrowRight, Star, Zap, Target, UserPlus, CircleCheckBig } from "lucide-react";
+import { Briefcase, Users, Search, FileSearch, Handshake, BrainCircuit, UserCheck, SearchCheck, Building, ArrowRight, Star, Zap, Target, UserPlus, CircleCheckBig, Building2Icon } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { ROUTES } from "@/constants";
@@ -172,6 +172,36 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Construction Sector Focus Section */}
+      <section className="py-12">
+        <div className="container mx-auto px-4 text-center">
+          <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit mb-6">
+            <Building2Icon className="h-12 w-12 text-primary" />
+          </div>
+          <h2 className="text-3xl md:text-4xl font-bold mb-6 text-foreground">
+            Al Servizio del Settore <span className="text-primary">Edile</span>
+          </h2>
+          <p className="text-lg text-foreground/80 max-w-3xl mx-auto mb-10">
+            BIMatch è dedicato a supportare l'innovazione e la crescita nel settore delle costruzioni in Italia, facilitando l'incontro tra domanda e offerta di competenze BIM specializzate. Siamo il ponte tra i professionisti del futuro e le aziende che costruiscono il domani.
+          </p>
+          <div className="relative h-80 md:h-96 lg:h-[500px] max-w-5xl mx-auto rounded-lg overflow-hidden shadow-xl border-4 border-primary/20">
+            <Image
+              src="https://picsum.photos/seed/constructionSite/1200/800"
+              alt="Immagine rappresentativa di un cantiere edile moderno con tecnologia BIM"
+              layout="fill"
+              objectFit="cover"
+              data-ai-hint="modern construction site"
+              className="transform hover:scale-105 transition-transform duration-500 ease-in-out"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+             <div className="absolute bottom-0 left-0 p-6 md:p-8">
+              <h3 className="text-2xl md:text-3xl font-semibold text-white mb-2 shadow-text">Innovazione nell'Edilizia</h3>
+              <p className="text-md md:text-lg text-primary-foreground/90 max-w-xl shadow-text">Colleghiamo professionisti e aziende per progetti BIM all'avanguardia.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Testimonials Section (Placeholder) */}
       <section className="py-12">
         <div className="container mx-auto px-4">
@@ -208,7 +238,7 @@ export default function HomePage() {
             <Button size="lg" asChild className="bg-background text-primary hover:bg-muted/90 w-full md:w-auto">
               <Link href={ROUTES.REGISTER_PROFESSIONAL}>Sono un Professionista</Link>
             </Button>
-            <Button size="lg" asChild className="bg-card text-primary border border-primary hover:bg-primary/10 w-full md:w-auto">
+            <Button size="lg" asChild className="bg-background text-primary hover:bg-muted/90 w-full md:w-auto border-primary-foreground">
               <Link href={ROUTES.REGISTER_COMPANY}>Sono un'Azienda</Link>
             </Button>
           </div>
