@@ -1,12 +1,15 @@
+
+
 'use client';
 
-import { ReactNode, useEffect } from 'react';
+import type { ReactNode } from 'react';
+import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { ROUTES, ROLES } from '@/constants';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarTrigger, SidebarFooter, SidebarSeparator, SidebarGroup, SidebarGroupLabel } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, User, Briefcase, LayoutDashboard, FolderPlus, Building, Search, MessageSquare, Settings } from 'lucide-react';
+import { LogOut, User, Briefcase, LayoutDashboard, FolderPlus, Building, Search, MessageSquare, Settings, Users } from 'lucide-react';
 import Link from 'next/link';
 import Logo from '@/components/core/Logo';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -29,7 +32,7 @@ const CompanyNavItems = [
   { href: ROUTES.DASHBOARD_COMPANY_PROFILE, label: 'Profilo Azienda', icon: Building },
   { href: ROUTES.DASHBOARD_COMPANY_POST_PROJECT, label: 'Pubblica Progetto', icon: FolderPlus },
   { href: ROUTES.DASHBOARD_COMPANY_PROJECTS, label: 'I Miei Progetti', icon: Briefcase },
-  // { href: '/dashboard/company/professionals', label: 'Cerca Professionisti', icon: Search },
+  { href: ROUTES.PROFESSIONALS_MARKETPLACE, label: 'Cerca Professionisti', icon: Users },
   // { href: '/dashboard/company/messages', label: 'Messaggi', icon: MessageSquare },
   // { href: '/dashboard/company/settings', label: 'Impostazioni', icon: Settings },
 ];

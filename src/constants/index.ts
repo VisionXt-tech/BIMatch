@@ -1,3 +1,4 @@
+
 export const ROUTES = {
   HOME: '/',
   LOGIN: '/login',
@@ -12,8 +13,9 @@ export const ROUTES = {
   DASHBOARD_COMPANY_POST_PROJECT: '/dashboard/company/post-project',
   DASHBOARD_COMPANY_PROJECTS: '/dashboard/company/projects',
   DASHBOARD_COMPANY_CANDIDATES: '/dashboard/company/candidates', // To view candidates for a project
+  PROFESSIONALS_MARKETPLACE: '/professionals', // New route for browsing professionals
   PROJECT_DETAILS: (id: string) => `/projects/${id}`,
-  PROFESSIONAL_PROFILE_VIEW: (id: string) => `/professionals/${id}`,
+  PROFESSIONAL_PROFILE_VIEW: (id: string) => `/professionals/${id}`, // This could be the detail page for a professional
   TERMS_OF_SERVICE: '/terms-of-service',
   PRIVACY_POLICY: '/privacy-policy',
 };
@@ -101,4 +103,12 @@ export const ITALIAN_REGIONS = [
   "Friuli-Venezia Giulia", "Lazio", "Liguria", "Lombardia", "Marche", 
   "Molise", "Piemonte", "Puglia", "Sardegna", "Sicilia", "Toscana", 
   "Trentino-Alto Adige", "Umbria", "Valle d'Aosta", "Veneto"
+];
+
+export const EXPERIENCE_LEVEL_OPTIONS = [
+    { value: "entry", label: "Entry Level (0-2 anni)" },
+    { value: "junior", label: "Junior (2-5 anni)" },
+    { value: "mid", label: "Mid-Level (5-10 anni)" },
+    { value: "senior", label: "Senior (10+ anni)" },
+    { value: "expert", label: "Expert / Specialist" },
 ];

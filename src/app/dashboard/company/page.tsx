@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ROUTES } from '@/constants';
-import { Building, Briefcase, Users, FolderPlus } from 'lucide-react';
+import { Building, Briefcase, Users, FolderPlus, Search } from 'lucide-react';
 import Image from 'next/image';
 
 
@@ -99,16 +99,21 @@ export default function CompanyDashboardPage() {
         <CardContent className="grid md:grid-cols-2 gap-6 items-center">
            <div>
             <p className="mb-4 text-foreground/90">
-              BIMatch semplifica la ricerca di personale BIM qualificato. Descrivi i requisiti del tuo progetto e lascia che il nostro algoritmo ti aiuti a trovare i candidati ideali.
+              BIMatch semplifica la ricerca di personale BIM qualificato. Descrivi i requisiti del tuo progetto o esplora il nostro database di professionisti.
             </p>
             <ul className="list-disc list-inside space-y-2 mb-4 text-foreground/80">
               <li>Pubblica offerte di progetto dettagliate.</li>
+              <li>Esplora profili di professionisti verificati.</li>
               <li>Filtra i professionisti per competenze e software.</li>
-              <li>Visualizza profili completi e portfolio.</li>
             </ul>
-            <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              <Link href={ROUTES.DASHBOARD_COMPANY_POST_PROJECT}> <FolderPlus className="mr-2 h-4 w-4" /> Pubblica un Nuovo Progetto</Link>
-            </Button>
+            <div className="flex flex-wrap gap-4">
+              <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                <Link href={ROUTES.DASHBOARD_COMPANY_POST_PROJECT}> <FolderPlus className="mr-2 h-4 w-4" /> Pubblica Progetto</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href={ROUTES.PROFESSIONALS_MARKETPLACE}> <Search className="mr-2 h-4 w-4" /> Cerca Professionisti</Link>
+              </Button>
+            </div>
           </div>
           <div className="relative h-64 rounded-lg overflow-hidden">
             <Image 
@@ -124,3 +129,4 @@ export default function CompanyDashboardPage() {
     </div>
   );
 }
+```
