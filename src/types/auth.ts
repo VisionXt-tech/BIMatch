@@ -45,7 +45,7 @@ export interface ProfessionalProfile extends BaseUserProfile {
   certifications?: string[];
   portfolioUrl?: string;
   cvUrl?: string; // Link to CV/Resume PDF in Firebase Storage
-  hourlyRate?: number; // Optional
+  hourlyRate?: number | ''; // Optional, allow empty string for form handling
   linkedInProfile?: string;
   preferredProjectTypes?: string[];
 }

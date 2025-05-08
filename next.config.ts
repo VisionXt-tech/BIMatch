@@ -18,6 +18,10 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Turbopack specific configuration if needed
+  // experimental: {
+  //   turbopack: {},
+  // },
 };
 
 export default nextConfig;

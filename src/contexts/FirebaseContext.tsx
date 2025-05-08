@@ -21,6 +21,8 @@ if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.proj
   // if (!firebaseConfig.storageBucket) missingKeys.push('NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET');
   // if (!firebaseConfig.appId) missingKeys.push('NEXT_PUBLIC_FIREBASE_APP_ID');
 
+  // This error will be thrown during server-side rendering or at the top-level client-side,
+  // preventing the app from starting with invalid config.
   throw new Error(
     `Firebase configuration is incomplete. The following environment variables are missing or undefined: ${missingKeys.join(', ')}. ` +
     "Please ensure they are correctly set in your .env.local file and that the file is being loaded. " +
@@ -66,23 +68,37 @@ if (process.env.NODE_ENV === 'development') {
   // Check for environment variables to enable emulators
   if (process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === 'true') {
     console.log("Connecting to Firebase Emulators...");
-    try {
-      connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
-      console.log("Auth Emulator connected.");
-    } catch (error) {
-      console.warn("Auth Emulator connection failed (already connected or other issue):", error);
+    // Check if already connected to avoid errors, especially with HMR
+    if (!(auth as any).emulatorConfig) {
+      try {
+        connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
+        console.log("Auth Emulator connected.");
+      } catch (error) {
+        console.warn("Auth Emulator connection attempt failed (could be already connected or other issue):", error);
+      }
+    } else {
+        console.log("Auth Emulator already configured.");
     }
-    try {
-      connectFirestoreEmulator(db, 'localhost', 8080);
-      console.log("Firestore Emulator connected.");
-    } catch (error) {
-      console.warn("Firestore Emulator connection failed (already connected or other issue):", error);
+    if (!(db as any).toJSON) { // A simple check; Firestore doesn't have a direct 'emulatorConfig' like auth
+      try {
+        connectFirestoreEmulator(db, 'localhost', 8080);
+        console.log("Firestore Emulator connected.");
+      } catch (error) {
+        console.warn("Firestore Emulator connection attempt failed (could be already connected or other issue):", error);
+      }
+    } else {
+        console.log("Firestore Emulator already configured (or check is not precise).");
     }
-    try {
-      connectStorageEmulator(storage, 'localhost', 9199);
-      console.log("Storage Emulator connected.");
-    } catch (error) {
-      console.warn("Storage Emulator connection failed (already connected or other issue):", error);
+
+    if (!(storage as any).emulatorConfig) {
+      try {
+        connectStorageEmulator(storage, 'localhost', 9199);
+        console.log("Storage Emulator connected.");
+      } catch (error) {
+        console.warn("Storage Emulator connection attempt failed (could be already connected or other issue):", error);
+      }
+    } else {
+        console.log("Storage Emulator already configured.");
     }
   }
 }
@@ -93,4 +109,3 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({ children }) 
 
   return <FirebaseContext.Provider value={value}>{children}</FirebaseContext.Provider>;
 };
-

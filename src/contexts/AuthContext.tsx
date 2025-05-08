@@ -8,7 +8,7 @@ import { createContext, useContext, useEffect, useState, ReactNode, useCallback 
 import { useFirebase } from './FirebaseContext';
 import { useToast } from "@/hooks/use-toast";
 import type { LoginFormData, ProfessionalRegistrationFormData, CompanyRegistrationFormData, UserProfile } from '@/types/auth';
-import { ROLES } from '@/constants';
+import { ROLES, ROUTES } from '@/constants';
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
@@ -76,6 +76,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await signInWithEmailAndPassword(auth, data.email, data.password);
       toast({ title: "Accesso Effettuato", description: "Bentornato!" });
       // User profile will be fetched by onAuthStateChanged listener
+      // router.push(ROUTES.DASHBOARD) is handled by login page after successful promise
     } catch (error: any) {
       console.error("Login error:", error);
       toast({ title: "Errore di Accesso", description: error.message || "Credenziali non valide.", variant: "destructive" });
@@ -98,6 +99,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         lastName: data.lastName,
         location: data.location,
         // Initialize other professional-specific fields as empty or default
+        photoURL: newUser.photoURL || '',
         bimSkills: [],
         softwareProficiency: [],
         availability: '',
@@ -110,6 +112,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await setDoc(userDocRef, professionalProfile);
       setUserProfile(professionalProfile); // Update local state
       toast({ title: "Registrazione Completata", description: "Benvenuto in BIMatch! Completa il tuo profilo." });
+      // router.push(ROUTES.DASHBOARD_PROFESSIONAL_PROFILE) is handled by registration page
     } catch (error: any) {
       console.error("Professional registration error:", error);
       toast({ title: "Errore di Registrazione", description: error.message || "Impossibile registrarsi.", variant: "destructive" });
@@ -133,6 +136,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         companyWebsite: data.companyWebsite || '',
         companyLocation: data.companyLocation,
         // Initialize other company-specific fields
+        photoURL: newUser.photoURL || '',
         companySize: '',
         industry: '',
         companyDescription: '',
@@ -143,6 +147,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await setDoc(userDocRef, companyProfile);
       setUserProfile(companyProfile); // Update local state
       toast({ title: "Registrazione Azienda Completata", description: "Benvenuta in BIMatch! Crea il profilo della tua azienda." });
+      // router.push(ROUTES.DASHBOARD_COMPANY_PROFILE) is handled by registration page
     } catch (error: any) {
       console.error("Company registration error:", error);
       toast({ title: "Errore di Registrazione", description: error.message || "Impossibile registrarsi.", variant: "destructive" });
@@ -156,6 +161,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(null);
       setUserProfile(null);
       toast({ title: "Logout Effettuato", description: "A presto!" });
+      // router.push(ROUTES.HOME) handled by Navbar/DashboardLayout
     } catch (error: any) {
       console.error("Logout error:", error);
       toast({ title: "Errore di Logout", description: error.message, variant: "destructive" });

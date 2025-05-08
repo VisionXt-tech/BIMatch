@@ -28,7 +28,7 @@ const professionalProfileSchema = z.object({
   portfolioUrl: z.string().url({ message: 'Inserisci un URL valido per il portfolio.' }).optional().or(z.literal('')),
   cvUrl: z.string().url({ message: 'Inserisci un URL valido per il CV (es. link a Google Drive, Dropbox).' }).optional().or(z.literal('')), // For simplicity, direct URL for now. File upload later.
   linkedInProfile: z.string().url({message: 'Inserisci un URL valido per LinkedIn.'}).optional().or(z.literal('')),
-  hourlyRate: z.number().positive({ message: 'La tariffa oraria deve essere un numero positivo.' }).optional().or(z.literal(0)).or(z.literal('')),
+  hourlyRate: z.union([z.number().positive({ message: 'La tariffa oraria deve essere un numero positivo.' }), z.literal(''), z.null(), z.undefined()]).optional(),
   // photoURL will be handled separately if we implement direct upload. For now, relies on Google/initials.
 });
 
@@ -54,7 +54,7 @@ export default function ProfessionalProfilePage() {
       portfolioUrl: '',
       cvUrl: '',
       linkedInProfile: '',
-      hourlyRate: undefined,
+      hourlyRate: '', // Initialize as empty string for the form input
     },
   });
 
@@ -74,7 +74,7 @@ export default function ProfessionalProfilePage() {
         portfolioUrl: currentProfile.portfolioUrl || '',
         cvUrl: currentProfile.cvUrl || '',
         linkedInProfile: currentProfile.linkedInProfile || '',
-        hourlyRate: currentProfile.hourlyRate || undefined,
+        hourlyRate: currentProfile.hourlyRate === undefined || currentProfile.hourlyRate === null ? '' : currentProfile.hourlyRate,
       });
     }
   }, [userProfile, form]);
@@ -88,11 +88,13 @@ export default function ProfessionalProfilePage() {
     
     // Update displayName if firstName or lastName changed
     const updatedDisplayName = `${data.firstName || userProfile.firstName || ''} ${data.lastName || userProfile.lastName || ''}`.trim();
+    
+    const hourlyRateAsNumber = data.hourlyRate === '' || data.hourlyRate === null || data.hourlyRate === undefined ? undefined : Number(data.hourlyRate);
+
     const dataToUpdate : Partial<ProfessionalProfile> = {
       ...data,
       displayName: updatedDisplayName,
-      // Convert empty string hourlyRate to undefined to avoid Firestore errors if it's not set.
-      hourlyRate: data.hourlyRate === '' ? undefined : Number(data.hourlyRate) || undefined,
+      hourlyRate: hourlyRateAsNumber,
     };
 
 

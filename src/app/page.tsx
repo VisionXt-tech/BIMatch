@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Briefcase, Users, CheckCircle, Search, UserPlus, FileSearch, Handshake, BrainCircuit, UserCheck, SearchCheck, Building, ArrowRight, Star, Zap, Target } from "lucide-react";
+import { Briefcase, Users, Search, FileSearch, Handshake, BrainCircuit, UserCheck, SearchCheck, Building, ArrowRight, Star, Zap, Target, UserPlus, CircleCheckBig } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { ROUTES } from "@/constants";
