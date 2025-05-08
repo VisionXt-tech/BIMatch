@@ -10,6 +10,7 @@ import type { ProfessionalMarketplaceProfile } from '@/types/marketplace';
 import { BIM_SKILLS_OPTIONS, ITALIAN_REGIONS, EXPERIENCE_LEVEL_OPTIONS, AVAILABILITY_OPTIONS } from '@/constants';
 import { Filter, Search, Users, X } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
 
 const mockProfessionals: ProfessionalMarketplaceProfile[] = [
   {
@@ -178,4 +179,3 @@ export default function ProfessionalsMarketplacePage() {
     </div>
   );
 }
-```

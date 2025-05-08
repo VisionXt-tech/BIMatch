@@ -1,11 +1,12 @@
+
 import type { ProfessionalMarketplaceProfile } from '@/types/marketplace';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ROUTES, BIM_SKILLS_OPTIONS, EXPERIENCE_LEVEL_OPTIONS, AVAILABILITY_OPTIONS } from '@/constants';
-import { MapPin, Briefcase, User, Clock, ShieldCheck, Construction, Code2 } from 'lucide-react';
+import { ROUTES, BIM_SKILLS_OPTIONS, EXPERIENCE_LEVEL_OPTIONS, AVAILABILITY_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS } from '@/constants';
+import { MapPin, User, Clock, Construction, Code2 } from 'lucide-react';
 import Image from 'next/image';
 
 interface ProfessionalCardProps {
@@ -80,10 +81,14 @@ const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional }) => 
             <h4 className="text-xs font-semibold text-muted-foreground mb-1.5 flex items-center"><Code2 className="h-3.5 w-3.5 mr-1.5 text-primary"/>Software Chiave:</h4>
             <div className="flex flex-wrap gap-1.5">
               {professional.keySoftware.map(swKey => {
-                const software = BIM_SKILLS_OPTIONS.find(s => s.value === swKey) || {label: swKey}; // Fallback if not in constants
+                // Try to find in SOFTWARE_PROFICIENCY_OPTIONS first, then BIM_SKILLS_OPTIONS as fallback
+                const softwareOption = SOFTWARE_PROFICIENCY_OPTIONS.find(s => s.value === swKey);
+                const skillOption = BIM_SKILLS_OPTIONS.find(s => s.value === swKey);
+                const softwareLabel = softwareOption?.label || skillOption?.label || swKey; // Fallback to swKey if not found
+
                 return (
                   <Badge key={swKey} variant="outline" className="text-xs px-2 py-0.5">
-                    {software.label}
+                    {softwareLabel}
                   </Badge>
                 );
               })}
@@ -91,7 +96,7 @@ const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional }) => 
           </div>
         )}
       </CardContent>
-      <CardFooter className="p-4 border-t">
+      <CardFooter className="p-4 border-t mt-auto">
         <Button asChild className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
           <Link href={ROUTES.PROFESSIONAL_PROFILE_VIEW(professional.id)}>Visualizza Profilo Completo</Link>
         </Button>
@@ -101,4 +106,3 @@ const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional }) => 
 };
 
 export default ProfessionalCard;
-```
