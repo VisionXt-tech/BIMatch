@@ -58,23 +58,26 @@ const mockProfessionals: ProfessionalMarketplaceProfile[] = [
   },
 ];
 
+const ALL_ITEMS_FILTER_VALUE = "__ALL_ITEMS__";
 
 export default function ProfessionalsMarketplacePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
-    skill: '',
-    location: '',
-    experience: '',
-    availability: '',
+    skill: ALL_ITEMS_FILTER_VALUE,
+    location: ALL_ITEMS_FILTER_VALUE,
+    experience: ALL_ITEMS_FILTER_VALUE,
+    availability: ALL_ITEMS_FILTER_VALUE,
   });
 
   // TODO: Implement actual data fetching and filtering logic
   const filteredProfessionals = mockProfessionals.filter(prof => {
-    const nameMatch = prof.displayName.toLowerCase().includes(searchTerm.toLowerCase());
-    const skillMatch = !filters.skill || prof.bimSkills.includes(filters.skill);
-    const locationMatch = !filters.location || prof.location.toLowerCase().includes(filters.location.toLowerCase());
-    const experienceMatch = !filters.experience || prof.experienceLevel === filters.experience;
-    const availabilityMatch = !filters.availability || prof.availability === filters.availability;
+    const nameMatch = prof.displayName.toLowerCase().includes(searchTerm.toLowerCase()) || (prof.tagline && prof.tagline.toLowerCase().includes(searchTerm.toLowerCase()));
+    const skillMatch = filters.skill === ALL_ITEMS_FILTER_VALUE || prof.bimSkills.includes(filters.skill);
+    // For location, check if the professional's location string *contains* the selected region filter.
+    // This is because prof.location might be "Milano, Lombardia" and filter.location might be "Lombardia".
+    const locationMatch = filters.location === ALL_ITEMS_FILTER_VALUE || (prof.location && prof.location.toLowerCase().includes(filters.location.toLowerCase()));
+    const experienceMatch = filters.experience === ALL_ITEMS_FILTER_VALUE || prof.experienceLevel === filters.experience;
+    const availabilityMatch = filters.availability === ALL_ITEMS_FILTER_VALUE || prof.availability === filters.availability;
     return nameMatch && skillMatch && locationMatch && experienceMatch && availabilityMatch;
   });
 
@@ -84,10 +87,15 @@ export default function ProfessionalsMarketplacePage() {
   
   const clearFilters = () => {
     setSearchTerm('');
-    setFilters({ skill: '', location: '', experience: '', availability: '' });
+    setFilters({ 
+      skill: ALL_ITEMS_FILTER_VALUE, 
+      location: ALL_ITEMS_FILTER_VALUE, 
+      experience: ALL_ITEMS_FILTER_VALUE, 
+      availability: ALL_ITEMS_FILTER_VALUE 
+    });
   };
 
-  const activeFilterCount = Object.values(filters).filter(Boolean).length + (searchTerm ? 1 : 0);
+  const activeFilterCount = Object.values(filters).filter(val => val !== ALL_ITEMS_FILTER_VALUE).length + (searchTerm ? 1 : 0);
 
 
   return (
@@ -113,7 +121,7 @@ export default function ProfessionalsMarketplacePage() {
               <AccordionContent>
                 <div className="space-y-4 pt-4">
                   <Input 
-                    placeholder="Cerca per nome o parola chiave..." 
+                    placeholder="Cerca per nome, tagline o parola chiave..." 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="max-w-full" 
@@ -122,28 +130,28 @@ export default function ProfessionalsMarketplacePage() {
                     <Select value={filters.skill} onValueChange={(value) => handleFilterChange('skill', value)}>
                       <SelectTrigger><SelectValue placeholder="Competenza BIM" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Tutte le competenze</SelectItem>
+                        <SelectItem value={ALL_ITEMS_FILTER_VALUE}>Tutte le competenze</SelectItem>
                         {BIM_SKILLS_OPTIONS.map(skill => <SelectItem key={skill.value} value={skill.value}>{skill.label}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <Select value={filters.location} onValueChange={(value) => handleFilterChange('location', value)}>
                       <SelectTrigger><SelectValue placeholder="Localizzazione" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Tutte le regioni</SelectItem>
+                        <SelectItem value={ALL_ITEMS_FILTER_VALUE}>Tutte le regioni</SelectItem>
                         {ITALIAN_REGIONS.map(region => <SelectItem key={region} value={region}>{region}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <Select value={filters.experience} onValueChange={(value) => handleFilterChange('experience', value)}>
                       <SelectTrigger><SelectValue placeholder="Livello Esperienza" /></SelectTrigger>
                       <SelectContent>
-                         <SelectItem value="">Qualsiasi esperienza</SelectItem>
+                         <SelectItem value={ALL_ITEMS_FILTER_VALUE}>Qualsiasi esperienza</SelectItem>
                         {EXPERIENCE_LEVEL_OPTIONS.map(exp => <SelectItem key={exp.value} value={exp.value}>{exp.label}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <Select value={filters.availability} onValueChange={(value) => handleFilterChange('availability', value)}>
                       <SelectTrigger><SelectValue placeholder="Disponibilità" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Qualsiasi disponibilità</SelectItem>
+                        <SelectItem value={ALL_ITEMS_FILTER_VALUE}>Qualsiasi disponibilità</SelectItem>
                         {AVAILABILITY_OPTIONS.map(avail => <SelectItem key={avail.value} value={avail.value}>{avail.label}</SelectItem>)}
                       </SelectContent>
                     </Select>
