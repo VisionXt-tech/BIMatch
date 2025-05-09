@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -69,7 +69,7 @@ export default function ProfessionalsMarketplacePage() {
         setProfessionals(fetchedProfessionals);
       } catch (e: any) {
         console.error("Error fetching professionals:", e);
-        setError(e.message.includes('offline') ? 'Impossibile caricare i profili. Controlla la tua connessione internet.' : 'Errore nel caricamento dei profili.');
+        setError(e.message.includes('offline') || e.message.includes('Failed to get document because the client is offline') ? 'Impossibile caricare i profili. Controlla la tua connessione internet.' : 'Errore nel caricamento dei profili.');
       } finally {
         setLoading(false);
       }
@@ -135,28 +135,28 @@ export default function ProfessionalsMarketplacePage() {
                     className="max-w-full" 
                   />
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <Select value={filters.skill} onValueChange={(value) => handleFilterChange('skill', value)}>
+                    <Select value={filters.skill} onValueChange={(value) => handleFilterChange('skill', value || ALL_ITEMS_FILTER_VALUE)}>
                       <SelectTrigger><SelectValue placeholder="Competenza BIM" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value={ALL_ITEMS_FILTER_VALUE}>Tutte le competenze</SelectItem>
                         {BIM_SKILLS_OPTIONS.map(skill => <SelectItem key={skill.value} value={skill.value}>{skill.label}</SelectItem>)}
                       </SelectContent>
                     </Select>
-                    <Select value={filters.location} onValueChange={(value) => handleFilterChange('location', value)}>
+                    <Select value={filters.location} onValueChange={(value) => handleFilterChange('location', value || ALL_ITEMS_FILTER_VALUE)}>
                       <SelectTrigger><SelectValue placeholder="Localizzazione" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value={ALL_ITEMS_FILTER_VALUE}>Tutte le regioni</SelectItem>
                         {ITALIAN_REGIONS.map(region => <SelectItem key={region} value={region}>{region}</SelectItem>)}
                       </SelectContent>
                     </Select>
-                    <Select value={filters.experience} onValueChange={(value) => handleFilterChange('experience', value)}>
+                    <Select value={filters.experience} onValueChange={(value) => handleFilterChange('experience', value || ALL_ITEMS_FILTER_VALUE)}>
                       <SelectTrigger><SelectValue placeholder="Livello Esperienza" /></SelectTrigger>
                       <SelectContent>
                          <SelectItem value={ALL_ITEMS_FILTER_VALUE}>Qualsiasi esperienza</SelectItem>
                         {EXPERIENCE_LEVEL_OPTIONS.map(exp => <SelectItem key={exp.value} value={exp.value}>{exp.label}</SelectItem>)}
                       </SelectContent>
                     </Select>
-                    <Select value={filters.availability} onValueChange={(value) => handleFilterChange('availability', value)}>
+                    <Select value={filters.availability} onValueChange={(value) => handleFilterChange('availability', value || ALL_ITEMS_FILTER_VALUE)}>
                       <SelectTrigger><SelectValue placeholder="Disponibilità" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value={ALL_ITEMS_FILTER_VALUE}>Qualsiasi disponibilità</SelectItem>
@@ -235,3 +235,4 @@ export default function ProfessionalsMarketplacePage() {
     </div>
   );
 }
+
