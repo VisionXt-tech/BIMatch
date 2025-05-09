@@ -41,7 +41,12 @@ export function FormInput<TFieldValues extends FieldValues>({
         <FormItem>
           <FormLabel>{label}</FormLabel>
           <FormControl>
-            <Input type={type} placeholder={placeholder} {...field} />
+            <Input 
+              type={type} 
+              placeholder={placeholder} 
+              {...field} 
+              value={field.value === null || field.value === undefined ? '' : field.value} 
+            />
           </FormControl>
           {description && <FormDescription>{description}</FormDescription>}
           <FormMessage />
@@ -76,7 +81,12 @@ export function FormTextarea<TFieldValues extends FieldValues>({
         <FormItem>
           <FormLabel>{label}</FormLabel>
           <FormControl>
-            <Textarea placeholder={placeholder} rows={rows} {...field} />
+            <Textarea 
+              placeholder={placeholder} 
+              rows={rows} 
+              {...field}
+              value={field.value === null || field.value === undefined ? '' : field.value} 
+            />
           </FormControl>
           {description && <FormDescription>{description}</FormDescription>}
           <FormMessage />
@@ -118,7 +128,7 @@ export function FormMultiSelect<TFieldValues extends FieldValues>({
                 {options.map((option) => (
                   <div key={option.value} className="flex items-center space-x-2">
                     <Checkbox
-                      id={`${name}-${option.value}`}
+                      id={`${String(name)}-${option.value}`}
                       checked={field.value?.includes(option.value)}
                       onCheckedChange={(checked) => {
                         const currentValue = field.value || [];
@@ -129,7 +139,7 @@ export function FormMultiSelect<TFieldValues extends FieldValues>({
                         }
                       }}
                     />
-                    <Label htmlFor={`${name}-${option.value}`} className="font-normal text-sm">
+                    <Label htmlFor={`${String(name)}-${option.value}`} className="font-normal text-sm">
                       {option.label}
                     </Label>
                   </div>
@@ -177,7 +187,7 @@ export function FormSingleSelect<TFieldValues extends FieldValues>({
       render={({ field }) => (
         <FormItem>
           <FormLabel>{label}</FormLabel>
-          <Select onValueChange={field.onChange} defaultValue={field.value}>
+          <Select onValueChange={field.onChange} value={field.value || ''} defaultValue={field.value || ''}>
             <FormControl>
               <SelectTrigger>
                 <SelectValue placeholder={placeholder} />
