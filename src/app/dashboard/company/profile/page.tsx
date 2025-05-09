@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -213,7 +214,7 @@ export default function CompanyProfilePage() {
                     <AvatarFallback className="rounded-md">{getInitials(userProfile.companyName)}</AvatarFallback>
                   </Avatar>
                   <FormControl>
-                    <Input type="file" accept="image/jpeg, image/png, image/webp" onChange={handleFileChange} className="max-w-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" />
+                    <Input type="file" accept="image/jpeg, image/png, image/webp" onChange={handleFileChange} className="max-w-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90" />
                   </FormControl>
                 </div>
                 {isUploading && uploadProgress !== null && (
@@ -223,6 +224,7 @@ export default function CompanyProfilePage() {
                    <p className="text-xs text-green-600 mt-1">Nuovo logo selezionato. Salva per applicare.</p>
                  )}
                 <FormDescription className="mt-1">Carica il logo (max 2MB, es. JPG, PNG).</FormDescription>
+                 <FormMessage />
               </FormItem>
 
 
@@ -279,4 +281,3 @@ export default function CompanyProfilePage() {
     </div>
   );
 }
-

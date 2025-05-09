@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -45,7 +46,7 @@ const professionalProfileSchema = z.object({
       if (typeof val === 'number') return val;
       return undefined; 
     },
-    z.number().positive({ message: 'La tariffa oraria deve essere un numero positivo.' }).optional()
+    z.number({invalid_type_error: 'La tariffa oraria deve essere un numero.'}).positive({ message: 'La tariffa oraria deve essere un numero positivo.' }).optional()
   ),
 });
 
@@ -98,7 +99,7 @@ export default function ProfessionalProfilePage() {
         portfolioUrl: currentProfile.portfolioUrl || '',
         cvUrl: currentProfile.cvUrl || '',
         linkedInProfile: currentProfile.linkedInProfile || '',
-        hourlyRate: currentProfile.hourlyRate === undefined || currentProfile.hourlyRate === null ? undefined : currentProfile.hourlyRate,
+        hourlyRate: currentProfile.hourlyRate === undefined || currentProfile.hourlyRate === null ? undefined : Number(currentProfile.hourlyRate),
       });
       if (currentProfile.photoURL) {
         setImagePreview(currentProfile.photoURL);
@@ -185,7 +186,7 @@ export default function ProfessionalProfilePage() {
       ...data,
       displayName: updatedDisplayName,
       photoURL: photoURL,
-      hourlyRate: data.hourlyRate === undefined || data.hourlyRate === null ? undefined : Number(data.hourlyRate),
+      hourlyRate: data.hourlyRate === undefined || data.hourlyRate === null || data.hourlyRate === '' ? undefined : Number(data.hourlyRate),
     };
 
     try {
@@ -251,7 +252,7 @@ export default function ProfessionalProfilePage() {
                     <AvatarFallback>{getInitials(userProfile.displayName)}</AvatarFallback>
                   </Avatar>
                   <FormControl>
-                    <Input type="file" accept="image/jpeg, image/png, image/webp, image/gif" onChange={handleFileChange} className="max-w-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" />
+                    <Input type="file" accept="image/jpeg, image/png, image/webp, image/gif" onChange={handleFileChange} className="max-w-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90" />
                   </FormControl>
                 </div>
                 {isUploading && uploadProgress !== null && (
@@ -261,6 +262,7 @@ export default function ProfessionalProfilePage() {
                    <p className="text-xs text-green-600 mt-1">Nuova immagine selezionata. Salva per applicare.</p>
                  )}
                 <FormDescription className="mt-1">Carica un&apos;immagine (max 2MB, es. JPG, PNG).</FormDescription>
+                <FormMessage />
               </FormItem>
 
 
@@ -318,7 +320,13 @@ export default function ProfessionalProfilePage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormInput control={form.control} name="linkedInProfile" label="Profilo LinkedIn (Opzionale)" placeholder="https://linkedin.com/in/tuoprofilo" />
-                <FormInput control={form.control} name="hourlyRate" label="Tariffa Oraria Indicativa (€) (Opzionale)" type="number" placeholder="Es. 50" />
+                <FormInput 
+                    control={form.control} 
+                    name="hourlyRate" 
+                    label="Tariffa Oraria Indicativa (€) (Opzionale)" 
+                    type="number" 
+                    placeholder="Es. 50" 
+                 />
               </div>
               
               <Button type="submit" className="w-full md:w-auto" disabled={authLoading || form.formState.isSubmitting || isUploading}>
@@ -332,4 +340,3 @@ export default function ProfessionalProfilePage() {
     </div>
   );
 }
-
