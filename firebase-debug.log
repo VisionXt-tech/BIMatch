@@ -1,0 +1,40 @@
+[debug] [2025-05-09T07:37:06.191Z] ----------------------------------------------------------------------
+[debug] [2025-05-09T07:37:06.195Z] Command:       /nix/store/rbdrkcs5kkwpalxcd7c6bnm33lk2955n-nodejs-20.19.0/bin/node /nix/store/h4vwr7z06qfjp6g97is2nhmki2jfwlgd-firebase-tools-14.2.2/lib/node_modules/firebase-tools/lib/bin/firebase.js init hosting
+[debug] [2025-05-09T07:37:06.196Z] CLI Version:   14.2.2
+[debug] [2025-05-09T07:37:06.196Z] Platform:      linux
+[debug] [2025-05-09T07:37:06.197Z] Node Version:  v20.19.0
+[debug] [2025-05-09T07:37:06.197Z] Time:          Fri May 09 2025 07:37:06 GMT+0000 (Coordinated Universal Time)
+[debug] [2025-05-09T07:37:06.197Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-05-09T07:37:06.208Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-05-09T07:37:49.294Z] Running auto auth
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  /home/user/studio
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] but for now we'll just set up a default project.
+[info] 
+[info] i  If you want to create a project in a Google Cloud organization or folder, please use "firebase projects:create" instead, and return to this command when you've created the project. 
+[debug] [2025-05-09T07:38:57.292Z] No OAuth tokens found
+[debug] [2025-05-09T07:38:57.296Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects [none]
+[debug] [2025-05-09T07:38:57.297Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects {"projectId":"20250509BIMATCH","name":"BIMatch"}
+[debug] [2025-05-09T07:38:58.094Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects 400
+[debug] [2025-05-09T07:38:58.095Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects {"error":{"code":400,"message":"field [project_id] has issue [project_id contains invalid characters]","status":"INVALID_ARGUMENT","details":[{"@type":"type.googleapis.com/google.rpc.BadRequest","fieldViolations":[{"field":"project_id","description":"project_id contains invalid characters"}]},{"@type":"type.googleapis.com/google.rpc.Help","links":[{"url":"https://cloud.google.com/resource-manager/reference/rest/v1/projects"}]}]}}
+[debug] [2025-05-09T07:38:58.129Z] FirebaseError: Request to https://cloudresourcemanager.googleapis.com/v1/projects had HTTP Error: 400, field [project_id] has issue [project_id contains invalid characters]
+    at responseToError (/nix/store/h4vwr7z06qfjp6g97is2nhmki2jfwlgd-firebase-tools-14.2.2/lib/node_modules/firebase-tools/lib/responseToError.js:52:12)
+    at RetryOperation._fn (/nix/store/h4vwr7z06qfjp6g97is2nhmki2jfwlgd-firebase-tools-14.2.2/lib/node_modules/firebase-tools/lib/apiv2.js:312:77)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+[error] 
+[error] Error: Failed to create project. See firebase-debug.log for more info.
