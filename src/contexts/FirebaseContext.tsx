@@ -12,24 +12,31 @@ import { createContext, useContext, ReactNode, useMemo } from 'react';
 import { firebaseConfig } from '@/lib/firebase/config';
 
 // Check for essential Firebase configuration keys before initialization
-if (typeof window !== 'undefined') { // Only run this check on the client-side initially
-  if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "YOUR_API_KEY" || !firebaseConfig.authDomain || !firebaseConfig.projectId) {
-    const missingKeys: string[] = [];
-    if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "YOUR_API_KEY") missingKeys.push('NEXT_PUBLIC_FIREBASE_API_KEY');
-    if (!firebaseConfig.authDomain) missingKeys.push('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN');
-    if (!firebaseConfig.projectId) missingKeys.push('NEXT_PUBLIC_FIREBASE_PROJECT_ID');
-    
-    // This error will be thrown during server-side rendering or at the top-level client-side,
-    // preventing the app from starting with invalid config.
-    // However, since this file is 'use client', this specific throw might not occur server-side as expected.
-    // The primary check should be robust.
+// This check runs on the client-side after the module has loaded.
+if (typeof window !== 'undefined') { 
+  const essentialKeys = {
+    apiKey: firebaseConfig.apiKey,
+    authDomain: firebaseConfig.authDomain,
+    projectId: firebaseConfig.projectId,
+  };
+  const missingKeys: string[] = [];
+
+  if (!essentialKeys.apiKey || essentialKeys.apiKey === "YOUR_API_KEY") {
+    missingKeys.push('NEXT_PUBLIC_FIREBASE_API_KEY');
+  }
+  if (!essentialKeys.authDomain) {
+    missingKeys.push('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN');
+  }
+  if (!essentialKeys.projectId) {
+    missingKeys.push('NEXT_PUBLIC_FIREBASE_PROJECT_ID');
+  }
+
+  if (missingKeys.length > 0) {
     console.error(
       `Firebase configuration is incomplete or uses placeholder values. The following environment variables are missing, undefined, or are placeholders: ${missingKeys.join(', ')}. ` +
       "Please ensure they are correctly set in your .env.local file and that the file is being loaded. " +
       "Refer to your Firebase project settings to get these values."
     );
-    // Optionally, throw an error here if you want to halt execution on the client if config is bad
-    // throw new Error(`Firebase configuration is incomplete. Missing: ${missingKeys.join(', ')}`);
   }
 }
 
@@ -58,17 +65,17 @@ interface FirebaseProviderProps {
 let firebaseApp: FirebaseApp;
 
 // Initialize Firebase only if it hasn't been initialized yet
+const configIsValid = firebaseConfig.apiKey && 
+                      firebaseConfig.apiKey !== "YOUR_API_KEY" && 
+                      firebaseConfig.authDomain && 
+                      firebaseConfig.projectId;
+
 if (!getApps().length) {
-  if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY" && firebaseConfig.authDomain && firebaseConfig.projectId) {
+  if (configIsValid) {
     firebaseApp = initializeApp(firebaseConfig);
   } else {
-    // Handle the case where config is still bad, perhaps show a global error UI or log
-    // This part is tricky because we are in 'use client' context already.
-    // The console error above should provide a warning.
-    // For a production app, you might want a more graceful fallback or error display.
-    console.error("Firebase App could not be initialized due to missing or placeholder configuration values.");
-    // A pseudo-app or a way to prevent further Firebase calls might be needed if you don't throw.
-    // This is a simplified handling.
+    // No console.error here as the top-level check and UI error are primary.
+    // The app will show a UI error via FirebaseProvider if firebaseApp.name is not set.
     firebaseApp = {} as FirebaseApp; // Placeholder to avoid crashes if accessed before proper init
   }
 } else {
@@ -100,13 +107,8 @@ if (process.env.NODE_ENV === 'development' && firebaseApp.name) { // Also check 
         console.log("Auth Emulator already configured or not available.");
     }
 
-    // Firestore's emulator connection doesn't have a direct 'emulatorConfig' property easily checkable like auth.
-    // A simple check like this can be prone to issues if the Firestore instance isn't fully initialized.
-    // We'll rely on trying to connect and catching errors.
-    if (db.app) { // Check if db is associated with an app
+    if (db.app) { 
         try {
-            // This might throw if already connected, Firebase SDK handles this internally usually.
-            // Or if the emulator is not running.
             connectFirestoreEmulator(db, 'localhost', 8080);
             console.log("Firestore Emulator connected (or connection attempted).");
         } catch (error) {
@@ -117,7 +119,7 @@ if (process.env.NODE_ENV === 'development' && firebaseApp.name) { // Also check 
     }
 
 
-    if (storage.app) { // Check if storage is associated with an app
+    if (storage.app) { 
         try {
             connectStorageEmulator(storage, 'localhost', 9199);
             console.log("Storage Emulator connected (or connection attempted).");
@@ -132,20 +134,19 @@ if (process.env.NODE_ENV === 'development' && firebaseApp.name) { // Also check 
 
 
 export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({ children }) => {
-  // Ensure that the value provided to context is stable, especially if firebaseApp could be a placeholder
   const value = useMemo(() => ({ 
-    app: firebaseApp.name ? firebaseApp : {} as FirebaseApp, // Provide placeholder if not initialized
+    app: firebaseApp.name ? firebaseApp : {} as FirebaseApp, 
     auth: auth.name ? auth : {} as Auth, 
     db: db.app ? db : {} as Firestore, 
     storage: storage.app ? storage : {} as FirebaseStorage 
-  }), []); // Empty dependency array means this runs once
+  }), []); 
 
-  // If Firebase app failed to initialize properly, you might want to render an error message
-  // instead of the children, or a loading state.
   if (!firebaseApp.name) {
     return (
-      <div style={{ padding: '20px', textAlign: 'center', color: 'red' }}>
-        Firebase non è configurato correttamente. Controlla le variabili d&apos;ambiente.
+      <div style={{ padding: '20px', textAlign: 'center', color: 'red', backgroundColor: '#fff1f1', border: '1px solid red', margin: '20px', borderRadius: '8px' }}>
+        <h2>Errore di Configurazione Firebase</h2>
+        <p>Firebase non è configurato correttamente. Assicurati che le variabili d&apos;ambiente richieste (es. <code>NEXT_PUBLIC_FIREBASE_API_KEY</code>) siano impostate nel tuo file <code>.env.local</code> e che il server di sviluppo sia stato riavviato.</p>
+        <p>Fai riferimento alla console per dettagli specifici sulle chiavi mancanti o errate.</p>
       </div>
     );
   }
