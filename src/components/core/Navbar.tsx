@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -42,6 +43,14 @@ const Navbar = () => {
       <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
         <Logo />
         <div className="flex items-center space-x-2 md:space-x-4">
+          {/* "Cerca Professionisti" button always visible */}
+          <Button variant="ghost" asChild>
+            <Link href={ROUTES.PROFESSIONALS_MARKETPLACE}>
+              <Search className="mr-0 md:mr-2 h-4 w-4" />
+              <span className="hidden md:inline">Cerca Professionisti</span>
+            </Link>
+          </Button>
+
           {loading ? (
             <div className="h-10 w-40 animate-pulse bg-muted rounded-md"></div>
           ) : user && userProfile ? (
@@ -87,12 +96,6 @@ const Navbar = () => {
             </DropdownMenu>
           ) : (
             <>
-              <Button variant="ghost" asChild>
-                <Link href={ROUTES.PROFESSIONALS_MARKETPLACE}>
-                  <Search className="mr-0 md:mr-2 h-4 w-4" /> 
-                  <span className="hidden md:inline">Cerca Professionisti</span>
-                </Link>
-              </Button>
               <Button variant="ghost" asChild>
                 <Link href={ROUTES.LOGIN}>Accedi</Link>
               </Button>
