@@ -28,7 +28,18 @@ const professionalProfileSchema = z.object({
   portfolioUrl: z.string().url({ message: 'Inserisci un URL valido per il portfolio.' }).optional().or(z.literal('')),
   cvUrl: z.string().url({ message: 'Inserisci un URL valido per il CV (es. link a Google Drive, Dropbox).' }).optional().or(z.literal('')), // For simplicity, direct URL for now. File upload later.
   linkedInProfile: z.string().url({message: 'Inserisci un URL valido per LinkedIn.'}).optional().or(z.literal('')),
-  hourlyRate: z.union([z.number().positive({ message: 'La tariffa oraria deve essere un numero positivo.' }), z.literal(''), z.null(), z.undefined()]).optional(),
+  hourlyRate: z.preprocess(
+    (val) => {
+      if (val === "") return undefined; // Treat empty string as undefined for .optional()
+      if (typeof val === 'string' && val.trim() !== "") {
+        const num = Number(val);
+        return isNaN(num) ? val : num; // if NaN, pass original string to fail z.number()
+      }
+      if (typeof val === 'number') return val;
+      return undefined; // Default to undefined for other types or empty trimmed string
+    },
+    z.number().positive({ message: 'La tariffa oraria deve essere un numero positivo.' }).optional()
+  ),
   // photoURL will be handled separately if we implement direct upload. For now, relies on Google/initials.
 });
 
@@ -54,7 +65,7 @@ export default function ProfessionalProfilePage() {
       portfolioUrl: '',
       cvUrl: '',
       linkedInProfile: '',
-      hourlyRate: '', // Initialize as empty string for the form input
+      hourlyRate: undefined, // Initialize as undefined, form input will show placeholder or be empty
     },
   });
 
@@ -74,7 +85,7 @@ export default function ProfessionalProfilePage() {
         portfolioUrl: currentProfile.portfolioUrl || '',
         cvUrl: currentProfile.cvUrl || '',
         linkedInProfile: currentProfile.linkedInProfile || '',
-        hourlyRate: currentProfile.hourlyRate === undefined || currentProfile.hourlyRate === null ? '' : currentProfile.hourlyRate,
+        hourlyRate: currentProfile.hourlyRate === undefined || currentProfile.hourlyRate === null ? undefined : currentProfile.hourlyRate,
       });
     }
   }, [userProfile, form]);
@@ -86,15 +97,13 @@ export default function ProfessionalProfilePage() {
       return;
     }
     
-    // Update displayName if firstName or lastName changed
     const updatedDisplayName = `${data.firstName || userProfile.firstName || ''} ${data.lastName || userProfile.lastName || ''}`.trim();
     
-    const hourlyRateAsNumber = data.hourlyRate === '' || data.hourlyRate === null || data.hourlyRate === undefined ? undefined : Number(data.hourlyRate);
-
+    // data.hourlyRate will be a number or undefined due to Zod preprocess/validation
     const dataToUpdate : Partial<ProfessionalProfile> = {
       ...data,
       displayName: updatedDisplayName,
-      hourlyRate: hourlyRateAsNumber,
+      hourlyRate: data.hourlyRate, // Already number or undefined
     };
 
 
@@ -207,3 +216,4 @@ export default function ProfessionalProfilePage() {
     </div>
   );
 }
+
