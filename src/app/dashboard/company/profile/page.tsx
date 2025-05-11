@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -92,18 +91,19 @@ export default function CompanyProfilePage() {
       const file = event.target.files[0];
       if (!file.type.startsWith('image/')) {
           toast({ title: "Formato File Non Valido", description: "Seleziona un file immagine (es. JPG, PNG).", variant: "destructive"});
-          event.target.value = '';
+          event.target.value = ''; // Reset file input
           return;
       }
       if (file.size > 2 * 1024 * 1024) { // 2MB limit
           toast({ title: "File Troppo Grande", description: "Il logo non deve superare i 2MB.", variant: "destructive"});
-          event.target.value = '';
+          event.target.value = ''; // Reset file input
           return;
       }
       setLogoFile(file);
       setLogoPreview(URL.createObjectURL(file));
     } else {
       setLogoFile(null);
+      // Revert to existing logoUrl or null if none
       setLogoPreview((userProfile as CompanyProfile)?.logoUrl || null);
     }
   };
@@ -116,7 +116,7 @@ export default function CompanyProfilePage() {
     }
 
     setIsUploading(true);
-    setUploadProgress(0); // Initialize progress to 0
+    setUploadProgress(0); 
 
     let logoUrlToUpdate = (userProfile as CompanyProfile)?.logoUrl || '';
 
@@ -130,8 +130,12 @@ export default function CompanyProfilePage() {
            uploadTask.on(
             'state_changed',
             (snapshot) => {
-              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              let progress = 0;
+              if (snapshot.totalBytes > 0) {
+                progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              }
               console.log('Logo Upload is ' + progress + '% done. State: ' + snapshot.state);
+              console.log(`Bytes transferred: ${snapshot.bytesTransferred}, Total bytes: ${snapshot.totalBytes}`);
               setUploadProgress(progress);
               switch (snapshot.state) {
                 case 'paused':
@@ -144,7 +148,6 @@ export default function CompanyProfilePage() {
             },
             (error: any) => {
               console.error('Logo upload failed:', error);
-              console.error('Logo upload failed with error code:', error.code, 'Message:', error.message, 'Full error object:', error);
               let userFriendlyMessage = "Errore durante il caricamento del logo.";
               switch (error.code) {
                 case 'storage/unauthorized':
@@ -157,11 +160,9 @@ export default function CompanyProfilePage() {
                   userFriendlyMessage = "Errore sconosciuto durante il caricamento. Riprova o controlla la console per dettagli.";
                   break;
                 default:
-                   userFriendlyMessage = `Errore: ${error.message}`;
+                   userFriendlyMessage = `Errore: ${error.message || 'Vedi console per dettagli.'}`;
               }
               toast({ title: "Errore Caricamento Logo", description: userFriendlyMessage, variant: "destructive" });
-              setUploadProgress(null);
-              setIsUploading(false);
               reject(error);
             },
             async () => {
@@ -172,16 +173,15 @@ export default function CompanyProfilePage() {
               } catch (getUrlError: any) {
                 console.error('Failed to get logo download URL', getUrlError);
                 toast({ title: "Errore URL Logo", description: (getUrlError as Error).message, variant: "destructive" });
-                setIsUploading(false);
                 reject(getUrlError);
               }
             }
           );
         });
       } catch (uploadError) {
-        console.error('Outer catch for logo upload process:', uploadError);
-        if (isUploading) setIsUploading(false);
-        if (uploadProgress === 0) setUploadProgress(null);
+        console.error('Upload process failed:', uploadError);
+        setIsUploading(false);
+        setUploadProgress(null);
         return; 
       }
     }
@@ -195,9 +195,7 @@ export default function CompanyProfilePage() {
     try {
       await updateUserProfile(user.uid, dataToUpdate);
       setLogoFile(null);
-      // Toast is handled by updateUserProfile
     } catch (error) {
-      // Toast is handled by updateUserProfile
       console.error('Company profile update failed on page:', error);
     } finally {
       setIsUploading(false);
@@ -206,7 +204,7 @@ export default function CompanyProfilePage() {
   };
 
   const getInitials = (name: string | null | undefined) => {
-    if (!name) return 'A'; // Default for Azienda/Company
+    if (!name) return 'A'; 
     return name.substring(0, 2).toUpperCase();
   };
 
@@ -238,12 +236,16 @@ export default function CompanyProfilePage() {
               <FormItem>
                 <FormLabel>Logo Aziendale</FormLabel>
                 <div className="flex items-center space-x-4 mt-2">
-                  <Avatar className="h-24 w-24 rounded-md"> {/* Square avatar for logos often looks better */}
+                  <Avatar className="h-24 w-24 rounded-md">
                     <AvatarImage src={logoPreview || (userProfile as CompanyProfile).logoUrl || undefined} alt={userProfile.companyName || 'Logo Azienda'} data-ai-hint="company logo" className="object-contain"/>
                     <AvatarFallback className="rounded-md">{getInitials(userProfile.companyName)}</AvatarFallback>
                   </Avatar>
                   <FormControl>
-                    <Input type="file" accept="image/jpeg, image/png, image/webp" onChange={handleFileChange} className="max-w-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90" />
+                    <Input 
+                        type="file" 
+                        accept="image/jpeg, image/png, image/webp" 
+                        onChange={handleFileChange} 
+                        className="max-w-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90" />
                   </FormControl>
                 </div>
                 {isUploading && uploadProgress !== null && (
@@ -313,4 +315,3 @@ export default function CompanyProfilePage() {
     </div>
   );
 }
-
