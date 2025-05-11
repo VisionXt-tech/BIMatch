@@ -37,16 +37,16 @@ const professionalProfileSchema = z.object({
   linkedInProfile: z.string().url({message: 'Inserisci un URL valido per LinkedIn.'}).optional().or(z.literal('')),
   hourlyRate: z.preprocess(
     (val) => {
-      if (val === "" || val === null || val === undefined) return undefined; // Allow empty string to be treated as undefined
+      if (val === "" || val === null || val === undefined) return undefined;
       const strVal = String(val).trim();
-      if (strVal === "") return undefined; // Explicitly handle empty string after trim
+      if (strVal === "") return undefined; 
       const num = Number(strVal);
-      return isNaN(num) ? strVal : num; // Return original string if not a number for Zod to catch as invalid_type
+      return isNaN(num) ? strVal : num; 
     },
     z.number({invalid_type_error: 'La tariffa oraria deve essere un numero valido.'})
       .positive({ message: 'La tariffa oraria deve essere un numero positivo.' })
       .optional()
-      .nullable() // Allow null to be passed from form reset
+      .nullable()
   ),
 });
 
@@ -112,20 +112,24 @@ export default function ProfessionalProfilePage() {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
       if (!file.type.startsWith('image/')) {
-          toast({ title: "Formato File Non Valido", description: "Seleziona un file immagine (es. JPG, PNG).", variant: "destructive"});
-          event.target.value = ''; // Reset file input
+          toast({ title: "Formato File Non Valido", description: "Seleziona un file immagine (es. JPG, PNG, WEBP).", variant: "destructive"});
+          event.target.value = ''; 
           return;
       }
       if (file.size > 2 * 1024 * 1024) { // 2MB limit
           toast({ title: "File Troppo Grande", description: "L'immagine non deve superare i 2MB.", variant: "destructive"});
-          event.target.value = ''; // Reset file input
+          event.target.value = ''; 
           return;
+      }
+      if (file.size === 0) {
+        toast({ title: "File Vuoto", description: "Il file selezionato è vuoto e non può essere caricato.", variant: "destructive" });
+        event.target.value = ''; // Reset file input
+        return;
       }
       setProfileImageFile(file);
       setImagePreview(URL.createObjectURL(file));
     } else {
       setProfileImageFile(null);
-      // If no file is selected, revert to existing photoURL or null if none exists
       setImagePreview(userProfile?.photoURL || null);
     }
   };
@@ -158,17 +162,9 @@ export default function ProfessionalProfilePage() {
               console.log('Upload is ' + progress + '% done. State: ' + snapshot.state);
               console.log(`Bytes transferred: ${snapshot.bytesTransferred}, Total bytes: ${snapshot.totalBytes}`);
               setUploadProgress(progress);
-              switch (snapshot.state) {
-                case 'paused':
-                  console.log('Upload is paused');
-                  break;
-                case 'running':
-                  console.log('Upload is running');
-                  break;
-              }
             },
-            (error: any) => {
-              console.error('Upload failed:', error);
+            (error: any) => { // Firebase Storage upload error
+              console.error('Firebase Storage upload error:', error);
               let userFriendlyMessage = "Errore durante il caricamento dell'immagine.";
               switch (error.code) {
                 case 'storage/unauthorized':
@@ -181,31 +177,35 @@ export default function ProfessionalProfilePage() {
                   userFriendlyMessage = "Errore sconosciuto durante il caricamento. Riprova o controlla la console per dettagli.";
                   break;
                 default:
-                   userFriendlyMessage = `Errore: ${error.message || 'Vedi console per dettagli.'}`;
+                   userFriendlyMessage = `Errore caricamento: ${error.message || 'Vedi console per dettagli.'}`;
               }
               toast({ title: "Errore Caricamento Immagine", description: userFriendlyMessage, variant: "destructive" });
+              setIsUploading(false); 
+              setUploadProgress(null);
               reject(error);
             },
-            async () => {
+            async () => { // Upload complete
               try {
                 photoURLToUpdate = await getDownloadURL(uploadTask.snapshot.ref);
                 console.log('File available at', photoURLToUpdate);
                 resolve();
               } catch (getUrlError: any) {
-                 console.error('Failed to get download URL', getUrlError);
-                 toast({ title: "Errore URL Immagine", description: (getUrlError as Error).message, variant: "destructive" });
+                 console.error('Failed to get download URL:', getUrlError);
+                 toast({ title: "Errore URL Immagine", description: `Impossibile ottenere l'URL dell'immagine: ${getUrlError.message}`, variant: "destructive" });
+                 setIsUploading(false);
+                 setUploadProgress(null);
                  reject(getUrlError);
               }
             }
           );
         });
-      } catch (uploadError) {
-          console.error('Upload process failed:', uploadError);
-          // Error toast is handled within the promise's reject or error callback.
-          // State reset (isUploading, uploadProgress) is handled in the finally block.
-          setIsUploading(false); // Ensure this is reset if error happens before finally
+      } catch (uploadError) { // Catches rejections from the new Promise (upload or getDownloadURL errors)
+          console.error('Upload process promise failed:', uploadError);
+          // Toast should have been shown by inner handlers.
+          // Ensure state is reset and prevent further execution.
+          setIsUploading(false); 
           setUploadProgress(null);
-          return; 
+          return; // Stop execution if upload process failed
       }
     }
 
@@ -223,6 +223,7 @@ export default function ProfessionalProfilePage() {
       setProfileImageFile(null); 
     } catch (error) {
       console.error('Profile update failed on page:', error);
+      // updateUserProfile should handle its own toasts for update errors
     } finally {
       setIsUploading(false);
       setUploadProgress(null); 
@@ -288,7 +289,7 @@ export default function ProfessionalProfilePage() {
                  {!isUploading && uploadProgress === null && profileImageFile && (
                    <p className="text-xs text-green-600 mt-1">Nuova immagine selezionata. Salva per applicare.</p>
                  )}
-                <FormDescription className="mt-1">Carica un&apos;immagine (max 2MB, es. JPG, PNG).</FormDescription>
+                <FormDescription className="mt-1">Carica un&apos;immagine (max 2MB, es. JPG, PNG, WEBP).</FormDescription>
                 <FormMessage />
               </FormItem>
 
@@ -352,11 +353,13 @@ export default function ProfessionalProfilePage() {
                     <Input
                       type="number"
                       placeholder="Es. 50"
-                      step="0.01" // Allows for decimal input if needed for currency
+                      step="0.01"
                       {...form.register("hourlyRate", {
                           setValueAs: (value) => {
                             if (value === "" || value === null || value === undefined) return undefined;
-                            const num = parseFloat(String(value));
+                            const strVal = String(value).trim();
+                            if (strVal === "") return undefined;
+                            const num = parseFloat(strVal);
                             return isNaN(num) ? undefined : num;
                           }
                        })}

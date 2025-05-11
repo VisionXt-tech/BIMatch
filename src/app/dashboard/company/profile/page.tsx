@@ -90,20 +90,24 @@ export default function CompanyProfilePage() {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
       if (!file.type.startsWith('image/')) {
-          toast({ title: "Formato File Non Valido", description: "Seleziona un file immagine (es. JPG, PNG).", variant: "destructive"});
-          event.target.value = ''; // Reset file input
+          toast({ title: "Formato File Non Valido", description: "Seleziona un file immagine (es. JPG, PNG, WEBP).", variant: "destructive"});
+          event.target.value = ''; 
           return;
       }
       if (file.size > 2 * 1024 * 1024) { // 2MB limit
           toast({ title: "File Troppo Grande", description: "Il logo non deve superare i 2MB.", variant: "destructive"});
-          event.target.value = ''; // Reset file input
+          event.target.value = ''; 
           return;
+      }
+      if (file.size === 0) {
+        toast({ title: "File Vuoto", description: "Il file selezionato è vuoto e non può essere caricato.", variant: "destructive" });
+        event.target.value = ''; // Reset file input
+        return;
       }
       setLogoFile(file);
       setLogoPreview(URL.createObjectURL(file));
     } else {
       setLogoFile(null);
-      // Revert to existing logoUrl or null if none
       setLogoPreview((userProfile as CompanyProfile)?.logoUrl || null);
     }
   };
@@ -137,17 +141,9 @@ export default function CompanyProfilePage() {
               console.log('Logo Upload is ' + progress + '% done. State: ' + snapshot.state);
               console.log(`Bytes transferred: ${snapshot.bytesTransferred}, Total bytes: ${snapshot.totalBytes}`);
               setUploadProgress(progress);
-              switch (snapshot.state) {
-                case 'paused':
-                  console.log('Logo Upload is paused');
-                  break;
-                case 'running':
-                  console.log('Logo Upload is running');
-                  break;
-              }
             },
-            (error: any) => {
-              console.error('Logo upload failed:', error);
+            (error: any) => { // Firebase Storage upload error
+              console.error('Firebase Storage logo upload error:', error);
               let userFriendlyMessage = "Errore durante il caricamento del logo.";
               switch (error.code) {
                 case 'storage/unauthorized':
@@ -160,29 +156,33 @@ export default function CompanyProfilePage() {
                   userFriendlyMessage = "Errore sconosciuto durante il caricamento. Riprova o controlla la console per dettagli.";
                   break;
                 default:
-                   userFriendlyMessage = `Errore: ${error.message || 'Vedi console per dettagli.'}`;
+                   userFriendlyMessage = `Errore caricamento logo: ${error.message || 'Vedi console per dettagli.'}`;
               }
               toast({ title: "Errore Caricamento Logo", description: userFriendlyMessage, variant: "destructive" });
+              setIsUploading(false);
+              setUploadProgress(null);
               reject(error);
             },
-            async () => {
+            async () => { // Upload complete
               try {
                 logoUrlToUpdate = await getDownloadURL(uploadTask.snapshot.ref);
                 console.log('Logo file available at', logoUrlToUpdate);
                 resolve();
               } catch (getUrlError: any) {
                 console.error('Failed to get logo download URL', getUrlError);
-                toast({ title: "Errore URL Logo", description: (getUrlError as Error).message, variant: "destructive" });
+                toast({ title: "Errore URL Logo", description: `Impossibile ottenere l'URL del logo: ${(getUrlError as Error).message}`, variant: "destructive" });
+                setIsUploading(false);
+                setUploadProgress(null);
                 reject(getUrlError);
               }
             }
           );
         });
-      } catch (uploadError) {
-        console.error('Upload process failed:', uploadError);
+      } catch (uploadError) { // Catches rejections from the new Promise
+        console.error('Logo upload process promise failed:', uploadError);
         setIsUploading(false);
         setUploadProgress(null);
-        return; 
+        return; // Stop execution if upload process failed
       }
     }
 
@@ -257,7 +257,7 @@ export default function CompanyProfilePage() {
                 {!isUploading && uploadProgress === null && logoFile && (
                    <p className="text-xs text-green-600 mt-1">Nuovo logo selezionato. Salva per applicare.</p>
                  )}
-                <FormDescription className="mt-1">Carica il logo (max 2MB, es. JPG, PNG).</FormDescription>
+                <FormDescription className="mt-1">Carica il logo (max 2MB, es. JPG, PNG, WEBP).</FormDescription>
                  <FormMessage />
               </FormItem>
 
