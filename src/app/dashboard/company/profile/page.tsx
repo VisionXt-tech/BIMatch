@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -89,6 +90,7 @@ export default function CompanyProfilePage() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
+      console.log("File selected:", file.name, "Size:", file.size, "Type:", file.type); // Log file details
       if (!file.type.startsWith('image/')) {
           toast({ title: "Formato File Non Valido", description: "Seleziona un file immagine (es. JPG, PNG, WEBP).", variant: "destructive"});
           event.target.value = ''; 
@@ -125,6 +127,7 @@ export default function CompanyProfilePage() {
     let logoUrlToUpdate = (userProfile as CompanyProfile)?.logoUrl || '';
 
     if (logoFile && storage) {
+      console.log("Starting logo upload. Storage instance:", storage ? 'Exists' : 'Missing');
       const filePath = `companyLogos/${user.uid}/${Date.now()}_${logoFile.name}`;
       const fileRef = storageRef(storage, filePath);
       const uploadTask = uploadBytesResumable(fileRef, logoFile);
@@ -134,16 +137,20 @@ export default function CompanyProfilePage() {
            uploadTask.on(
             'state_changed',
             (snapshot) => {
-              let progress = 0;
-              if (snapshot.totalBytes > 0) {
-                progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              }
-              console.log('Logo Upload is ' + progress + '% done. State: ' + snapshot.state);
-              console.log(`Bytes transferred: ${snapshot.bytesTransferred}, Total bytes: ${snapshot.totalBytes}`);
-              setUploadProgress(progress);
+              const progressPercentage = snapshot.totalBytes > 0
+                ? (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+                : 0;
+              
+              console.log('[COMPANY_LOGO_UPLOAD_PROGRESS]', {
+                state: snapshot.state,
+                bytesTransferred: snapshot.bytesTransferred,
+                totalBytes: snapshot.totalBytes,
+                calculatedProgress: progressPercentage,
+              });
+              setUploadProgress(progressPercentage);
             },
-            (error: any) => { // Firebase Storage upload error
-              console.error('Firebase Storage logo upload error:', error);
+            (error: any) => { 
+              console.error('Firebase Storage logo upload error (state_changed listener):', error);
               let userFriendlyMessage = "Errore durante il caricamento del logo.";
               switch (error.code) {
                 case 'storage/unauthorized':
@@ -163,7 +170,7 @@ export default function CompanyProfilePage() {
               setUploadProgress(null);
               reject(error);
             },
-            async () => { // Upload complete
+            async () => { 
               try {
                 logoUrlToUpdate = await getDownloadURL(uploadTask.snapshot.ref);
                 console.log('Logo file available at', logoUrlToUpdate);
@@ -178,12 +185,15 @@ export default function CompanyProfilePage() {
             }
           );
         });
-      } catch (uploadError) { // Catches rejections from the new Promise
+      } catch (uploadError) { 
         console.error('Logo upload process promise failed:', uploadError);
+        // Toast should have been shown by inner error handler
         setIsUploading(false);
         setUploadProgress(null);
-        return; // Stop execution if upload process failed
+        return; 
       }
+    } else {
+      console.log("Skipping logo upload. logoFile:", logoFile, "Storage instance:", storage ? 'Exists' : 'Missing');
     }
 
     const dataToUpdate : Partial<CompanyProfile> = {
@@ -194,9 +204,10 @@ export default function CompanyProfilePage() {
 
     try {
       await updateUserProfile(user.uid, dataToUpdate);
-      setLogoFile(null);
+      setLogoFile(null); // Clear the selected file after successful profile update
     } catch (error) {
       console.error('Company profile update failed on page:', error);
+      // updateUserProfile in AuthContext should handle its own toasts
     } finally {
       setIsUploading(false);
       setUploadProgress(null);
@@ -238,7 +249,7 @@ export default function CompanyProfilePage() {
                 <div className="flex items-center space-x-4 mt-2">
                   <Avatar className="h-24 w-24 rounded-md">
                     <AvatarImage src={logoPreview || (userProfile as CompanyProfile).logoUrl || undefined} alt={userProfile.companyName || 'Logo Azienda'} data-ai-hint="company logo" className="object-contain"/>
-                    <AvatarFallback className="rounded-md">{getInitials(userProfile.companyName)}</AvatarFallback>
+                    <AvatarFallback className="rounded-md text-2xl">{getInitials(userProfile.companyName)}</AvatarFallback>
                   </Avatar>
                   <FormControl>
                     <Input 
@@ -315,3 +326,4 @@ export default function CompanyProfilePage() {
     </div>
   );
 }
+

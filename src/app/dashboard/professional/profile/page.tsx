@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -111,6 +112,7 @@ export default function ProfessionalProfilePage() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
+      console.log("Profile image selected:", file.name, "Size:", file.size, "Type:", file.type); // Log file details
       if (!file.type.startsWith('image/')) {
           toast({ title: "Formato File Non Valido", description: "Seleziona un file immagine (es. JPG, PNG, WEBP).", variant: "destructive"});
           event.target.value = ''; 
@@ -146,6 +148,7 @@ export default function ProfessionalProfilePage() {
     let photoURLToUpdate = userProfile.photoURL || '';
 
     if (profileImageFile && storage) {
+      console.log("Starting profile image upload. Storage instance:", storage ? 'Exists' : 'Missing');
       const filePath = `profileImages/${user.uid}/${Date.now()}_${profileImageFile.name}`;
       const fileRef = storageRef(storage, filePath);
       const uploadTask = uploadBytesResumable(fileRef, profileImageFile);
@@ -155,16 +158,20 @@ export default function ProfessionalProfilePage() {
           uploadTask.on(
             'state_changed',
             (snapshot) => {
-              let progress = 0;
-              if (snapshot.totalBytes > 0) {
-                progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              }
-              console.log('Upload is ' + progress + '% done. State: ' + snapshot.state);
-              console.log(`Bytes transferred: ${snapshot.bytesTransferred}, Total bytes: ${snapshot.totalBytes}`);
-              setUploadProgress(progress);
+              const progressPercentage = snapshot.totalBytes > 0
+                ? (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+                : 0;
+
+              console.log('[PROFILE_IMAGE_UPLOAD_PROGRESS]', {
+                state: snapshot.state,
+                bytesTransferred: snapshot.bytesTransferred,
+                totalBytes: snapshot.totalBytes,
+                calculatedProgress: progressPercentage,
+              });
+              setUploadProgress(progressPercentage);
             },
-            (error: any) => { // Firebase Storage upload error
-              console.error('Firebase Storage upload error:', error);
+            (error: any) => { 
+              console.error('Firebase Storage profile image upload error (state_changed listener):', error);
               let userFriendlyMessage = "Errore durante il caricamento dell'immagine.";
               switch (error.code) {
                 case 'storage/unauthorized':
@@ -184,13 +191,13 @@ export default function ProfessionalProfilePage() {
               setUploadProgress(null);
               reject(error);
             },
-            async () => { // Upload complete
+            async () => { 
               try {
                 photoURLToUpdate = await getDownloadURL(uploadTask.snapshot.ref);
-                console.log('File available at', photoURLToUpdate);
+                console.log('Profile image file available at', photoURLToUpdate);
                 resolve();
               } catch (getUrlError: any) {
-                 console.error('Failed to get download URL:', getUrlError);
+                 console.error('Failed to get profile image download URL:', getUrlError);
                  toast({ title: "Errore URL Immagine", description: `Impossibile ottenere l'URL dell'immagine: ${getUrlError.message}`, variant: "destructive" });
                  setIsUploading(false);
                  setUploadProgress(null);
@@ -199,15 +206,16 @@ export default function ProfessionalProfilePage() {
             }
           );
         });
-      } catch (uploadError) { // Catches rejections from the new Promise (upload or getDownloadURL errors)
-          console.error('Upload process promise failed:', uploadError);
-          // Toast should have been shown by inner handlers.
-          // Ensure state is reset and prevent further execution.
+      } catch (uploadError) { 
+          console.error('Profile image upload process promise failed:', uploadError);
           setIsUploading(false); 
           setUploadProgress(null);
-          return; // Stop execution if upload process failed
+          return; 
       }
+    } else {
+       console.log("Skipping profile image upload. profileImageFile:", profileImageFile, "Storage instance:", storage ? 'Exists' : 'Missing');
     }
+
 
     const updatedDisplayName = `${data.firstName || userProfile.firstName || ''} ${data.lastName || userProfile.lastName || ''}`.trim();
 
@@ -223,7 +231,6 @@ export default function ProfessionalProfilePage() {
       setProfileImageFile(null); 
     } catch (error) {
       console.error('Profile update failed on page:', error);
-      // updateUserProfile should handle its own toasts for update errors
     } finally {
       setIsUploading(false);
       setUploadProgress(null); 
@@ -269,7 +276,7 @@ export default function ProfessionalProfilePage() {
                 <div className="flex items-center space-x-4 mt-2">
                   <Avatar className="h-24 w-24">
                     <AvatarImage src={imagePreview || userProfile.photoURL || undefined} alt={userProfile.displayName || 'User'} data-ai-hint="profile person" />
-                    <AvatarFallback>{getInitials(userProfile.displayName)}</AvatarFallback>
+                    <AvatarFallback className="text-3xl">{getInitials(userProfile.displayName)}</AvatarFallback>
                   </Avatar>
                   <FormControl>
                      <Input
@@ -381,3 +388,4 @@ export default function ProfessionalProfilePage() {
     </div>
   );
 }
+
