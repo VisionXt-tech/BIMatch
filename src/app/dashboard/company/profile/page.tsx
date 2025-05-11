@@ -114,9 +114,9 @@ export default function CompanyProfilePage() {
       toast({ title: "Errore", description: "Utente non autenticato.", variant: "destructive" });
       return;
     }
-    
+
     setIsUploading(true);
-    setUploadProgress(null);
+    setUploadProgress(0); // Initialize progress to 0
 
     let logoUrlToUpdate = (userProfile as CompanyProfile)?.logoUrl || '';
 
@@ -131,35 +131,64 @@ export default function CompanyProfilePage() {
             'state_changed',
             (snapshot) => {
               const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              console.log('Logo Upload is ' + progress + '% done. State: ' + snapshot.state);
               setUploadProgress(progress);
+              switch (snapshot.state) {
+                case 'paused':
+                  console.log('Logo Upload is paused');
+                  break;
+                case 'running':
+                  console.log('Logo Upload is running');
+                  break;
+              }
             },
-            (error) => {
+            (error: any) => {
               console.error('Logo upload failed:', error);
-              toast({ title: "Errore Caricamento Logo", description: error.message, variant: "destructive" });
+              console.error('Logo upload failed with error code:', error.code, 'Message:', error.message, 'Full error object:', error);
+              let userFriendlyMessage = "Errore durante il caricamento del logo.";
+              switch (error.code) {
+                case 'storage/unauthorized':
+                  userFriendlyMessage = "Non hai i permessi per caricare questo file. Controlla le regole di Firebase Storage.";
+                  break;
+                case 'storage/canceled':
+                  userFriendlyMessage = "Caricamento annullato.";
+                  break;
+                case 'storage/unknown':
+                  userFriendlyMessage = "Errore sconosciuto durante il caricamento. Riprova o controlla la console per dettagli.";
+                  break;
+                default:
+                   userFriendlyMessage = `Errore: ${error.message}`;
+              }
+              toast({ title: "Errore Caricamento Logo", description: userFriendlyMessage, variant: "destructive" });
               setUploadProgress(null);
+              setIsUploading(false);
               reject(error);
             },
             async () => {
               try {
                 logoUrlToUpdate = await getDownloadURL(uploadTask.snapshot.ref);
+                console.log('Logo file available at', logoUrlToUpdate);
                 resolve();
-              } catch (getUrlError) {
+              } catch (getUrlError: any) {
                 console.error('Failed to get logo download URL', getUrlError);
                 toast({ title: "Errore URL Logo", description: (getUrlError as Error).message, variant: "destructive" });
+                setIsUploading(false);
                 reject(getUrlError);
               }
             }
           );
         });
       } catch (uploadError) {
-        setIsUploading(false);
-        return; // Stop submission if logo upload fails
+        console.error('Outer catch for logo upload process:', uploadError);
+        if (isUploading) setIsUploading(false);
+        if (uploadProgress === 0) setUploadProgress(null);
+        return; 
       }
     }
-    
+
     const dataToUpdate : Partial<CompanyProfile> = {
         ...data,
-        displayName: data.companyName || userProfile.companyName, 
+        displayName: data.companyName || userProfile.companyName,
         logoUrl: logoUrlToUpdate,
     };
 
@@ -218,7 +247,10 @@ export default function CompanyProfilePage() {
                   </FormControl>
                 </div>
                 {isUploading && uploadProgress !== null && (
-                  <Progress value={uploadProgress} className="w-full mt-2 h-2" />
+                  <div className="mt-2">
+                    <Progress value={uploadProgress} className="w-full h-2" />
+                    <p className="text-xs text-muted-foreground mt-1">Caricamento: {Math.round(uploadProgress)}%</p>
+                  </div>
                 )}
                 {!isUploading && uploadProgress === null && logoFile && (
                    <p className="text-xs text-green-600 mt-1">Nuovo logo selezionato. Salva per applicare.</p>
@@ -232,7 +264,7 @@ export default function CompanyProfilePage() {
                 <FormInput control={form.control} name="companyName" label="Nome Azienda" placeholder="La Mia Azienda S.r.l." />
                 <FormInput control={form.control} name="companyVat" label="Partita IVA" placeholder="12345678901" />
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  <FormSingleSelect
                   control={form.control}
@@ -260,16 +292,16 @@ export default function CompanyProfilePage() {
                   placeholder="Seleziona settore"
                 />
               </div>
-              
+
               <FormTextarea control={form.control} name="companyDescription" label="Descrizione Azienda (Opzionale)" placeholder="Descrivi la tua azienda, la mission, i valori e i tipi di progetti..." rows={5} />
-              
+
               <CardTitle className="text-xl font-semibold pt-4 border-t mt-4">Informazioni di Contatto</CardTitle>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <FormInput control={form.control} name="contactPerson" label="Persona di Riferimento (Opzionale)" placeholder="Mario Rossi" />
                 <FormInput control={form.control} name="contactEmail" label="Email di Contatto (Opzionale)" placeholder="info@lamiaazienda.it" type="email"/>
                 <FormInput control={form.control} name="contactPhone" label="Telefono di Contatto (Opzionale)" placeholder="+39 02 1234567" type="tel"/>
               </div>
-                            
+
               <Button type="submit" className="w-full md:w-auto" disabled={authLoading || form.formState.isSubmitting || isUploading}>
                 <Save className="mr-2 h-4 w-4" />
                  {isUploading ? `Caricamento... ${uploadProgress !== null ? Math.round(uploadProgress) + '%' : ''}` : (form.formState.isSubmitting ? 'Salvataggio in corso...' : 'Salva Modifiche')}
@@ -281,3 +313,4 @@ export default function CompanyProfilePage() {
     </div>
   );
 }
+

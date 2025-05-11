@@ -26,7 +26,7 @@ import { Input } from '@/components/ui/input';
 const professionalProfileSchema = z.object({
   firstName: z.string().min(2, { message: 'Il nome deve contenere almeno 2 caratteri.' }).optional(),
   lastName: z.string().min(2, { message: 'Il cognome deve contenere almeno 2 caratteri.' }).optional(),
-  displayName: z.string().min(2, "Il nome visualizzato è richiesto.").optional(), 
+  displayName: z.string().min(2, "Il nome visualizzato è richiesto.").optional(),
   location: z.string().min(1, { message: 'La localizzazione è richiesta.' }).optional(),
   bio: z.string().max(1000, "La bio non può superare i 1000 caratteri.").optional().or(z.literal('')),
   bimSkills: z.array(z.string()).optional(),
@@ -38,11 +38,11 @@ const professionalProfileSchema = z.object({
   linkedInProfile: z.string().url({message: 'Inserisci un URL valido per LinkedIn.'}).optional().or(z.literal('')),
   hourlyRate: z.preprocess(
     (val) => {
-      if (val === "" || val === null || val === undefined) return undefined; 
+      if (val === "" || val === null || val === undefined) return undefined;
       const strVal = String(val).trim();
       if (strVal === "") return undefined;
       const num = Number(strVal);
-      return isNaN(num) ? strVal : num; // Keep as string if not a valid number for Zod to catch
+      return isNaN(num) ? strVal : num;
     },
     z.number({invalid_type_error: 'La tariffa oraria deve essere un numero valido.'}).positive({ message: 'La tariffa oraria deve essere un numero positivo.' }).optional()
   ),
@@ -104,26 +104,26 @@ export default function ProfessionalProfilePage() {
       }
     }
   }, [userProfile, form]);
-  
+
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
       if (!file.type.startsWith('image/')) {
           toast({ title: "Formato File Non Valido", description: "Seleziona un file immagine (es. JPG, PNG).", variant: "destructive"});
-          event.target.value = ''; 
+          event.target.value = '';
           return;
       }
       if (file.size > 2 * 1024 * 1024) { // 2MB limit
           toast({ title: "File Troppo Grande", description: "L'immagine non deve superare i 2MB.", variant: "destructive"});
-          event.target.value = ''; 
+          event.target.value = '';
           return;
       }
       setProfileImageFile(file);
       setImagePreview(URL.createObjectURL(file));
     } else {
       setProfileImageFile(null);
-      setImagePreview(userProfile?.photoURL || null); 
+      setImagePreview(userProfile?.photoURL || null);
     }
   };
 
@@ -132,11 +132,11 @@ export default function ProfessionalProfilePage() {
       toast({ title: "Errore", description: "Utente non autenticato.", variant: "destructive" });
       return;
     }
-    
-    setIsUploading(true); 
-    setUploadProgress(null);
 
-    let photoURLToUpdate = userProfile.photoURL || ''; 
+    setIsUploading(true);
+    setUploadProgress(0); // Initialize progress to 0
+
+    let photoURLToUpdate = userProfile.photoURL || '';
 
     if (profileImageFile && storage) {
       const filePath = `profileImages/${user.uid}/${Date.now()}_${profileImageFile.name}`;
@@ -149,57 +149,88 @@ export default function ProfessionalProfilePage() {
             'state_changed',
             (snapshot) => {
               const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              console.log('Upload is ' + progress + '% done. State: ' + snapshot.state);
               setUploadProgress(progress);
+              switch (snapshot.state) {
+                case 'paused':
+                  console.log('Upload is paused');
+                  break;
+                case 'running':
+                  console.log('Upload is running');
+                  break;
+              }
             },
-            (error) => {
-              // Firebase Storage errors (like permission denied) will be caught here.
-              // Check browser console for detailed error codes from Firebase.
+            (error: any) => {
               console.error('Upload failed:', error);
-              toast({ title: "Errore Caricamento Immagine", description: `Dettaglio: ${error.message}. Controlla la console per maggiori informazioni.`, variant: "destructive" });
+              console.error('Upload failed with error code:', error.code, 'Message:', error.message, 'Full error object:', error);
+              let userFriendlyMessage = "Errore durante il caricamento dell'immagine.";
+              switch (error.code) {
+                case 'storage/unauthorized':
+                  userFriendlyMessage = "Non hai i permessi per caricare questo file. Controlla le regole di Firebase Storage.";
+                  break;
+                case 'storage/canceled':
+                  userFriendlyMessage = "Caricamento annullato.";
+                  break;
+                case 'storage/unknown':
+                  userFriendlyMessage = "Errore sconosciuto durante il caricamento. Riprova o controlla la console per dettagli.";
+                  break;
+                default:
+                   userFriendlyMessage = `Errore: ${error.message}`;
+              }
+              toast({ title: "Errore Caricamento Immagine", description: userFriendlyMessage, variant: "destructive" });
               setUploadProgress(null);
-              reject(error); 
+              setIsUploading(false);
+              reject(error);
             },
             async () => {
               try {
                 photoURLToUpdate = await getDownloadURL(uploadTask.snapshot.ref);
-                resolve(); 
-              } catch (getUrlError) {
+                console.log('File available at', photoURLToUpdate);
+                resolve();
+              } catch (getUrlError: any) {
                  console.error('Failed to get download URL', getUrlError);
                  toast({ title: "Errore URL Immagine", description: (getUrlError as Error).message, variant: "destructive" });
-                 reject(getUrlError); 
+                 setIsUploading(false);
+                 reject(getUrlError);
               }
             }
           );
         });
       } catch (uploadError) {
-          setIsUploading(false); 
-          return; 
+          // Error is handled in the uploadTask's error callback, this catch might be redundant for upload-specific errors
+          // but can catch other synchronous errors in the try block.
+          console.error('Outer catch for upload process:', uploadError);
+          if (isUploading) setIsUploading(false); // Ensure uploading state is reset
+          if (uploadProgress === 0) setUploadProgress(null); // Clear progress if it never started
+          return;
       }
     }
 
     const updatedDisplayName = `${data.firstName || userProfile.firstName || ''} ${data.lastName || userProfile.lastName || ''}`.trim();
-    
+
     const dataToUpdate : Partial<ProfessionalProfile> = {
       ...data,
-      displayName: updatedDisplayName || userProfile.displayName, // Ensure display name isn't accidentally cleared
+      displayName: updatedDisplayName || userProfile.displayName,
       photoURL: photoURLToUpdate,
       hourlyRate: data.hourlyRate === undefined || data.hourlyRate === null || String(data.hourlyRate).trim() === '' ? undefined : Number(data.hourlyRate),
     };
 
     try {
       await updateUserProfile(user.uid, dataToUpdate);
-      setProfileImageFile(null); 
+      setProfileImageFile(null); // Clear the selected file after successful update
+      // Toast for profile update is handled by updateUserProfile
     } catch (error) {
+      // Toast for profile update error is handled by updateUserProfile
       console.error('Profile update failed on page:', error);
     } finally {
       setIsUploading(false);
-      setUploadProgress(null);
+      setUploadProgress(null); // Reset progress after submission attempt (success or fail)
     }
   };
-  
+
 
   const getInitials = (name: string | null | undefined) => {
-    if (!name) return 'P'; 
+    if (!name) return 'P';
     const names = name.split(' ');
     if (names.length > 1 && names[0] && names[names.length - 1]) {
       return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
@@ -239,16 +270,19 @@ export default function ProfessionalProfilePage() {
                     <AvatarFallback>{getInitials(userProfile.displayName)}</AvatarFallback>
                   </Avatar>
                   <FormControl>
-                     <Input 
-                        type="file" 
-                        accept="image/jpeg, image/png, image/webp, image/gif" 
-                        onChange={handleFileChange} 
+                     <Input
+                        type="file"
+                        accept="image/jpeg, image/png, image/webp, image/gif"
+                        onChange={handleFileChange}
                         className="max-w-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
                       />
                   </FormControl>
                 </div>
                 {isUploading && uploadProgress !== null && (
-                  <Progress value={uploadProgress} className="w-full mt-2 h-2" />
+                  <div className="mt-2">
+                    <Progress value={uploadProgress} className="w-full h-2" />
+                    <p className="text-xs text-muted-foreground mt-1">Caricamento: {Math.round(uploadProgress)}%</p>
+                  </div>
                 )}
                  {!isUploading && uploadProgress === null && profileImageFile && (
                    <p className="text-xs text-green-600 mt-1">Nuova immagine selezionata. Salva per applicare.</p>
@@ -261,7 +295,7 @@ export default function ProfessionalProfilePage() {
                 <FormInput control={form.control} name="firstName" label="Nome" placeholder="Mario" />
                 <FormInput control={form.control} name="lastName" label="Cognome" placeholder="Rossi" />
               </div>
-              
+
               <FormSingleSelect
                 control={form.control}
                 name="location"
@@ -269,21 +303,21 @@ export default function ProfessionalProfilePage() {
                 options={ITALIAN_REGIONS.map(r => ({ value: r, label: r }))}
                 placeholder="Seleziona la tua regione principale"
               />
-              
+
               <FormTextarea control={form.control} name="bio" label="Breve Bio Professionale" placeholder="Descrivi la tua esperienza, specializzazioni e obiettivi..." rows={5} />
-              
-              <FormMultiSelect 
-                control={form.control} 
-                name="bimSkills" 
-                label="Competenze BIM" 
-                options={BIM_SKILLS_OPTIONS} 
+
+              <FormMultiSelect
+                control={form.control}
+                name="bimSkills"
+                label="Competenze BIM"
+                options={BIM_SKILLS_OPTIONS}
                 placeholder="Seleziona le tue competenze BIM principali"
               />
 
-              <FormMultiSelect 
-                control={form.control} 
-                name="softwareProficiency" 
-                label="Software BIM Utilizzati" 
+              <FormMultiSelect
+                control={form.control}
+                name="softwareProficiency"
+                label="Software BIM Utilizzati"
                 options={SOFTWARE_PROFICIENCY_OPTIONS}
                 placeholder="Indica i software che conosci"
               />
@@ -311,20 +345,22 @@ export default function ProfessionalProfilePage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormInput control={form.control} name="linkedInProfile" label="Profilo LinkedIn (Opzionale)" placeholder="https://linkedin.com/in/tuoprofilo" />
-                <FormInput 
-                    control={form.control} 
-                    name="hourlyRate" 
-                    label="Tariffa Oraria Indicativa (€) (Opzionale)" 
-                    type="number" 
-                    placeholder="Es. 50" 
-                    value={form.watch('hourlyRate') ?? ''} // Ensure controlled component behavior
-                    onChange={(e) => {
-                        const value = e.target.value;
-                        form.setValue('hourlyRate', value === '' ? undefined : Number(value), { shouldValidate: true });
-                    }}
-                 />
+                 <FormItem>
+                  <FormLabel>Tariffa Oraria Indicativa (€) (Opzionale)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="Es. 50"
+                      {...form.register("hourlyRate", {
+                          setValueAs: (value) => value === "" ? undefined : Number(value),
+                       })}
+                      defaultValue={form.getValues('hourlyRate') ?? ''}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               </div>
-              
+
               <Button type="submit" className="w-full md:w-auto" disabled={authLoading || form.formState.isSubmitting || isUploading}>
                 <Save className="mr-2 h-4 w-4" />
                 {isUploading ? `Caricamento... ${uploadProgress !== null ? Math.round(uploadProgress) + '%' : ''}` : (form.formState.isSubmitting ? 'Salvataggio in corso...' : 'Salva Modifiche')}
