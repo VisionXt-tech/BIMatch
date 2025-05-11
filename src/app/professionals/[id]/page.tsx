@@ -11,9 +11,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, MapPin, Briefcase, Laptop, Users, DollarSign, Linkedin, ExternalLink, FileText, Settings, CalendarDays, CheckCircle, UserCircle2 } from 'lucide-react';
-import { BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, AVAILABILITY_OPTIONS, EXPERIENCE_LEVEL_OPTIONS, ITALIAN_REGIONS, ROUTES } from '@/constants';
+import { ArrowLeft, MapPin, Briefcase, Laptop, DollarSign, Linkedin, ExternalLink, FileText, Settings, CalendarDays, UserCircle2, WifiOff } from 'lucide-react';
+import { BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, AVAILABILITY_OPTIONS, EXPERIENCE_LEVEL_OPTIONS, ROUTES } from '@/constants';
 import Image from 'next/image';
+
+// Removed generateMetadata function as it cannot be exported from a 'use client' component.
+// If server-generated metadata is needed for this dynamic route, it requires a different setup.
 
 const getInitials = (name: string | null | undefined): string => {
   if (!name) return 'P';
@@ -36,7 +39,7 @@ export default function ProfessionalProfileViewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const professionalId = params?.id as string;
+  const professionalId = typeof params?.id === 'string' ? params.id : null;
 
   useEffect(() => {
     if (professionalId) {
@@ -48,14 +51,29 @@ export default function ProfessionalProfileViewPage() {
           const userDocSnap = await getDoc(userDocRef);
 
           if (userDocSnap.exists() && userDocSnap.data()?.role === 'professional') {
-            setProfessional(userDocSnap.data() as ProfessionalProfile);
+            const profileData = userDocSnap.data() as ProfessionalProfile;
+            setProfessional(profileData);
+            // Dynamically set document title (client-side)
+            if (profileData.displayName) {
+              document.title = `${profileData.displayName} - Profilo BIMatch`;
+            } else {
+              document.title = `Profilo Professionista - BIMatch`;
+            }
           } else {
             setError('Profilo non trovato o non valido.');
             setProfessional(null);
+            document.title = 'Profilo Non Trovato - BIMatch';
           }
         } catch (e: any) {
           console.error("Error fetching professional profile:", e);
-          setError(e.message || 'Errore nel caricamento del profilo.');
+          let errorMessage = 'Errore nel caricamento del profilo.';
+          if (typeof e.message === 'string' && (e.message.includes('offline') || e.message.includes('Failed to get document because the client is offline'))) {
+            errorMessage = 'Impossibile caricare il profilo. Controlla la tua connessione internet e riprova.';
+          } else if (typeof e.message === 'string') {
+            errorMessage = e.message;
+          }
+          setError(errorMessage);
+           document.title = 'Errore Profilo - BIMatch';
         } finally {
           setLoading(false);
         }
@@ -64,6 +82,7 @@ export default function ProfessionalProfileViewPage() {
     } else {
       setLoading(false);
       setError("ID del professionista non specificato.");
+      document.title = 'Errore ID Profilo - BIMatch';
     }
   }, [professionalId, db]);
 
@@ -81,8 +100,10 @@ export default function ProfessionalProfileViewPage() {
 
   if (error) {
     return (
-      <div className="text-center py-10">
-        <p className="text-destructive text-lg">{error}</p>
+      <div className="text-center py-10 flex flex-col items-center space-y-4 bg-destructive/10 p-8 rounded-lg">
+        <WifiOff className="h-16 w-16 text-destructive" />
+        <p className="text-destructive text-xl font-semibold">Errore di Caricamento</p>
+        <p className="text-destructive/80 text-md max-w-md">{error}</p>
         <Button onClick={() => router.push(ROUTES.PROFESSIONALS_MARKETPLACE)} className="mt-4">
           <ArrowLeft className="mr-2 h-4 w-4" /> Torna al Marketplace
         </Button>
@@ -106,28 +127,28 @@ export default function ProfessionalProfileViewPage() {
 
   return (
     <div className="container mx-auto px-2 py-8 md:px-4">
-      <Button variant="outline" onClick={() => router.back()} className="mb-6">
-        <ArrowLeft className="mr-2 h-4 w-4" /> Torna Indietro
+      <Button variant="outline" onClick={() => router.back()} className="mb-6 group">
+        <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" /> Torna Indietro
       </Button>
-      <Card className="shadow-xl overflow-hidden">
-        <div className="relative h-48 md:h-64 bg-gradient-to-br from-primary/20 via-background to-secondary/20">
+      <Card className="shadow-xl overflow-hidden border-primary/20">
+        <div className="relative h-48 md:h-64 bg-gradient-to-br from-primary/10 via-background to-secondary/10">
            <Image 
-              src={`https://picsum.photos/seed/${professional.uid}bg/1200/300`} 
+              src={professional.photoURL || `https://picsum.photos/seed/${professional.uid}bg/1200/300`} 
               alt="Copertina profilo" 
               layout="fill" 
               objectFit="cover"
-              className="opacity-50"
+              className="opacity-30"
               data-ai-hint="abstract background"
             />
-           <div className="absolute inset-0 flex items-end p-6">
-            <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-card shadow-lg">
+           <div className="absolute inset-0 flex items-end p-4 md:p-6">
+            <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-card shadow-lg ring-2 ring-primary/50">
               <AvatarImage src={professional.photoURL || `https://picsum.photos/seed/${professional.uid}/200/200`} alt={professional.displayName || 'Professionista'} data-ai-hint="profile person" />
-              <AvatarFallback className="text-4xl">{getInitials(professional.displayName)}</AvatarFallback>
+              <AvatarFallback className="text-3xl md:text-4xl bg-muted">{getInitials(professional.displayName)}</AvatarFallback>
             </Avatar>
            </div>
         </div>
         
-        <CardHeader className="pt-8 md:pt-12">
+        <CardHeader className="pt-8 md:pt-12 border-b border-border pb-6">
           <CardTitle className="text-3xl md:text-4xl font-bold text-primary">{professional.displayName}</CardTitle>
           {professional.location && (
             <CardDescription className="flex items-center text-md text-muted-foreground mt-1">
@@ -136,120 +157,115 @@ export default function ProfessionalProfileViewPage() {
           )}
         </CardHeader>
 
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 pt-2 pb-6">
-          {/* Colonna sinistra: Info principali e Bio */}
+        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 pt-6 pb-6">
           <div className="md:col-span-2 space-y-6">
             {professional.bio && (
-              <Card className="shadow-md">
-                <CardHeader><CardTitle className="text-xl flex items-center"><UserCircle2 className="mr-2 h-5 w-5 text-primary"/> Bio</CardTitle></CardHeader>
-                <CardContent><p className="text-foreground/90 whitespace-pre-line">{professional.bio}</p></CardContent>
+              <Card className="shadow-md border-border">
+                <CardHeader><CardTitle className="text-xl flex items-center text-foreground/90"><UserCircle2 className="mr-3 h-6 w-6 text-primary"/> Bio Professionale</CardTitle></CardHeader>
+                <CardContent><p className="text-foreground/80 whitespace-pre-line leading-relaxed">{professional.bio}</p></CardContent>
               </Card>
             )}
 
             {professional.bimSkills && professional.bimSkills.length > 0 && (
-              <Card className="shadow-md">
-                <CardHeader><CardTitle className="text-xl flex items-center"><Settings className="mr-2 h-5 w-5 text-primary"/> Competenze BIM</CardTitle></CardHeader>
+              <Card className="shadow-md border-border">
+                <CardHeader><CardTitle className="text-xl flex items-center text-foreground/90"><Settings className="mr-3 h-6 w-6 text-primary"/> Competenze BIM</CardTitle></CardHeader>
                 <CardContent className="flex flex-wrap gap-2">
                   {professional.bimSkills.map(skillKey => {
                     const skill = getLabelForValue(BIM_SKILLS_OPTIONS, skillKey);
-                    return skill ? <Badge key={skillKey} variant="secondary" className="text-sm py-1 px-3 bg-primary/10 text-primary border-primary/30">{skill}</Badge> : null;
+                    return skill ? <Badge key={skillKey} variant="secondary" className="text-sm py-1 px-3 bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 transition-colors">{skill}</Badge> : null;
                   })}
                 </CardContent>
               </Card>
             )}
 
             {professional.softwareProficiency && professional.softwareProficiency.length > 0 && (
-              <Card className="shadow-md">
-                <CardHeader><CardTitle className="text-xl flex items-center"><Laptop className="mr-2 h-5 w-5 text-primary"/> Software BIM Utilizzati</CardTitle></CardHeader>
+              <Card className="shadow-md border-border">
+                <CardHeader><CardTitle className="text-xl flex items-center text-foreground/90"><Laptop className="mr-3 h-6 w-6 text-primary"/> Software BIM Utilizzati</CardTitle></CardHeader>
                 <CardContent className="flex flex-wrap gap-2">
                   {professional.softwareProficiency.map(swKey => {
                     const software = getLabelForValue(SOFTWARE_PROFICIENCY_OPTIONS, swKey);
-                    return software ? <Badge key={swKey} variant="outline" className="text-sm py-1 px-3">{software}</Badge> : null;
+                    return software ? <Badge key={swKey} variant="outline" className="text-sm py-1 px-3 border-muted-foreground/50 text-muted-foreground hover:bg-muted/80 transition-colors">{software}</Badge> : null;
                   })}
                 </CardContent>
               </Card>
             )}
           </div>
 
-          {/* Colonna destra: Dettagli e Contatti */}
           <div className="space-y-6">
-            <Card className="shadow-md">
-                <CardHeader><CardTitle className="text-xl">Dettagli</CardTitle></CardHeader>
-                <CardContent className="space-y-3">
+            <Card className="shadow-md border-border">
+                <CardHeader><CardTitle className="text-xl text-foreground/90">Dettagli Chiave</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
                     {experienceLabel && (
-                        <div className="flex items-center">
-                            <Briefcase className="h-5 w-5 mr-3 text-primary"/>
+                        <div className="flex items-start">
+                            <Briefcase className="h-5 w-5 mr-3 mt-0.5 text-primary flex-shrink-0"/>
                             <div>
                                 <p className="text-xs text-muted-foreground">Livello Esperienza</p>
-                                <p className="font-medium">{experienceLabel}</p>
+                                <p className="font-medium text-foreground/90">{experienceLabel}</p>
                             </div>
                         </div>
                     )}
                     {availabilityLabel && (
-                        <div className="flex items-center">
-                            <CalendarDays className="h-5 w-5 mr-3 text-primary"/>
+                        <div className="flex items-start">
+                            <CalendarDays className="h-5 w-5 mr-3 mt-0.5 text-primary flex-shrink-0"/>
                             <div>
                                 <p className="text-xs text-muted-foreground">Disponibilità</p>
-                                <p className="font-medium">{availabilityLabel}</p>
+                                <p className="font-medium text-foreground/90">{availabilityLabel}</p>
                             </div>
                         </div>
                     )}
-                    {professional.hourlyRate && (
-                        <div className="flex items-center">
-                            <DollarSign className="h-5 w-5 mr-3 text-primary"/>
+                    {professional.hourlyRate != null && professional.hourlyRate !== '' && (
+                        <div className="flex items-start">
+                            <DollarSign className="h-5 w-5 mr-3 mt-0.5 text-primary flex-shrink-0"/>
                             <div>
                                 <p className="text-xs text-muted-foreground">Tariffa Oraria (Indicativa)</p>
-                                <p className="font-medium">€{professional.hourlyRate}</p>
+                                <p className="font-medium text-foreground/90">€ {professional.hourlyRate}</p>
                             </div>
                         </div>
                     )}
                 </CardContent>
             </Card>
             
-             <Card className="shadow-md">
-                <CardHeader><CardTitle className="text-xl">Link Esterni</CardTitle></CardHeader>
+             <Card className="shadow-md border-border">
+                <CardHeader><CardTitle className="text-xl text-foreground/90">Link Professionali</CardTitle></CardHeader>
                 <CardContent className="space-y-2">
                     {professional.portfolioUrl && (
-                        <Button variant="outline" asChild className="w-full justify-start">
-                        <Link href={professional.portfolioUrl} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="mr-2 h-4 w-4" /> Portfolio
+                        <Button variant="outline" asChild className="w-full justify-start group hover:border-primary/50 hover:bg-primary/5">
+                        <Link href={professional.portfolioUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/90">
+                            <ExternalLink className="mr-2 h-4 w-4 group-hover:text-primary transition-colors" /> Portfolio Personale
                         </Link>
                         </Button>
                     )}
                     {professional.cvUrl && (
-                        <Button variant="outline" asChild className="w-full justify-start">
-                        <Link href={professional.cvUrl} target="_blank" rel="noopener noreferrer">
-                            <FileText className="mr-2 h-4 w-4" /> Curriculum Vitae
+                        <Button variant="outline" asChild className="w-full justify-start group hover:border-primary/50 hover:bg-primary/5">
+                        <Link href={professional.cvUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/90">
+                            <FileText className="mr-2 h-4 w-4 group-hover:text-primary transition-colors" /> Curriculum Vitae
                         </Link>
                         </Button>
                     )}
                     {professional.linkedInProfile && (
-                        <Button variant="outline" asChild className="w-full justify-start">
-                        <Link href={professional.linkedInProfile} target="_blank" rel="noopener noreferrer">
-                            <Linkedin className="mr-2 h-4 w-4" /> Profilo LinkedIn
+                        <Button variant="outline" asChild className="w-full justify-start group hover:border-primary/50 hover:bg-primary/5">
+                        <Link href={professional.linkedInProfile} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/90">
+                            <Linkedin className="mr-2 h-4 w-4 group-hover:text-primary transition-colors" /> Profilo LinkedIn
                         </Link>
                         </Button>
                     )}
                      {(!professional.portfolioUrl && !professional.cvUrl && !professional.linkedInProfile) && (
-                        <p className="text-sm text-muted-foreground">Nessun link esterno fornito.</p>
+                        <p className="text-sm text-muted-foreground italic">Nessun link esterno fornito.</p>
                      )}
                 </CardContent>
             </Card>
 
-            {/* Placeholder for contact button - actual messaging to be implemented */}
-            <Button className="w-full" size="lg" disabled>
+            <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" size="lg" disabled>
               Contatta {professional.firstName || 'il Professionista'} (Prossimamente)
             </Button>
           </div>
         </CardContent>
-        <CardFooter className="border-t pt-6">
+        <CardFooter className="border-t pt-4 pb-4 bg-muted/30">
             <p className="text-xs text-muted-foreground">
-                Profilo verificato il: {professional.updatedAt && typeof professional.updatedAt.toDate === 'function' ? professional.updatedAt.toDate().toLocaleDateString('it-IT') : 'Data non disponibile'}
+                Ultimo aggiornamento profilo: {professional.updatedAt && typeof (professional.updatedAt as any).toDate === 'function' ? (professional.updatedAt as any).toDate().toLocaleDateString('it-IT', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Data non disponibile'}
             </p>
         </CardFooter>
       </Card>
     </div>
   );
 }
-
-    
