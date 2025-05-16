@@ -88,9 +88,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <SidebarHeader className={`px-4 pb-4 ${SIDEBAR_HEADER_PADDING_TOP_CLASS}`}> {/* Adjusted padding */}
           <div className="flex items-center justify-end group-data-[collapsible=icon]:justify-center w-full">
              {/* Logo component removed from here */}
-            <div className="group-data-[collapsible=icon]:hidden">
-              <SidebarTrigger />
-            </div>
+            {/* SidebarTrigger removed */}
           </div>
         </SidebarHeader>
         
@@ -143,4 +141,3 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     </SidebarProvider>
   );
 }
-
