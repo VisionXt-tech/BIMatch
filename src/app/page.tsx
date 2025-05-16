@@ -40,15 +40,21 @@ export default function HomePage() {
   }, [projectIndex]);
 
   return (
-    <div className="flex flex-col items-center justify-center text-center px-4 md:px-8 w-full">
+    <div className="flex flex-col items-center justify-center flex-grow text-center px-4 md:px-8 w-full">
       <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary mb-8 tracking-tight">
         Fai Match con{' '}
-        <span className="inline-block text-center w-96 px-3 py-1 rounded-md bg-accent/10 text-accent">
-            {currentTalentWord}
+        <span
+          key={currentTalentWord}
+          className="inline-block text-center w-[440px] px-3 py-1 rounded-md bg-accent/10 text-accent animate-fadeIn"
+        >
+          {currentTalentWord}
         </span>
         {' '}e{' '}
-        <span className="inline-block text-center w-96 px-3 py-1 rounded-md bg-accent/10 text-accent">
-            {currentProjectWord}
+        <span
+          key={currentProjectWord}
+          className="inline-block text-center w-[440px] px-3 py-1 rounded-md bg-accent/10 text-accent animate-fadeIn"
+        >
+          {currentProjectWord}
         </span>
         {' '}BIM
       </h1>
