@@ -1,14 +1,48 @@
 
+'use client';
+
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { ROUTES } from "@/constants";
 
+const talentWords = ["Talenti", "Professionisti", "Esperti", "Innovatori"];
+const projectWords = ["Progetti", "Opportunità", "Incarichi", "Sfide"];
+
 export default function HomePage() {
+  const [currentTalentWord, setCurrentTalentWord] = useState(talentWords[0]);
+  const [currentProjectWord, setCurrentProjectWord] = useState(projectWords[0]);
+  const [talentIndex, setTalentIndex] = useState(0);
+  const [projectIndex, setProjectIndex] = useState(0);
+
+  useEffect(() => {
+    const talentInterval = setInterval(() => {
+      setTalentIndex((prevIndex) => (prevIndex + 1) % talentWords.length);
+    }, 2500); // Cambia parola ogni 2.5 secondi
+
+    const projectInterval = setInterval(() => {
+      setProjectIndex((prevIndex) => (prevIndex + 1) % projectWords.length);
+    }, 2700); // Cambia parola ogni 2.7 secondi (leggermente sfalsato per un effetto più naturale)
+
+    return () => {
+      clearInterval(talentInterval);
+      clearInterval(projectInterval);
+    };
+  }, []);
+
+  useEffect(() => {
+    setCurrentTalentWord(talentWords[talentIndex]);
+  }, [talentIndex]);
+
+  useEffect(() => {
+    setCurrentProjectWord(projectWords[projectIndex]);
+  }, [projectIndex]);
+
   return (
-    <div className="flex flex-col items-center text-center px-4 md:px-8 w-full">
+    <div className="flex flex-col items-center justify-center flex-grow text-center px-4 md:px-8 w-full">
       <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary mb-8 tracking-tight">
-        Fai Match con <span className="text-accent">Talenti</span> e <span className="text-accent">Progetti</span> BIM
+        Fai Match con <span className="text-accent inline-block min-w-[200px] md:min-w-[280px] transition-all duration-500 ease-in-out">{currentTalentWord}</span> e <span className="text-accent inline-block min-w-[200px] md:min-w-[280px] transition-all duration-500 ease-in-out">{currentProjectWord}</span> BIM
       </h1>
       <p className="text-lg md:text-xl text-foreground/80 max-w-2xl mx-auto mb-12">
         La piattaforma N°1 in Italia per professionisti BIM e aziende.
