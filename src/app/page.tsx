@@ -7,8 +7,8 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { ROUTES } from "@/constants";
 
-const talentWords = ["Talenti", "Professionisti", "Esperti", "Innovatori"];
-const projectWords = ["Progetti", "Opportunità", "Incarichi", "Sfide"];
+const talentWords = ["Talenti", "Professionisti", "Esperti", "Innovatori", "Specialisti"];
+const projectWords = ["Progetti", "Opportunità", "Incarichi", "Sfide", "Collaborazioni"];
 
 export default function HomePage() {
   const [currentTalentWord, setCurrentTalentWord] = useState(talentWords[0]);
@@ -43,12 +43,12 @@ export default function HomePage() {
     <div className="flex flex-col items-center justify-center flex-grow text-center px-4 md:px-8 w-full">
       <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary mb-8 tracking-tight">
         Fai Match con{' '}
-        <span className="text-accent inline-block transition-all duration-300 ease-in-out">
-          {currentTalentWord}
+        <span className="inline-block text-center w-64 px-3 py-1 rounded-md bg-accent/10 text-accent">
+            {currentTalentWord}
         </span>
         {' '}e{' '}
-        <span className="text-accent inline-block transition-all duration-300 ease-in-out">
-          {currentProjectWord}
+        <span className="inline-block text-center w-56 px-3 py-1 rounded-md bg-accent/10 text-accent">
+            {currentProjectWord}
         </span>
         {' '}BIM
       </h1>
@@ -88,3 +88,4 @@ export default function HomePage() {
     </div>
   );
 }
+
