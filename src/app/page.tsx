@@ -6,7 +6,7 @@ import { ROUTES } from "@/constants";
 
 export default function HomePage() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-250px)] py-12 px-4 md:px-8 text-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 dark:from-gray-900 dark:via-primary-950/10 dark:to-gray-850/10 rounded-2xl shadow-lg">
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-250px)] py-12 px-4 md:px-8 text-center">
       <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-primary mb-6 tracking-tight">
         BIMatch: Connetti Talenti e Progetti BIM.
       </h1>
@@ -19,7 +19,7 @@ export default function HomePage() {
         <Button
           size="lg"
           asChild
-          className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground group text-base py-6 transform hover:scale-105 transition-transform duration-300 shadow-md"
+          className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground group text-base py-6 transform hover:scale-[1.03] transition-transform duration-300 shadow-md"
         >
           <Link href={ROUTES.REGISTER_PROFESSIONAL}>
             Sei un Professionista?
@@ -30,7 +30,7 @@ export default function HomePage() {
         <Button
           size="lg"
           asChild
-          className="w-full sm:w-auto bg-background text-primary border-2 border-primary hover:bg-primary/5 group text-base py-6 transform hover:scale-105 transition-transform duration-300 shadow-md"
+          className="w-full sm:w-auto bg-background text-primary border-2 border-primary hover:bg-primary/5 group text-base py-6 transform hover:scale-[1.03] transition-transform duration-300 shadow-md"
         >
           <Link href={ROUTES.REGISTER_COMPANY}>
             Sei un'Azienda?
