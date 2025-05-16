@@ -7,7 +7,7 @@ export default function HomePage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] py-20 md:py-28 px-4 text-center">
       <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary mb-6 tracking-tight">
-        BIMatch: Connetti Talenti e Progetti BIM.
+        Fai Match con Talenti e Progetti BIM
       </h1>
       <p className="text-lg md:text-xl text-foreground/80 max-w-2xl mx-auto mb-12">
         La piattaforma N°1 in Italia per professionisti BIM e aziende.
