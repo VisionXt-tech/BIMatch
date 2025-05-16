@@ -13,8 +13,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 210 10% 23%;
 
-    --primary: 217 70% 45%; /* Blu profondo sofisticato */
-    --primary-foreground: 0 0% 98%; /* Testo bianco/molto chiaro su primario */
+    --primary: 0 0% 4%; /* Nero (Grigio Molto Scuro) */
+    --primary-foreground: 0 0% 98%; /* Testo quasi bianco su primario */
 
     --secondary: 210 20% 92%; /* Grigio freddo chiaro per elementi secondari */
     --secondary-foreground: 217 30% 40%; /* Grigio freddo scuro per testo su secondario */
@@ -22,7 +22,6 @@
     --muted: 210 20% 95%; /* Grigio freddo molto chiaro per testo/elementi muted */
     --muted-foreground: 210 10% 45%; /* Grigio freddo medio per testo muted */
 
-    /* Nuovo Accento: Teal scuro, come da PRD originale */
     --accent: 180 100% 25.1%; /* Teal #008080 */
     --accent-foreground: 0 0% 98%; /* Testo bianco/molto chiaro su accento teal scuro */
 
@@ -31,9 +30,9 @@
 
     --border: 210 20% 88%; /* Grigio freddo chiaro per bordi */
     --input: 210 20% 88%; /* Grigio freddo chiaro per bordi input */
-    --ring: 217 70% 55%; /* Blu leggermente più chiaro per focus rings */
+    --ring: 210 10% 40%; /* Grigio scuro per focus-visible rings su elementi primari neri */
 
-    --chart-1: 217 60% 55%;
+    --chart-1: 0 0% 25%; /* Grigio scuro per grafici (precedentemente basato sul primario blu) */
     --chart-2: 180 70% 45%;  /* Teal per grafici, al posto dell'oro */
     --chart-3: 190 40% 50%;
     --chart-4: 210 30% 70%;
@@ -44,12 +43,12 @@
     /* Colori Sidebar aggiornati */
     --sidebar-background: 0 0% 99%;
     --sidebar-foreground: 210 10% 23%;
-    --sidebar-primary: 217 70% 45%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 180 100% 25.1%; /* Teal scuro per hover/active nella sidebar */
-    --sidebar-accent-foreground: 0 0% 98%; /* Testo chiaro su accento sidebar */
+    --sidebar-primary: 0 0% 4%; /* Nero (Grigio Molto Scuro) per elementi primari sidebar */
+    --sidebar-primary-foreground: 0 0% 98%; /* Testo chiaro su primario sidebar */
+    --sidebar-accent: 180 100% 25.1%; /* Teal scuro per hover/active nella sidebar (invariato) */
+    --sidebar-accent-foreground: 0 0% 98%; /* Testo chiaro su accento sidebar (invariato) */
     --sidebar-border: 210 20% 88%;
-    --sidebar-ring: 180 100% 30%; /* Ring sidebar teal più chiaro */
+    --sidebar-ring: 210 10% 40%; /* Ring sidebar abbinato al ring principale */
   }
 
   .dark {
@@ -62,8 +61,8 @@
     --popover: 210 15% 16%;
     --popover-foreground: 0 0% 96.1%;
 
-    --primary: 217 70% 55%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 0 0% 10%; /* Nero/Grigio molto scuro (leggermente più chiaro che in light per visibilità su sfondo scuro) */
+    --primary-foreground: 0 0% 98%; /* Testo quasi bianco su primario */
 
     --secondary: 210 15% 25%;
     --secondary-foreground: 0 0% 98%;
@@ -71,26 +70,25 @@
     --muted: 210 15% 22%;
     --muted-foreground: 0 0% 63.9%;
 
-    /* Nuovo Accento Dark: Teal più vibrante/chiaro per dark mode */
-    --accent: 175 70% 40%; /* Teal vibrante per dark mode */
-    --accent-foreground: 0 0% 98%; /* Testo chiaro su accento teal */
+    --accent: 175 70% 40%; /* Teal vibrante per dark mode (invariato) */
+    --accent-foreground: 0 0% 98%; /* Testo chiaro su accento teal (invariato) */
 
     --destructive: 0 60% 50%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 210 15% 30%;
     --input: 210 15% 30%;
-    --ring: 175 70% 45%; /* Ring accent più brillante */
+    --ring: 210 10% 70%; /* Grigio più chiaro per focus-visible rings in dark mode su elementi primari scuri */
     
     /* Colori Sidebar Dark aggiornati */
     --sidebar-background: 210 15% 10%;
     --sidebar-foreground: 0 0% 96.1%;
-    --sidebar-primary: 217 70% 55%; 
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 175 70% 35%; /* Teal per hover/active sidebar dark */
+    --sidebar-primary: 0 0% 10%; /* Nero/Grigio molto scuro per elementi primari sidebar dark */
+    --sidebar-primary-foreground: 0 0% 98%; 
+    --sidebar-accent: 175 70% 35%; /* Teal per hover/active sidebar dark (invariato) */
     --sidebar-accent-foreground: 0 0% 98%; 
     --sidebar-border: 210 15% 25%;
-    --sidebar-ring: 175 70% 40%;
+    --sidebar-ring: 210 10% 70%; /* Ring sidebar abbinato al ring principale dark */
   }
 }
 
