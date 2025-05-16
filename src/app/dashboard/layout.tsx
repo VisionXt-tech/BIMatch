@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import type { ReactNode } from 'react';
@@ -36,6 +35,11 @@ const CompanyNavItems = [
   // { href: '/dashboard/company/messages', label: 'Messaggi', icon: MessageSquare },
   // { href: '/dashboard/company/settings', label: 'Impostazioni', icon: Settings },
 ];
+
+// Navbar height is approx 4rem (64px). Tailwind '16' unit is 4rem.
+// We'll use pt-20 (5rem = 80px) for SidebarHeader for extra clearance over its existing p-4.
+const SIDEBAR_HEADER_PADDING_TOP_CLASS = "pt-20"; 
+const MAIN_CONTENT_MARGIN_TOP_CLASS = "mt-16"; // 4rem = 64px
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, userProfile, loading, logout } = useAuth();
@@ -81,7 +85,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <SidebarProvider defaultOpen>
       <Sidebar collapsible="icon" className="border-r">
-        <SidebarHeader className="p-4">
+        <SidebarHeader className={`px-4 pb-4 ${SIDEBAR_HEADER_PADDING_TOP_CLASS}`}> {/* Adjusted padding */}
           <div className="flex items-center justify-between group-data-[collapsible=icon]:justify-center">
              <Logo />
             <div className="group-data-[collapsible=icon]:hidden">
@@ -131,7 +135,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
-      <SidebarInset>
+      <SidebarInset className={`${MAIN_CONTENT_MARGIN_TOP_CLASS}`}> {/* Added margin-top */}
         <div className="p-4 md:p-6 lg:p-8">
          {children}
         </div>
