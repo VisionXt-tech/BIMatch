@@ -10,7 +10,7 @@ import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, S
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { LogOut, User, Briefcase, LayoutDashboard, FolderPlus, Building, Search, MessageSquare, Settings, Users } from 'lucide-react';
 import Link from 'next/link';
-import Logo from '@/components/core/Logo';
+// import Logo from '@/components/core/Logo'; // Logo is no longer used here
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface DashboardLayoutProps {
@@ -38,7 +38,7 @@ const CompanyNavItems = [
 
 // Navbar height is approx 4rem (64px). Tailwind '16' unit is 4rem.
 // Adjust sidebar header padding to align its content with Navbar content.
-const SIDEBAR_HEADER_PADDING_TOP_CLASS = "pt-16"; 
+const SIDEBAR_HEADER_PADDING_TOP_CLASS = "pt-16";
 const MAIN_CONTENT_MARGIN_TOP_CLASS = "mt-16"; // 4rem = 64px, to clear the Navbar
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
@@ -86,8 +86,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     <SidebarProvider defaultOpen>
       <Sidebar collapsible="icon" className="border-r">
         <SidebarHeader className={`px-4 pb-4 ${SIDEBAR_HEADER_PADDING_TOP_CLASS}`}> {/* Adjusted padding */}
-          <div className="flex items-center justify-between group-data-[collapsible=icon]:justify-center">
-             <Logo />
+          <div className="flex items-center justify-end group-data-[collapsible=icon]:justify-center w-full">
+             {/* Logo component removed from here */}
             <div className="group-data-[collapsible=icon]:hidden">
               <SidebarTrigger />
             </div>
