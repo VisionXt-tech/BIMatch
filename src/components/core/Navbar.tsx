@@ -16,11 +16,15 @@ import {
 import { LogOut, User, LayoutDashboard, Briefcase, Building, Search } from 'lucide-react';
 import Logo from './Logo';
 import { ROUTES, ROLES } from '@/constants';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 const Navbar = () => {
   const { user, userProfile, loading, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const isDashboardPage = pathname.startsWith(ROUTES.DASHBOARD);
+
 
   const handleLogout = async () => {
     await logout();
@@ -39,17 +43,27 @@ const Navbar = () => {
   const dashboardLink = userProfile?.role === ROLES.PROFESSIONAL ? ROUTES.DASHBOARD_PROFESSIONAL : ROUTES.DASHBOARD_COMPANY;
 
   return (
-    <header className="sticky top-0 z-50">
-      <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
+    <header className="sticky top-0 z-50 border-b border-border bg-card">
+      <nav
+        className={cn(
+          "py-3 flex justify-between items-center",
+          isDashboardPage 
+            ? "w-full px-4 md:px-6 lg:px-8 body-sidebar-collapsed:pl-20 body-sidebar-expanded:pl-[17rem]" 
+            // pl-20 (5rem) = 3rem icon sidebar + 2rem space for safety/padding
+            // pl-[17rem] = 16rem expanded sidebar + 1rem space for safety/padding
+            : "container mx-auto px-4"
+        )}
+      >
         <Logo />
         <div className="flex items-center space-x-2 md:space-x-4">
-          {/* "Cerca Professionisti" button always visible for now, can be conditional */}
-          <Button variant="ghost" asChild>
-            <Link href={ROUTES.PROFESSIONALS_MARKETPLACE}>
-              <Search className="mr-0 md:mr-2 h-4 w-4" />
-              <span className="hidden md:inline">Cerca Professionisti</span>
-            </Link>
-          </Button>
+          {!isDashboardPage && ( // Mostra "Cerca Professionisti" solo se non siamo in una dashboard
+            <Button variant="ghost" asChild>
+              <Link href={ROUTES.PROFESSIONALS_MARKETPLACE}>
+                <Search className="mr-0 md:mr-2 h-4 w-4" />
+                <span className="hidden md:inline">Cerca Professionisti</span>
+              </Link>
+            </Button>
+          )}
 
           {loading ? (
             <div className="h-10 w-40 animate-pulse bg-muted rounded-md"></div>
@@ -123,3 +137,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+
