@@ -3,9 +3,9 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { ROUTES } from "@/constants";
+import { ArrowRight } from 'lucide-react';
 
 const talentWords = ["Talenti", "Professionisti", "Esperti", "Innovatori", "Specialisti"];
 const projectWords = ["Progetti", "Opportunità", "Incarichi", "Sfide", "Collaborazioni"];
@@ -40,13 +40,13 @@ export default function HomePage() {
   }, [projectIndex]);
 
   return (
-    <div className="flex flex-col items-center justify-center flex-grow text-center px-4 md:px-8 w-full">
-      <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary mb-8 tracking-tight">
+    <div className="flex flex-col items-center justify-center flex-grow text-center w-full">
+      <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-primary mb-6 tracking-tight">
         Fai Match con{' '}
         <Button
           key={currentTalentWord}
           variant="ghost"
-          className="inline-block align-baseline text-center w-[440px] h-auto px-3 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 hover:text-accent animate-fadeIn text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight"
+          className="inline-block align-baseline text-center w-48 sm:w-52 md:w-56 lg:w-72 h-auto px-3 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 hover:text-accent animate-fadeIn text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight"
         >
           {currentTalentWord}
         </Button>
@@ -54,18 +54,18 @@ export default function HomePage() {
         <Button
           key={currentProjectWord}
           variant="ghost"
-          className="inline-block align-baseline text-center w-[440px] h-auto px-3 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 hover:text-accent animate-fadeIn text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight"
+          className="inline-block align-baseline text-center w-48 sm:w-52 md:w-56 lg:w-72 h-auto px-3 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 hover:text-accent animate-fadeIn text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight"
         >
           {currentProjectWord}
         </Button>
-        {' '}BIM
+        {' '}BIM.
       </h1>
-      <p className="text-lg md:text-xl text-foreground/80 max-w-2xl mx-auto mb-12">
+      <p className="text-base md:text-lg text-foreground/80 max-w-xl mx-auto mb-10">
         La piattaforma N°1 in Italia per professionisti BIM e aziende.
         Trova opportunità o i migliori talenti.
       </p>
 
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6 w-full max-w-md mb-12">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6 w-full max-w-md mb-10">
         <Button
           size="lg"
           asChild
@@ -90,7 +90,7 @@ export default function HomePage() {
         </Button>
       </div>
 
-      <p className="text-base text-foreground/60 max-w-xl mx-auto">
+      <p className="text-sm text-foreground/60 max-w-lg mx-auto">
         Entra in BIMatch: dove le competenze incontrano le opportunità.
       </p>
     </div>
