@@ -23,7 +23,7 @@ export default function HomePage() {
 
     const projectInterval = setInterval(() => {
       setProjectIndex((prevIndex) => (prevIndex + 1) % projectWords.length);
-    }, 2700); // Slightly different interval for a more dynamic feel
+    }, 2700);
 
     return () => {
       clearInterval(talentInterval);
@@ -43,19 +43,21 @@ export default function HomePage() {
     <div className="flex flex-col items-center justify-center flex-grow text-center px-4 md:px-8 w-full">
       <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary mb-8 tracking-tight">
         Fai Match con{' '}
-        <span
+        <Button
           key={currentTalentWord}
-          className="inline-block text-center w-[440px] px-3 py-1 rounded-md bg-accent/10 text-accent animate-fadeIn"
+          variant="ghost"
+          className="inline-block align-baseline text-center w-[440px] h-auto px-3 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 hover:text-accent animate-fadeIn text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight"
         >
           {currentTalentWord}
-        </span>
+        </Button>
         {' '}e{' '}
-        <span
+        <Button
           key={currentProjectWord}
-          className="inline-block text-center w-[440px] px-3 py-1 rounded-md bg-accent/10 text-accent animate-fadeIn"
+          variant="ghost"
+          className="inline-block align-baseline text-center w-[440px] h-auto px-3 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 hover:text-accent animate-fadeIn text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight"
         >
           {currentProjectWord}
-        </span>
+        </Button>
         {' '}BIM
       </h1>
       <p className="text-lg md:text-xl text-foreground/80 max-w-2xl mx-auto mb-12">
