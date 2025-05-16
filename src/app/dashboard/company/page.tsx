@@ -111,9 +111,7 @@ export default function CompanyDashboardPage() {
               <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 <Link href={ROUTES.DASHBOARD_COMPANY_POST_PROJECT}> <FolderPlus className="mr-2 h-4 w-4" /> Pubblica Progetto</Link>
               </Button>
-              <Button variant="outline" asChild>
-                <Link href={ROUTES.PROFESSIONALS_MARKETPLACE}> <Search className="mr-2 h-4 w-4" /> Cerca Professionisti</Link>
-              </Button>
+              {/* Removed redundant "Cerca Professionisti" button as it's in the sidebar */}
             </div>
           </div>
           <div className="relative h-64 rounded-lg overflow-hidden">

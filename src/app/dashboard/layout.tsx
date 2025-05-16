@@ -37,9 +37,9 @@ const CompanyNavItems = [
 ];
 
 // Navbar height is approx 4rem (64px). Tailwind '16' unit is 4rem.
-// We'll use pt-20 (5rem = 80px) for SidebarHeader for extra clearance over its existing p-4.
-const SIDEBAR_HEADER_PADDING_TOP_CLASS = "pt-20"; 
-const MAIN_CONTENT_MARGIN_TOP_CLASS = "mt-16"; // 4rem = 64px
+// Adjust sidebar header padding to align its content with Navbar content.
+const SIDEBAR_HEADER_PADDING_TOP_CLASS = "pt-3"; 
+const MAIN_CONTENT_MARGIN_TOP_CLASS = "mt-16"; // 4rem = 64px, to clear the Navbar
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, userProfile, loading, logout } = useAuth();
