@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -112,7 +113,7 @@ export default function ProfessionalDashboardPage() {
           </div>
           <div className="relative h-64 rounded-lg overflow-hidden">
             <Image 
-              src="https://picsum.photos/500/300?random=2" 
+              src="https://images.unsplash.com/photo-1612888262725-6b300edf916c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHwzRCUyME1vZGVsaW5nfGVufDB8fHx8MTc0NzQxMTMyOXww&ixlib=rb-4.1.0&q=80&w=1080" 
               alt="BIM professional working" 
               layout="fill" 
               objectFit="cover"
