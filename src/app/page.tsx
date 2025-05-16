@@ -39,7 +39,7 @@ export default function HomePage() {
             className="inline-block align-baseline text-center
                        w-48 sm:w-52 md:w-60 lg:w-72
                        h-auto 
-                       px-3 py-0 
+                       px-3 py-2 
                        text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight
                        border border-primary rounded-lg 
                        relative
