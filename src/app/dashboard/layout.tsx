@@ -38,7 +38,7 @@ const CompanyNavItems = [
 
 // Navbar height is approx 4rem (64px). Tailwind '16' unit is 4rem.
 // Adjust sidebar header padding to align its content with Navbar content.
-const SIDEBAR_HEADER_PADDING_TOP_CLASS = "pt-3"; 
+const SIDEBAR_HEADER_PADDING_TOP_CLASS = "pt-16"; 
 const MAIN_CONTENT_MARGIN_TOP_CLASS = "mt-16"; // 4rem = 64px, to clear the Navbar
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
@@ -136,10 +136,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset className={`${MAIN_CONTENT_MARGIN_TOP_CLASS}`}> {/* Added margin-top */}
-        <div className="p-4 md:p-6 lg:p-8">
+        <div className="px-4 md:px-6 lg:px-8 pt-0 pb-8">
          {children}
         </div>
       </SidebarInset>
     </SidebarProvider>
   );
 }
+
