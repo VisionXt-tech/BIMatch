@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +9,7 @@ import { BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, ITALIAN_REGIONS } fro
 import { Briefcase, MapPin, Percent, Search, Filter, Construction, Code2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 // Placeholder project data structure
 interface Project {
@@ -28,7 +30,7 @@ const mockProjects: Project[] = [
     id: '1',
     title: 'Modellatore BIM Architettonico Senior - Residenziale Lusso',
     companyName: 'Studio Architettura Innova',
-    companyLogo: 'https://picsum.photos/seed/companyA/40/40',
+    companyLogo: 'https://placehold.co/40x40.png',
     location: 'Milano, Lombardia',
     requiredSkills: ['modellazione-architettonica', 'bim-coordination', 'rendering-visualizzazione'],
     requiredSoftware: ['autodesk-revit', 'autodesk-navisworks', 'lumion'],
@@ -40,7 +42,7 @@ const mockProjects: Project[] = [
     id: '2',
     title: 'BIM Coordinator per Grande Opera Infrastrutturale',
     companyName: 'Ingegneria Progetti Italia S.p.A.',
-    companyLogo: 'https://picsum.photos/seed/companyB/40/40',
+    companyLogo: 'https://placehold.co/40x40.png',
     location: 'Roma, Lazio',
     requiredSkills: ['bim-coordination', 'clash-detection', 'programmazione-lavori-4d'],
     requiredSoftware: ['autodesk-navisworks', 'synchro-4d', 'trimble-connect'],
@@ -52,7 +54,7 @@ const mockProjects: Project[] = [
     id: '3',
     title: 'Specialista BIM MEP - Impianti Ospedalieri',
     companyName: 'Tech Solutions Edilizia',
-    companyLogo: 'https://picsum.photos/seed/companyC/40/40',
+    companyLogo: 'https://placehold.co/40x40.png',
     location: 'Napoli, Campania',
     requiredSkills: ['modellazione-mep', 'bim-coordination'],
     requiredSoftware: ['autodesk-revit', 'nemetschek-allplan'],
@@ -68,59 +70,62 @@ export default function AvailableProjectsPage() {
 
   return (
     <div className="space-y-8">
-      <Card className="shadow-md">
+      <Card className="shadow-lg">
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <CardTitle className="text-3xl font-bold">Progetti Disponibili</CardTitle>
               <CardDescription>Esplora le opportunità BIM che corrispondono al tuo profilo.</CardDescription>
             </div>
-            <div className="flex items-center gap-2 w-full md:w-auto">
-                <Input placeholder="Cerca per parola chiave..." className="max-w-xs" />
-                <Button variant="outline"><Filter className="mr-2 h-4 w-4" /> Filtri</Button>
-            </div>
           </div>
         </CardHeader>
         <CardContent>
-            {/* TODO: Advanced Filter Section - Collapsible */}
-             <div className="mb-6 p-4 border rounded-lg bg-muted/50">
-                <h3 className="text-lg font-semibold mb-3 flex items-center"><Filter className="mr-2 h-5 w-5 text-primary"/> Filtri Avanzati</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <Select>
-                        <SelectTrigger><SelectValue placeholder="Competenza BIM" /></SelectTrigger>
-                        <SelectContent>
-                            {BIM_SKILLS_OPTIONS.map(skill => <SelectItem key={skill.value} value={skill.value}>{skill.label}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                     <Select>
-                        <SelectTrigger><SelectValue placeholder="Software" /></SelectTrigger>
-                        <SelectContent>
-                            {SOFTWARE_PROFICIENCY_OPTIONS.map(sw => <SelectItem key={sw.value} value={sw.value}>{sw.label}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                    <Select>
-                        <SelectTrigger><SelectValue placeholder="Localizzazione" /></SelectTrigger>
-                        <SelectContent>
-                             {ITALIAN_REGIONS.map(region => <SelectItem key={region} value={region}>{region}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                    <Button className="w-full"><Search className="mr-2 h-4 w-4" /> Applica Filtri</Button>
-                </div>
-            </div>
+            <Accordion type="single" collapsible className="w-full mb-6 border rounded-lg bg-muted/50 px-4">
+              <AccordionItem value="filters" className="border-b-0">
+                <AccordionTrigger className="text-lg font-semibold hover:no-underline py-4">
+                  <div className="flex items-center">
+                    <Filter className="mr-2 h-5 w-5 text-primary"/> Filtri Avanzati
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pb-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                      <Select>
+                          <SelectTrigger><SelectValue placeholder="Competenza BIM" /></SelectTrigger>
+                          <SelectContent>
+                              {BIM_SKILLS_OPTIONS.map(skill => <SelectItem key={skill.value} value={skill.value}>{skill.label}</SelectItem>)}
+                          </SelectContent>
+                      </Select>
+                      <Select>
+                          <SelectTrigger><SelectValue placeholder="Software" /></SelectTrigger>
+                          <SelectContent>
+                              {SOFTWARE_PROFICIENCY_OPTIONS.map(sw => <SelectItem key={sw.value} value={sw.value}>{sw.label}</SelectItem>)}
+                          </SelectContent>
+                      </Select>
+                      <Select>
+                          <SelectTrigger><SelectValue placeholder="Localizzazione" /></SelectTrigger>
+                          <SelectContent>
+                              {ITALIAN_REGIONS.map(region => <SelectItem key={region} value={region}>{region}</SelectItem>)}
+                          </SelectContent>
+                      </Select>
+                      <Button className="w-full"><Search className="mr-2 h-4 w-4" /> Applica Filtri</Button>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
 
 
           {mockProjects.length > 0 ? (
             <div className="space-y-6">
               {mockProjects.map((project) => (
-                <Card key={project.id} className="hover:shadow-lg transition-shadow">
+                <Card key={project.id} className="shadow-lg hover:shadow-xl transition-shadow duration-300">
                   <CardHeader>
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between gap-2">
                         <div>
                             <CardTitle className="text-xl hover:text-primary transition-colors">
                                 <Link href={`/projects/${project.id}`}>{project.title}</Link>
                             </CardTitle>
-                            <div className="flex items-center text-sm text-muted-foreground mt-1">
-                                {project.companyLogo && <Image data-ai-hint="company logo" src={project.companyLogo} alt={`${project.companyName} logo`} width={20} height={20} className="mr-2 rounded-full" />}
+                            <div className="flex items-center text-sm text-muted-foreground mt-1.5">
+                                {project.companyLogo && <Image data-ai-hint="company logo" src={project.companyLogo} alt={`${project.companyName} logo`} width={20} height={20} className="mr-2 rounded-full border" />}
                                 <span>{project.companyName}</span>
                                 <span className="mx-2">·</span>
                                 <MapPin className="h-4 w-4 mr-1" />
@@ -128,35 +133,35 @@ export default function AvailableProjectsPage() {
                             </div>
                         </div>
                         {project.compatibility && (
-                             <div className="flex items-center text-sm font-semibold text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                                <Percent className="h-4 w-4 mr-1" /> {project.compatibility}% Compatibile
+                             <div className="flex items-center text-xs font-semibold text-green-700 bg-green-100 px-2.5 py-1 rounded-full whitespace-nowrap mt-1 sm:mt-0">
+                                <Percent className="h-3.5 w-3.5 mr-1" /> {project.compatibility}% Compatibile
                             </div>
                         )}
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-foreground/80 mb-3 line-clamp-2">{project.description}</p>
+                    <p className="text-sm text-foreground/80 mb-4 line-clamp-2">{project.description}</p>
                     <div className="mb-3">
-                        <h4 className="text-xs font-semibold text-muted-foreground mb-1">Competenze richieste:</h4>
+                        <h4 className="text-xs font-semibold text-muted-foreground mb-1.5 flex items-center"><Construction className="h-3.5 w-3.5 mr-1.5 text-primary/80"/>Competenze Richieste:</h4>
                         <div className="flex flex-wrap gap-2">
                             {project.requiredSkills.slice(0,3).map(skillKey => {
                                 const skill = BIM_SKILLS_OPTIONS.find(s => s.value === skillKey);
-                                return skill ? <span key={skillKey} className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full flex items-center"><Construction className="h-3 w-3 mr-1"/>{skill.label}</span> : null;
+                                return skill ? <span key={skillKey} className="text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full">{skill.label}</span> : null;
                             })}
-                            {project.requiredSkills.length > 3 && <span className="text-xs text-muted-foreground">+{project.requiredSkills.length - 3} altro</span>}
+                            {project.requiredSkills.length > 3 && <span className="text-xs text-muted-foreground self-center">+{project.requiredSkills.length - 3} altro</span>}
                         </div>
                     </div>
                      <div className="mb-4">
-                        <h4 className="text-xs font-semibold text-muted-foreground mb-1">Software:</h4>
+                        <h4 className="text-xs font-semibold text-muted-foreground mb-1.5 flex items-center"><Code2 className="h-3.5 w-3.5 mr-1.5 text-primary/80"/>Software Richiesti:</h4>
                         <div className="flex flex-wrap gap-2">
                             {project.requiredSoftware.slice(0,3).map(swKey => {
                                 const software = SOFTWARE_PROFICIENCY_OPTIONS.find(s => s.value === swKey);
-                                return software ? <span key={swKey} className="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full flex items-center"><Code2 className="h-3 w-3 mr-1"/>{software.label}</span> : null;
+                                return software ? <span key={swKey} className="text-xs bg-secondary text-secondary-foreground px-2.5 py-1 rounded-full">{software.label}</span> : null;
                             })}
-                             {project.requiredSoftware.length > 3 && <span className="text-xs text-muted-foreground">+{project.requiredSoftware.length - 3} altro</span>}
+                             {project.requiredSoftware.length > 3 && <span className="text-xs text-muted-foreground self-center">+{project.requiredSoftware.length - 3} altro</span>}
                         </div>
                     </div>
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center pt-3 border-t border-border">
                         <p className="text-xs text-muted-foreground">Pubblicato: {project.postedDate}</p>
                         <Button size="sm" asChild>
                             <Link href={`/projects/${project.id}`}>Dettagli e Candidatura</Link>
@@ -168,7 +173,7 @@ export default function AvailableProjectsPage() {
               {/* TODO: Pagination */}
             </div>
           ) : (
-            <div className="text-center py-10">
+            <div className="text-center py-16 border-2 border-dashed border-border rounded-lg">
               <Briefcase className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <p className="text-lg font-semibold">Nessun progetto trovato.</p>
               <p className="text-muted-foreground">Prova a modificare i filtri o controlla più tardi.</p>

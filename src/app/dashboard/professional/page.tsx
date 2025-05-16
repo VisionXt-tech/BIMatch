@@ -26,16 +26,16 @@ export default function ProfessionalDashboardPage() {
 
   return (
     <div className="space-y-8">
-      <Card className="bg-gradient-to-r from-primary/10 via-background to-primary/10 shadow-md">
+      <Card className="bg-gradient-to-r from-primary/10 via-background to-secondary/10 shadow-md">
         <CardHeader>
           <CardTitle className="text-3xl font-bold text-primary">Ciao, {userProfile.firstName || userProfile.displayName}!</CardTitle>
           <CardDescription className="text-lg">Benvenuto nella tua dashboard BIMatch. Qui puoi gestire il tuo profilo e trovare nuove opportunità.</CardDescription>
         </CardHeader>
         {!isProfileComplete && (
           <CardContent>
-             <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md" role="alert">
+             <div className="bg-secondary border-l-4 border-primary text-secondary-foreground p-4 rounded-md" role="alert">
                 <p className="font-bold">Completa il tuo profilo!</p>
-                <p>Un profilo completo aumenta le tue possibilità di trovare il progetto giusto. <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROFILE} className="font-semibold underline hover:text-yellow-800">Aggiorna ora</Link>.</p>
+                <p>Un profilo completo aumenta le tue possibilità di trovare il progetto giusto. <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROFILE} className="font-semibold underline hover:text-primary">Aggiorna ora</Link>.</p>
             </div>
           </CardContent>
         )}

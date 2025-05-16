@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -54,10 +55,10 @@ const mockCompanyProjects: CompanyProject[] = [
 
 const getStatusBadgeVariant = (status: CompanyProject['status']) => {
   switch (status) {
-    case 'attivo': return 'default'; // Greenish if customized
-    case 'in_revisione': return 'secondary'; // Bluish/Yellowish
-    case 'completato': return 'outline'; // Grayish
-    case 'chiuso': return 'destructive'; // Reddish
+    case 'attivo': return 'default'; 
+    case 'in_revisione': return 'secondary'; 
+    case 'completato': return 'outline'; 
+    case 'chiuso': return 'destructive';
     default: return 'default';
   }
 };
@@ -77,7 +78,7 @@ export default function CompanyProjectsPage() {
 
   return (
     <div className="space-y-8">
-      <Card className="shadow-md">
+      <Card className="shadow-lg">
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
@@ -93,7 +94,7 @@ export default function CompanyProjectsPage() {
           {mockCompanyProjects.length > 0 ? (
             <div className="space-y-6">
               {mockCompanyProjects.map((project) => (
-                <Card key={project.id} className="hover:shadow-lg transition-shadow">
+                <Card key={project.id} className="shadow-lg hover:shadow-xl transition-shadow duration-300">
                   <CardHeader>
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                         <div>
@@ -104,7 +105,7 @@ export default function CompanyProjectsPage() {
                                 Pubblicato: {project.postedDate} - Località: {project.location}
                             </div>
                         </div>
-                        <Badge variant={getStatusBadgeVariant(project.status)} className="mt-2 sm:mt-0">
+                        <Badge variant={getStatusBadgeVariant(project.status)} className="mt-2 sm:mt-0 text-xs">
                             {getStatusBadgeText(project.status)}
                         </Badge>
                     </div>
@@ -121,12 +122,12 @@ export default function CompanyProjectsPage() {
                         </Link>
                       </Button>
                        <Button size="sm" variant="outline" asChild>
-                        <Link href={`${ROUTES.DASHBOARD_COMPANY_PROJECTS}/${project.id}/edit`}> {/* Placeholder edit route */}
+                        <Link href={`${ROUTES.DASHBOARD_COMPANY_PROJECTS}/${project.id}/edit`}> 
                           <Edit3 className="mr-2 h-4 w-4" /> Modifica
                         </Link>
                       </Button>
                       <Button size="sm" variant="outline" asChild>
-                        <Link href={`${ROUTES.DASHBOARD_COMPANY_CANDIDATES}?projectId=${project.id}`}> {/* Placeholder candidates route */}
+                        <Link href={`${ROUTES.DASHBOARD_COMPANY_CANDIDATES}?projectId=${project.id}`}> 
                           <Users className="mr-2 h-4 w-4" /> Vedi Candidati ({project.candidatesCount})
                         </Link>
                       </Button>
@@ -140,7 +141,7 @@ export default function CompanyProjectsPage() {
               {/* TODO: Pagination */}
             </div>
           ) : (
-            <div className="text-center py-20 border-2 border-dashed rounded-lg">
+            <div className="text-center py-16 border-2 border-dashed border-border rounded-lg">
               <Briefcase className="mx-auto h-16 w-16 text-muted-foreground mb-6" />
               <p className="text-xl font-semibold mb-2">Non hai ancora pubblicato nessun progetto.</p>
               <p className="text-muted-foreground mb-6">Inizia ora per trovare i talenti BIM di cui hai bisogno.</p>

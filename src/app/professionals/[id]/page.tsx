@@ -6,14 +6,14 @@ import { useParams, useRouter } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import type { ProfessionalProfile } from '@/types/auth';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft, MapPin, Briefcase, Laptop, DollarSign, Linkedin, ExternalLink, FileText, Settings, CalendarDays, UserCircle2, WifiOff } from 'lucide-react';
 import { BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, AVAILABILITY_OPTIONS, EXPERIENCE_LEVEL_OPTIONS, ROUTES } from '@/constants';
-import Image from 'next/image';
+import Image from 'next/image'; // Keep Image import for AvatarImage
 
 const getInitials = (name: string | null | undefined): string => {
   if (!name) return 'P';
@@ -27,6 +27,7 @@ const getInitials = (name: string | null | undefined): string => {
 const getLabelForValue = (options: { value: string; label: string }[], value?: string): string | undefined => {
   return options.find(opt => opt.value === value)?.label;
 };
+
 
 export default function ProfessionalProfileViewPage() {
   const params = useParams();
@@ -50,15 +51,9 @@ export default function ProfessionalProfileViewPage() {
           if (userDocSnap.exists() && userDocSnap.data()?.role === 'professional') {
             const profileData = userDocSnap.data() as ProfessionalProfile;
             setProfessional(profileData);
-            if (profileData.displayName) {
-              document.title = `${profileData.displayName} - Profilo BIMatch`;
-            } else {
-              document.title = `Profilo Professionista - BIMatch`;
-            }
           } else {
             setError('Profilo non trovato o non valido.');
             setProfessional(null);
-            document.title = 'Profilo Non Trovato - BIMatch';
           }
         } catch (e: any) {
           console.error("Error fetching professional profile:", e);
@@ -69,7 +64,6 @@ export default function ProfessionalProfileViewPage() {
             errorMessage = e.message;
           }
           setError(errorMessage);
-           document.title = 'Errore Profilo - BIMatch';
         } finally {
           setLoading(false);
         }
@@ -78,7 +72,6 @@ export default function ProfessionalProfileViewPage() {
     } else {
       setLoading(false);
       setError("ID del professionista non specificato.");
-      document.title = 'Errore ID Profilo - BIMatch';
     }
   }, [professionalId, db]);
 
@@ -126,44 +119,34 @@ export default function ProfessionalProfileViewPage() {
       <Button variant="outline" onClick={() => router.back()} className="mb-6 group">
         <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" /> Torna Indietro
       </Button>
-      <Card className="shadow-xl overflow-hidden border-primary/20">
-        <div className="relative h-48 md:h-64 bg-muted">
-           <Image 
-              src={professional.photoURL || `https://placehold.co/1200x300.png`} 
-              alt="Copertina profilo" 
-              layout="fill" 
-              objectFit="cover"
-              className="opacity-30"
-              data-ai-hint="abstract background"
-            />
-           <div className="absolute inset-0 flex items-end p-4 md:p-6">
-            <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-card shadow-lg ring-2 ring-primary/50">
+      <Card className="shadow-xl border">
+        <CardHeader className="p-6 md:p-8 border-b flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6">
+            <Avatar className="h-28 w-28 md:h-32 md:w-32 border-2 border-primary/50 shadow-md shrink-0">
               <AvatarImage src={professional.photoURL || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxOHx8YXJjaGl0ZWN0fGVufDB8fHx8MTc0NzM5OTM5OXww&ixlib=rb-4.1.0&q=80&w=1080"} alt={professional.displayName || 'Professionista'} data-ai-hint="profile person" />
               <AvatarFallback className="text-3xl md:text-4xl bg-muted">{getInitials(professional.displayName)}</AvatarFallback>
             </Avatar>
-           </div>
-        </div>
-        
-        <CardHeader className="pt-8 md:pt-12 border-b border-border pb-6">
-          <CardTitle className="text-3xl md:text-4xl font-bold text-primary">{professional.displayName}</CardTitle>
-          {professional.location && (
-            <CardDescription className="flex items-center text-md text-muted-foreground mt-1">
-              <MapPin className="h-5 w-5 mr-2 flex-shrink-0 text-primary/80" /> {professional.location}
-            </CardDescription>
-          )}
+            <div className="flex-grow">
+                <CardTitle className="text-3xl md:text-4xl font-bold text-primary">{professional.displayName}</CardTitle>
+                {professional.location && (
+                    <div className="flex items-center text-md text-muted-foreground mt-1.5">
+                    <MapPin className="h-5 w-5 mr-2 flex-shrink-0 text-primary/80" /> {professional.location}
+                    </div>
+                )}
+                 {/* Potresti aggiungere qui un tagline/ruolo breve se disponibile */}
+            </div>
         </CardHeader>
 
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 pt-6 pb-6">
           <div className="md:col-span-2 space-y-6">
             {professional.bio && (
-              <Card className="shadow-sm border-border">
+              <Card className="shadow-sm border bg-background">
                 <CardHeader><CardTitle className="text-xl flex items-center text-foreground/90"><UserCircle2 className="mr-3 h-6 w-6 text-primary"/> Bio Professionale</CardTitle></CardHeader>
                 <CardContent><p className="text-foreground/80 whitespace-pre-line leading-relaxed">{professional.bio}</p></CardContent>
               </Card>
             )}
 
             {professional.bimSkills && professional.bimSkills.length > 0 && (
-              <Card className="shadow-sm border-border">
+              <Card className="shadow-sm border bg-background">
                 <CardHeader><CardTitle className="text-xl flex items-center text-foreground/90"><Settings className="mr-3 h-6 w-6 text-primary"/> Competenze BIM</CardTitle></CardHeader>
                 <CardContent className="flex flex-wrap gap-2">
                   {professional.bimSkills.map(skillKey => {
@@ -175,7 +158,7 @@ export default function ProfessionalProfileViewPage() {
             )}
 
             {professional.softwareProficiency && professional.softwareProficiency.length > 0 && (
-              <Card className="shadow-sm border-border">
+              <Card className="shadow-sm border bg-background">
                 <CardHeader><CardTitle className="text-xl flex items-center text-foreground/90"><Laptop className="mr-3 h-6 w-6 text-primary"/> Software BIM Utilizzati</CardTitle></CardHeader>
                 <CardContent className="flex flex-wrap gap-2">
                   {professional.softwareProficiency.map(swKey => {
@@ -188,7 +171,7 @@ export default function ProfessionalProfileViewPage() {
           </div>
 
           <div className="space-y-6">
-            <Card className="shadow-sm border-border">
+            <Card className="shadow-sm border bg-background">
                 <CardHeader><CardTitle className="text-xl text-foreground/90">Dettagli Chiave</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                     {experienceLabel && (
@@ -209,19 +192,19 @@ export default function ProfessionalProfileViewPage() {
                             </div>
                         </div>
                     )}
-                    {professional.hourlyRate != null && professional.hourlyRate !== '' && (
+                    {professional.hourlyRate != null && String(professional.hourlyRate).trim() !== '' && !isNaN(Number(professional.hourlyRate)) && (
                         <div className="flex items-start">
                             <DollarSign className="h-5 w-5 mr-3 mt-0.5 text-primary flex-shrink-0"/>
                             <div>
                                 <p className="text-xs text-muted-foreground">Tariffa Oraria (Indicativa)</p>
-                                <p className="font-medium text-foreground/90">€ {professional.hourlyRate}</p>
+                                <p className="font-medium text-foreground/90">€ {Number(professional.hourlyRate).toFixed(2)}</p>
                             </div>
                         </div>
                     )}
                 </CardContent>
             </Card>
             
-             <Card className="shadow-sm border-border">
+             <Card className="shadow-sm border bg-background">
                 <CardHeader><CardTitle className="text-xl text-foreground/90">Link Professionali</CardTitle></CardHeader>
                 <CardContent className="space-y-2">
                     {professional.portfolioUrl && (
@@ -246,7 +229,7 @@ export default function ProfessionalProfileViewPage() {
                         </Button>
                     )}
                      {(!professional.portfolioUrl && !professional.cvUrl && !professional.linkedInProfile) && (
-                        <p className="text-sm text-muted-foreground italic">Nessun link esterno fornito.</p>
+                        <p className="text-sm text-muted-foreground italic text-center py-2">Nessun link esterno fornito.</p>
                      )}
                 </CardContent>
             </Card>
@@ -256,7 +239,7 @@ export default function ProfessionalProfileViewPage() {
             </Button>
           </div>
         </CardContent>
-        <CardFooter className="border-t pt-4 pb-4 bg-muted/30">
+        <CardFooter className="border-t pt-4 pb-4 bg-muted/50">
             <p className="text-xs text-muted-foreground">
                 Ultimo aggiornamento profilo: {professional.updatedAt && typeof (professional.updatedAt as any).toDate === 'function' ? (professional.updatedAt as any).toDate().toLocaleDateString('it-IT', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Data non disponibile'}
             </p>
