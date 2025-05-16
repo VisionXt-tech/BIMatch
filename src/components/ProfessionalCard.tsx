@@ -30,7 +30,7 @@ const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional }) => 
     <Card className="flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader className="flex flex-row items-start gap-4 space-y-0 p-4">
         <Avatar className="h-16 w-16 border-2 border-primary/50">
-          <AvatarImage src={professional.photoURL || `https://picsum.photos/seed/${professional.id}/100/100`} alt={professional.displayName} data-ai-hint="profile person" />
+          <AvatarImage src={professional.photoURL || "https://images.unsplash.com/photo-1569317252961-e8e879ffe423?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxN3x8YXJjaGl0ZWN0fGVufDB8fHx8MTc0NzM5OTM5OXww&ixlib=rb-4.1.0&q=80&w=1080"} alt={professional.displayName} data-ai-hint="profile person" />
           <AvatarFallback>{getInitials(professional.displayName)}</AvatarFallback>
         </Avatar>
         <div className="flex-1">
