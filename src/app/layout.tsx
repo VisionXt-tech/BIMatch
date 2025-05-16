@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
-import { GeistSans } from 'geist/font/sans';
-import { GeistMono } from 'geist/font/mono';
+import { Raleway } from 'next/font/google'; // Importato Raleway
 import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { Toaster } from '@/components/ui/toaster';
@@ -8,8 +7,12 @@ import Navbar from '@/components/core/Navbar';
 import Footer from '@/components/core/Footer';
 import { FirebaseProvider } from '@/contexts/FirebaseContext';
 
-const geistSans = GeistSans;
-const geistMono = GeistMono;
+// Configurazione del font Raleway
+const raleway = Raleway({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-raleway', // Definisce una variabile CSS per Raleway
+});
 
 export const metadata: Metadata = {
   title: 'BIMatch - Connettiamo Talenti BIM e Aziende',
@@ -23,7 +26,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="it">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}>
+      {/* Applica la classe del font Raleway al body */}
+      <body className={`${raleway.variable} font-sans antialiased flex flex-col min-h-screen`}>
         <FirebaseProvider>
           <AuthProvider>
             <Navbar />
