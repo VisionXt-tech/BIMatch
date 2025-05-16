@@ -39,11 +39,11 @@ const Navbar = () => {
   const dashboardLink = userProfile?.role === ROLES.PROFESSIONAL ? ROUTES.DASHBOARD_PROFESSIONAL : ROUTES.DASHBOARD_COMPANY;
 
   return (
-    <header className="bg-card shadow-sm sticky top-0 z-50">
+    <header className="sticky top-0 z-50">
       <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
         <Logo />
         <div className="flex items-center space-x-2 md:space-x-4">
-          {/* "Cerca Professionisti" button always visible */}
+          {/* "Cerca Professionisti" button always visible for now, can be conditional */}
           <Button variant="ghost" asChild>
             <Link href={ROUTES.PROFESSIONALS_MARKETPLACE}>
               <Search className="mr-0 md:mr-2 h-4 w-4" />
