@@ -22,73 +22,75 @@
     --muted: 210 20% 95%; /* Grigio freddo molto chiaro per testo/elementi muted */
     --muted-foreground: 210 10% 45%; /* Grigio freddo medio per testo muted */
 
-    --accent: 35 80% 60%; /* Oro/Ocra elegante per accenti */
-    --accent-foreground: 210 10% 15%; /* Testo grigio scuro/nero su accento */
+    /* Nuovo Accento: Teal scuro, come da PRD originale */
+    --accent: 180 100% 25.1%; /* Teal #008080 */
+    --accent-foreground: 0 0% 98%; /* Testo bianco/molto chiaro su accento teal scuro */
 
-    --destructive: 0 70% 55%; /* Mantenuto o leggermente aggiustato se necessario */
+    --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 210 20% 88%; /* Grigio freddo chiaro per bordi */
     --input: 210 20% 88%; /* Grigio freddo chiaro per bordi input */
     --ring: 217 70% 55%; /* Blu leggermente più chiaro per focus rings */
 
-    --chart-1: 217 60% 55%; /* Blu per grafici */
-    --chart-2: 35 70% 50%;  /* Oro/Ocra per grafici */
-    --chart-3: 190 40% 50%; /* Ciano/Teal spento per grafici */
-    --chart-4: 210 30% 70%; /* Grigio-blu chiaro per grafici */
-    --chart-5: 0 0% 50%;    /* Grigio medio per grafici */
+    --chart-1: 217 60% 55%;
+    --chart-2: 180 70% 45%;  /* Teal per grafici, al posto dell'oro */
+    --chart-3: 190 40% 50%;
+    --chart-4: 210 30% 70%;
+    --chart-5: 0 0% 50%;
     
     --radius: 0.5rem;
 
     /* Colori Sidebar aggiornati */
-    --sidebar-background: 0 0% 99%; /* Quasi bianco, pulito */
-    --sidebar-foreground: 210 10% 23%; /* Testo scuro */
-    --sidebar-primary: 217 70% 45%; /* Blu primario */
-    --sidebar-primary-foreground: 0 0% 98%; /* Testo chiaro su primario sidebar */
-    --sidebar-accent: 210 20% 94%; /* Grigio chiaro per hover */
-    --sidebar-accent-foreground: 217 70% 45%; /* Testo primario su hover sidebar */
-    --sidebar-border: 210 20% 88%; /* Bordo sidebar */
-    --sidebar-ring: 217 70% 55%; /* Ring sidebar */
+    --sidebar-background: 0 0% 99%;
+    --sidebar-foreground: 210 10% 23%;
+    --sidebar-primary: 217 70% 45%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 180 100% 25.1%; /* Teal scuro per hover/active nella sidebar */
+    --sidebar-accent-foreground: 0 0% 98%; /* Testo chiaro su accento sidebar */
+    --sidebar-border: 210 20% 88%;
+    --sidebar-ring: 180 100% 30%; /* Ring sidebar teal più chiaro */
   }
 
   .dark {
-    --background: 210 15% 12%; /* Sfondo scuro profondo */
-    --foreground: 0 0% 96.1%; /* Testo chiaro */
+    --background: 210 15% 12%;
+    --foreground: 0 0% 96.1%;
 
-    --card: 210 15% 16%; /* Card leggermente più chiare dello sfondo */
+    --card: 210 15% 16%;
     --card-foreground: 0 0% 96.1%;
 
     --popover: 210 15% 16%;
     --popover-foreground: 0 0% 96.1%;
 
-    --primary: 217 70% 55%; /* Blu primario più brillante per dark mode */
+    --primary: 217 70% 55%;
     --primary-foreground: 0 0% 98%;
 
-    --secondary: 210 15% 25%; /* Secondario scuro */
+    --secondary: 210 15% 25%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 210 15% 22%; /* Muted scuro */
+    --muted: 210 15% 22%;
     --muted-foreground: 0 0% 63.9%;
 
-    --accent: 35 70% 65%; /* Oro/Ocra più brillante per dark mode */
-    --accent-foreground: 210 10% 15%;
+    /* Nuovo Accento Dark: Teal più vibrante/chiaro per dark mode */
+    --accent: 175 70% 40%; /* Teal vibrante per dark mode */
+    --accent-foreground: 0 0% 98%; /* Testo chiaro su accento teal */
 
     --destructive: 0 60% 50%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 210 15% 30%;
     --input: 210 15% 30%;
-    --ring: 217 70% 60%; /* Ring primario più brillante */
+    --ring: 175 70% 45%; /* Ring accent più brillante */
     
     /* Colori Sidebar Dark aggiornati */
-    --sidebar-background: 210 15% 10%; /* Sidebar molto scura */
+    --sidebar-background: 210 15% 10%;
     --sidebar-foreground: 0 0% 96.1%;
     --sidebar-primary: 217 70% 55%; 
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 210 15% 20%; 
-    --sidebar-accent-foreground: 217 70% 55%; 
+    --sidebar-accent: 175 70% 35%; /* Teal per hover/active sidebar dark */
+    --sidebar-accent-foreground: 0 0% 98%; 
     --sidebar-border: 210 15% 25%;
-    --sidebar-ring: 217 70% 60%;
+    --sidebar-ring: 175 70% 40%;
   }
 }
 
@@ -97,9 +99,8 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-sans; /* Applica il font sans-serif di default definito in Tailwind */
+    @apply bg-background text-foreground font-sans;
   }
-  /* Stile specifico per forzare Raleway se necessario, ma la variabile CSS dovrebbe bastare */
   .font-raleway {
     font-family: var(--font-raleway), system-ui, sans-serif;
   }

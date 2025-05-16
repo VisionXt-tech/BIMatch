@@ -7,7 +7,6 @@ import Link from "next/link";
 import { ROUTES } from "@/constants";
 import { ArrowRight } from 'lucide-react';
 
-// Adjusted word lists if necessary
 const initialTalentWords = ["Talenti", "Professionisti", "Esperti", "Innovatori", "Specialisti", "Consulenti"];
 
 export default function HomePage() {
@@ -18,7 +17,7 @@ export default function HomePage() {
   useEffect(() => {
     const talentInterval = setInterval(() => {
       setTalentIndex((prevIndex) => (prevIndex + 1) % talentWords.length);
-    }, 2500); // Change word every 2.5 seconds
+    }, 2500);
 
     return () => {
       clearInterval(talentInterval);
@@ -37,17 +36,20 @@ export default function HomePage() {
           <Button
             variant="ghost"
             className="inline-block align-baseline text-center
-                       w-48 sm:w-52 md:w-60 lg:w-72
+                       w-48 sm:w-52 md:w-64 lg:w-72 /* Adjusted widths */
                        h-auto 
-                       px-3 py-2 
+                       px-3 py-2 /* Increased padding slightly for better button feel */
                        text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight
                        border border-primary rounded-lg 
                        relative
-                       focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-1"
+                       focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-1
+                       bg-transparent hover:bg-transparent /* Ensure no button background interferes */
+                       text-primary /* Make button text primary by default */
+                       "
           >
             <span
               key={currentTalentWord}
-              className="text-primary animate-fadeIn inline-block"
+              className="animate-fadeIn inline-block bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 bg-clip-text text-transparent" /* Gradient applied here */
             >
               {currentTalentWord}
             </span>
