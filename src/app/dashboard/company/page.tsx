@@ -33,9 +33,9 @@ export default function CompanyDashboardPage() {
         </CardHeader>
          {!isProfileComplete && (
           <CardContent>
-             <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md" role="alert">
+             <div className="bg-secondary border-l-4 border-primary text-secondary-foreground p-4 rounded-md" role="alert">
                 <p className="font-bold">Completa il profilo aziendale!</p>
-                <p>Un profilo dettagliato attira i migliori professionisti. <Link href={ROUTES.DASHBOARD_COMPANY_PROFILE} className="font-semibold underline hover:text-yellow-800">Aggiorna ora</Link>.</p>
+                <p>Un profilo dettagliato attira i migliori professionisti. <Link href={ROUTES.DASHBOARD_COMPANY_PROFILE} className="font-semibold underline hover:text-primary">Aggiorna ora</Link>.</p>
             </div>
           </CardContent>
         )}
@@ -118,7 +118,7 @@ export default function CompanyDashboardPage() {
           </div>
           <div className="relative h-64 rounded-lg overflow-hidden">
             <Image 
-              src="https://picsum.photos/500/300?random=3" 
+              src="https://images.unsplash.com/photo-1744627049721-73c27008ad28?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxCSU18ZW58MHx8fHwxNzQ3NDEyNDUxfDA&ixlib=rb-4.1.0&q=80&w=1080" 
               alt="Team working on BIM project" 
               layout="fill" 
               objectFit="cover"
