@@ -8,7 +8,7 @@ export default function HomePage() {
   return (
     <div className="flex flex-col items-center text-center px-4 md:px-8 w-full">
       <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary mb-8 tracking-tight">
-        Fai Match con Talenti e Progetti BIM
+        Fai Match con <span className="text-accent">Talenti</span> e <span className="text-accent">Progetti</span> BIM
       </h1>
       <p className="text-lg md:text-xl text-foreground/80 max-w-2xl mx-auto mb-12">
         La piattaforma N°1 in Italia per professionisti BIM e aziende.
