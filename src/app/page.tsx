@@ -1,11 +1,10 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ROUTES } from "@/constants";
-import Image from 'next/image';
+// Image import is no longer needed as the background image is removed
 import { ArrowRight } from 'lucide-react';
 
 const initialTalentWords = ["Talenti", "Professionisti", "Esperti", "Innovatori", "Specialisti", "Consulenti"];
@@ -30,20 +29,8 @@ export default function HomePage() {
   }, [talentIndex, talentWords]);
 
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-[calc(100vh-120px)] w-full overflow-hidden">
-      {/* Background Image */}
-      <Image
-        src="https://images.unsplash.com/photo-1449157291145-7efd050a4d0e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxNXx8Y2l0eXxlbnwwfHx8fDE3NDc0MDgzNjl8MA&ixlib=rb-4.1.0&q=80&w=1080"
-        alt="Skyline di una metropoli moderna al tramonto"
-        layout="fill"
-        objectFit="cover"
-        quality={80}
-        priority
-        className="z-0"
-        data-ai-hint="cityscape metropolis"
-      />
-      {/* Overlay Sfumato Scuro */}
-      <div className="absolute inset-0 bg-black/40 z-10"></div>
+    <div className="relative flex flex-col items-center justify-center min-h-[calc(100vh-120px)] w-full">
+      {/* Background Image and Overlay Removed */}
 
       {/* Contenuto Card Sfocata */}
       <div className="relative z-20 flex flex-col items-start justify-center w-full max-w-xl 2xl:max-w-2xl p-6 sm:p-8 md:p-10 lg:p-12
@@ -61,14 +48,13 @@ export default function HomePage() {
                        text-2xl sm:text-3xl md:text-4xl lg:text-5xl /* Stessa dimensione del titolo */
                        bg-white/10 hover:bg-white/15 /* Sfondo leggero e statico per il pulsante */
                        rounded-lg border border-white/30 /* Bordo esplicito e più visibile */
-                       relative focus-visible:ring-accent focus-visible:ring-offset-0 focus-visible:ring-2" // Stili focus
-            aria-live="polite" // Notifica i cambi agli screen reader
+                       relative focus-visible:ring-accent focus-visible:ring-offset-0 focus-visible:ring-2"
+            aria-live="polite"
             aria-atomic="true"
           >
-            {/* Lo span interno ora gestisce il testo, il colore del testo e l'animazione del testo */}
             <span
-              key={currentTalentWord} // La key dinamica è qui per far ripartire l'animazione solo sullo span
-              className="text-accent animate-fadeIn inline-block" // Colore e animazione solo per il testo
+              key={currentTalentWord}
+              className="text-accent animate-fadeIn inline-block"
             >
               {currentTalentWord}
             </span>
