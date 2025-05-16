@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
@@ -5,8 +6,8 @@ import { ROUTES } from "@/constants";
 
 export default function HomePage() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] py-20 md:py-28 px-4 text-center">
-      <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary mb-6 tracking-tight">
+    <div className="flex flex-col items-center justify-center flex-grow text-center px-4 md:px-8">
+      <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary mb-8 tracking-tight">
         Fai Match con Talenti e Progetti BIM
       </h1>
       <p className="text-lg md:text-xl text-foreground/80 max-w-2xl mx-auto mb-12">
@@ -14,7 +15,7 @@ export default function HomePage() {
         Trova opportunità o i migliori talenti.
       </p>
 
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6 w-full max-w-md">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6 w-full max-w-md mb-12">
         <Button
           size="lg"
           asChild
@@ -39,7 +40,7 @@ export default function HomePage() {
         </Button>
       </div>
 
-      <p className="mt-20 text-base text-foreground/60 max-w-xl mx-auto">
+      <p className="text-base text-foreground/60 max-w-xl mx-auto">
         Entra in BIMatch: dove le competenze incontrano le opportunità.
       </p>
     </div>
