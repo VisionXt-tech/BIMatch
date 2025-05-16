@@ -29,7 +29,9 @@ const CompanyNavItems = [
   { href: ROUTES.PROFESSIONALS_MARKETPLACE, label: 'Cerca Professionisti', icon: Users },
 ];
 
-const NAVBAR_HEIGHT_APPROX = "4rem"; // Corrisponde a h-16 in Tailwind
+// Approximate height of the global Navbar, used for offsetting content.
+// Corresponds to h-16 in Tailwind or a similar fixed height.
+const NAVBAR_HEIGHT_CSS_VAR_VALUE = "4rem"; 
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, userProfile, loading, logout } = useAuth();
@@ -74,8 +76,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <SidebarProvider defaultOpen>
       <Sidebar collapsible="icon" className="border-r">
-        <SidebarHeader className="px-4 pb-4" style={{ paddingTop: NAVBAR_HEIGHT_APPROX }}> {/* Adjusted padding */}
-          {/* Content of SidebarHeader if any, like a logo or toggle, will now be below the global Navbar */}
+        <SidebarHeader 
+          className="px-4" 
+          style={{ paddingTop: `var(--sidebar-header-padding-top, ${NAVBAR_HEIGHT_CSS_VAR_VALUE})` }}
+        >
+          {/* Logo and SidebarTrigger were removed in previous steps and are intentionally left out */}
         </SidebarHeader>
         
         <SidebarContent>
@@ -119,8 +124,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
-      <SidebarInset style={{ marginTop: NAVBAR_HEIGHT_APPROX }}> {/* Added margin-top */}
-        <div className="px-4 md:px-6 lg:px-8 pt-0 pb-8"> {/* pt-0 to rely on SidebarInset's margin */}
+      <SidebarInset style={{ marginTop: `var(--main-content-area-margin-top, ${NAVBAR_HEIGHT_CSS_VAR_VALUE})` }}>
+        <div className="px-4 md:px-6 lg:px-8 pt-0 pb-8">
          {children}
         </div>
       </SidebarInset>
