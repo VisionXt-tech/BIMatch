@@ -23,7 +23,7 @@ export default function HomePage() {
 
     const projectInterval = setInterval(() => {
       setProjectIndex((prevIndex) => (prevIndex + 1) % projectWords.length);
-    }, 2700);
+    }, 2700); // Slightly different interval for a more dynamic feel
 
     return () => {
       clearInterval(talentInterval);
@@ -43,11 +43,11 @@ export default function HomePage() {
     <div className="flex flex-col items-center justify-center flex-grow text-center px-4 md:px-8 w-full">
       <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary mb-8 tracking-tight">
         Fai Match con{' '}
-        <span className="inline-block text-center w-64 px-3 py-1 rounded-md bg-accent/10 text-accent">
+        <span className="inline-block text-center w-80 px-3 py-1 rounded-md bg-accent/10 text-accent">
             {currentTalentWord}
         </span>
         {' '}e{' '}
-        <span className="inline-block text-center w-56 px-3 py-1 rounded-md bg-accent/10 text-accent">
+        <span className="inline-block text-center w-80 px-3 py-1 rounded-md bg-accent/10 text-accent">
             {currentProjectWord}
         </span>
         {' '}BIM
@@ -88,4 +88,3 @@ export default function HomePage() {
     </div>
   );
 }
-
