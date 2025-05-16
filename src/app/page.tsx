@@ -6,7 +6,7 @@ import { ROUTES } from "@/constants";
 
 export default function HomePage() {
   return (
-    <div className="flex flex-col items-center justify-center flex-grow text-center px-4 md:px-8">
+    <div className="flex flex-col items-center text-center px-4 md:px-8 w-full">
       <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary mb-8 tracking-tight">
         Fai Match con Talenti e Progetti BIM
       </h1>
