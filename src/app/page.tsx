@@ -8,26 +8,23 @@ import { ROUTES } from "@/constants";
 import { ArrowRight } from 'lucide-react';
 
 const talentWords = ["Talenti", "Professionisti", "Esperti", "Innovatori", "Specialisti"];
-const projectWords = ["Progetti", "Opportunità", "Incarichi", "Sfide", "Collaborazioni"];
+// Rimosso projectWords poiché "Progetti BIM" è ora statico
 
 export default function HomePage() {
   const [currentTalentWord, setCurrentTalentWord] = useState(talentWords[0]);
-  const [currentProjectWord, setCurrentProjectWord] = useState(projectWords[0]);
   const [talentIndex, setTalentIndex] = useState(0);
-  const [projectIndex, setProjectIndex] = useState(0);
+  // Rimosse le variabili di stato per projectWord
 
   useEffect(() => {
     const talentInterval = setInterval(() => {
       setTalentIndex((prevIndex) => (prevIndex + 1) % talentWords.length);
     }, 2500);
 
-    const projectInterval = setInterval(() => {
-      setProjectIndex((prevIndex) => (prevIndex + 1) % projectWords.length);
-    }, 2700);
+    // Rimosso setInterval per projectWords
 
     return () => {
       clearInterval(talentInterval);
-      clearInterval(projectInterval);
+      // Rimosso clearInterval per projectInterval
     };
   }, []);
 
@@ -35,30 +32,20 @@ export default function HomePage() {
     setCurrentTalentWord(talentWords[talentIndex]);
   }, [talentIndex]);
 
-  useEffect(() => {
-    setCurrentProjectWord(projectWords[projectIndex]);
-  }, [projectIndex]);
+  // Rimosso useEffect per projectIndex
 
   return (
-    <div className="flex flex-col items-center justify-center flex-grow text-center w-full">
+    <div className="flex flex-col items-center justify-center flex-grow text-center px-4 md:px-8 w-full">
       <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-primary mb-6 tracking-tight">
         Fai Match con{' '}
         <Button
-          key={currentTalentWord}
+          key={currentTalentWord} // Chiave per ri-triggerare animazione
           variant="ghost"
           className="inline-block align-baseline text-center w-48 sm:w-52 md:w-56 lg:w-72 h-auto px-3 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 hover:text-accent animate-fadeIn text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight"
         >
           {currentTalentWord}
         </Button>
-        {' '}e{' '}
-        <Button
-          key={currentProjectWord}
-          variant="ghost"
-          className="inline-block align-baseline text-center w-48 sm:w-52 md:w-56 lg:w-72 h-auto px-3 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 hover:text-accent animate-fadeIn text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight"
-        >
-          {currentProjectWord}
-        </Button>
-        {' '}BIM.
+        {' '}e Progetti BIM. {}
       </h1>
       <p className="text-base md:text-lg text-foreground/80 max-w-xl mx-auto mb-10">
         La piattaforma N°1 in Italia per professionisti BIM e aziende.
