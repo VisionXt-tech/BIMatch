@@ -12,9 +12,7 @@ const initialTalentWords = ["Talenti", "Professionisti", "Esperti", "Innovatori"
 
 export default function HomePage() {
   const [talentWords, setTalentWords] = useState(initialTalentWords);
-
   const [currentTalentWord, setCurrentTalentWord] = useState(talentWords[0]);
-
   const [talentIndex, setTalentIndex] = useState(0);
 
   useEffect(() => {
@@ -35,7 +33,7 @@ export default function HomePage() {
     <div className="relative flex flex-col items-center justify-center min-h-[calc(100vh-120px)] w-full overflow-hidden">
       {/* Background Image */}
       <Image
-        src="https://images.unsplash.com/photo-1560440021-33f9b867899d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxjaXR5c2NhcGUlMjBtZXRyb3BvbGlzfGVufDB8fHx8MTc0Njk3NjY5OHww&ixlib=rb-4.1.0&q=80&w=1920"
+        src="https://images.unsplash.com/photo-1449157291145-7efd050a4d0e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxNXx8Y2l0eXxlbnwwfHx8fDE3NDc0MDgzNjl8MA&ixlib=rb-4.1.0&q=80&w=1080"
         alt="Skyline di una metropoli moderna al tramonto"
         layout="fill"
         objectFit="cover"
@@ -56,8 +54,6 @@ export default function HomePage() {
           Fai Match con {' '}
           <Button
             variant="ghost"
-            // No key dinamica qui per mantenere il pulsante statico
-            // Nessuna animazione diretta sul pulsante
             className="inline-block align-baseline text-center h-auto font-bold tracking-tight
                        w-52 sm:w-60 md:w-64 lg:w-72 /* Larghezze fisse responsive per il contenitore */
                        px-4 /* Padding orizzontale */
@@ -120,4 +116,3 @@ export default function HomePage() {
     </div>
   );
 }
-    
