@@ -42,7 +42,7 @@ export default function HomePage() {
   return (
     <div className="flex flex-col items-center justify-center flex-grow text-center px-4 md:px-8 w-full">
       <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary mb-8 tracking-tight">
-        Fai Match con <span className="text-accent inline-block min-w-[200px] md:min-w-[280px] transition-all duration-500 ease-in-out">{currentTalentWord}</span> e <span className="text-accent inline-block min-w-[200px] md:min-w-[280px] transition-all duration-500 ease-in-out">{currentProjectWord}</span> BIM
+        Fai Match con <span className="text-accent inline-block w-[240px] md:w-[300px] transition-all duration-300 ease-in-out">{currentTalentWord}</span> e <span className="text-accent inline-block w-[240px] md:w-[300px] transition-all duration-300 ease-in-out">{currentProjectWord}</span> BIM
       </h1>
       <p className="text-lg md:text-xl text-foreground/80 max-w-2xl mx-auto mb-12">
         La piattaforma N°1 in Italia per professionisti BIM e aziende.
@@ -65,7 +65,7 @@ export default function HomePage() {
           size="lg"
           asChild
           variant="outline"
-          className="w-full sm:w-auto bg-background text-primary border-2 border-primary hover:bg-primary/5 group text-base py-7 px-8 transform hover:scale-[1.03] transition-transform duration-300 shadow-md rounded-lg"
+          className="w-full sm:w-auto bg-background text-accent border-2 border-accent hover:bg-accent/10 group text-base py-7 px-8 transform hover:scale-[1.03] transition-transform duration-300 shadow-md rounded-lg"
         >
           <Link href={ROUTES.REGISTER_COMPANY}>
             Sei un'Azienda?
