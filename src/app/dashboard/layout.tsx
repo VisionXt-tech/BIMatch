@@ -6,12 +6,10 @@ import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { ROUTES, ROLES } from '@/constants';
-import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarTrigger, SidebarFooter, SidebarSeparator, SidebarGroup, SidebarGroupLabel } from '@/components/ui/sidebar';
+import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarFooter, SidebarSeparator, SidebarGroup } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, User, Briefcase, LayoutDashboard, FolderPlus, Building, Search, MessageSquare, Settings, Users } from 'lucide-react';
+import { LogOut, User, Briefcase, LayoutDashboard, FolderPlus, Building, Search, Users } from 'lucide-react';
 import Link from 'next/link';
-// import Logo from '@/components/core/Logo'; // Logo is no longer used here
-import { Skeleton } from '@/components/ui/skeleton';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -21,9 +19,6 @@ const ProfessionalNavItems = [
   { href: ROUTES.DASHBOARD_PROFESSIONAL, label: 'Dashboard', icon: LayoutDashboard },
   { href: ROUTES.DASHBOARD_PROFESSIONAL_PROFILE, label: 'Il Mio Profilo', icon: User },
   { href: ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS, label: 'Progetti Disponibili', icon: Search },
-  // { href: '/dashboard/professional/applications', label: 'Candidature', icon: Briefcase },
-  // { href: '/dashboard/professional/messages', label: 'Messaggi', icon: MessageSquare },
-  // { href: '/dashboard/professional/settings', label: 'Impostazioni', icon: Settings },
 ];
 
 const CompanyNavItems = [
@@ -32,14 +27,9 @@ const CompanyNavItems = [
   { href: ROUTES.DASHBOARD_COMPANY_POST_PROJECT, label: 'Pubblica Progetto', icon: FolderPlus },
   { href: ROUTES.DASHBOARD_COMPANY_PROJECTS, label: 'I Miei Progetti', icon: Briefcase },
   { href: ROUTES.PROFESSIONALS_MARKETPLACE, label: 'Cerca Professionisti', icon: Users },
-  // { href: '/dashboard/company/messages', label: 'Messaggi', icon: MessageSquare },
-  // { href: '/dashboard/company/settings', label: 'Impostazioni', icon: Settings },
 ];
 
-// Navbar height is approx 4rem (64px). Tailwind '16' unit is 4rem.
-// Adjust sidebar header padding to align its content with Navbar content.
-const SIDEBAR_HEADER_PADDING_TOP_CLASS = "pt-16";
-const MAIN_CONTENT_MARGIN_TOP_CLASS = "mt-16"; // 4rem = 64px, to clear the Navbar
+const NAVBAR_HEIGHT_APPROX = "4rem"; // Corrisponde a h-16 in Tailwind
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, userProfile, loading, logout } = useAuth();
@@ -81,15 +71,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     router.push(ROUTES.HOME);
   };
 
-
   return (
     <SidebarProvider defaultOpen>
       <Sidebar collapsible="icon" className="border-r">
-        <SidebarHeader className={`px-4 pb-4 ${SIDEBAR_HEADER_PADDING_TOP_CLASS}`}> {/* Adjusted padding */}
-          <div className="flex items-center justify-end group-data-[collapsible=icon]:justify-center w-full">
-             {/* Logo component removed from here */}
-            {/* SidebarTrigger removed */}
-          </div>
+        <SidebarHeader className="px-4 pb-4" style={{ paddingTop: NAVBAR_HEIGHT_APPROX }}> {/* Adjusted padding */}
+          {/* Content of SidebarHeader if any, like a logo or toggle, will now be below the global Navbar */}
         </SidebarHeader>
         
         <SidebarContent>
@@ -133,8 +119,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
-      <SidebarInset className={`${MAIN_CONTENT_MARGIN_TOP_CLASS}`}> {/* Added margin-top */}
-        <div className="px-4 md:px-6 lg:px-8 pt-0 pb-8">
+      <SidebarInset style={{ marginTop: NAVBAR_HEIGHT_APPROX }}> {/* Added margin-top */}
+        <div className="px-4 md:px-6 lg:px-8 pt-0 pb-8"> {/* pt-0 to rely on SidebarInset's margin */}
          {children}
         </div>
       </SidebarInset>

@@ -45,21 +45,14 @@ const Navbar = () => {
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card">
       <nav
-        className={cn(
-          "py-3 flex justify-between items-center", // Base styles
-          isDashboardPage
-            ? [
-                "w-full", // Full width for dashboard
-                // Right padding consistent with non-dashboard
-                "pr-4 md:pr-6 lg:pr-8",
-                // Dynamic left padding based on sidebar state
-                // Sidebar icon width (3rem) + 1rem padding = 4rem (pl-16)
-                // Expanded sidebar width (16rem) + 1rem padding = 17rem (pl-[17rem])
-                "body-sidebar-collapsed:pl-16",
-                "body-sidebar-expanded:pl-[17rem]"
-              ]
-            : "container mx-auto px-4" // Non-dashboard pages
-        )}
+        className="py-3 flex justify-between items-center"
+        style={{
+          paddingLeft: `var(--navbar-content-padding-left, 1rem)`, // Uses CSS variable set by SidebarProvider, defaults to 1rem for non-dashboard
+          paddingRight: '1rem', // Consistent right padding
+          // For non-dashboard pages, max-width and mx-auto would typically be handled by a wrapper if needed, or this stays full-width.
+          // If a container effect is needed for non-dashboard, this logic would need to be conditional.
+          // For now, this keeps it simpler and assumes Navbar can be full-width, with content alignment handled by padding.
+        }}
       >
         <Logo />
         <div className="flex items-center space-x-2 md:space-x-4">

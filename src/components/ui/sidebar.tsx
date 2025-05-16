@@ -22,9 +22,10 @@ import {
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
-const SIDEBAR_WIDTH = "16rem"
-const SIDEBAR_WIDTH_MOBILE = "18rem"
-const SIDEBAR_WIDTH_ICON = "3rem"
+const SIDEBAR_WIDTH = "16rem" // 256px
+const SIDEBAR_WIDTH_MOBILE = "18rem" // 288px
+const SIDEBAR_WIDTH_ICON = "3rem" // 48px
+const PAGE_CONTENT_PADDING = "1rem"; // Standard page padding (e.g., px-4)
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
 type SidebarContext = {
@@ -72,7 +73,7 @@ const SidebarProvider = React.forwardRef<
     const [openMobile, setOpenMobile] = React.useState(false)
 
     const [_open, _setOpen] = React.useState(defaultOpen)
-    const open = openProp ?? _open
+    const open = openProp ?? _open // Desktop sidebar state
     const setOpen = React.useCallback(
       (value: boolean | ((value: boolean) => boolean)) => {
         const openState = typeof value === "function" ? value(open) : value
@@ -88,8 +89,8 @@ const SidebarProvider = React.forwardRef<
 
     const toggleSidebar = React.useCallback(() => {
       return isMobile
-        ? setOpenMobile((open) => !open)
-        : setOpen((open) => !open)
+        ? setOpenMobile((current) => !current)
+        : setOpen((current) => !current)
     }, [isMobile, setOpen, setOpenMobile])
 
     React.useEffect(() => {
@@ -102,7 +103,6 @@ const SidebarProvider = React.forwardRef<
           toggleSidebar()
         }
       }
-
       window.addEventListener("keydown", handleKeyDown)
       return () => window.removeEventListener("keydown", handleKeyDown)
     }, [toggleSidebar])
@@ -110,23 +110,40 @@ const SidebarProvider = React.forwardRef<
     const state = open ? "expanded" : "collapsed"
 
     React.useEffect(() => {
+      const root = document.documentElement;
+      let currentSidebarActualWidth = "0rem";
+      let mainContentMarginLeft = "0rem";
+      let navbarContentPaddingLeft = PAGE_CONTENT_PADDING; // e.g., "1rem"
+
+      if (!isMobile) {
+        currentSidebarActualWidth = open ? SIDEBAR_WIDTH : SIDEBAR_WIDTH_ICON;
+        mainContentMarginLeft = currentSidebarActualWidth;
+        navbarContentPaddingLeft = `calc(${currentSidebarActualWidth} + ${PAGE_CONTENT_PADDING})`;
+      }
+      
+      root.style.setProperty("--sidebar-actual-width", currentSidebarActualWidth);
+      root.style.setProperty("--main-content-area-margin-left", mainContentMarginLeft);
+      root.style.setProperty("--navbar-content-padding-left", navbarContentPaddingLeft);
+      
+      // For body classes if still needed elsewhere, though CSS vars are now primary
       const sidebarOpenClass = "body-sidebar-expanded";
       const sidebarClosedClass = "body-sidebar-collapsed";
-
       if (isMobile) {
         document.body.classList.remove(sidebarOpenClass, sidebarClosedClass);
-        return;
-      }
-
-      if (open) {
-        document.body.classList.add(sidebarOpenClass);
-        document.body.classList.remove(sidebarClosedClass);
       } else {
-        document.body.classList.add(sidebarClosedClass);
-        document.body.classList.remove(sidebarOpenClass);
+        if (open) {
+          document.body.classList.add(sidebarOpenClass);
+          document.body.classList.remove(sidebarClosedClass);
+        } else {
+          document.body.classList.add(sidebarClosedClass);
+          document.body.classList.remove(sidebarOpenClass);
+        }
       }
 
       return () => {
+        root.style.removeProperty("--sidebar-actual-width");
+        root.style.removeProperty("--main-content-area-margin-left");
+        root.style.removeProperty("--navbar-content-padding-left");
         document.body.classList.remove(sidebarOpenClass, sidebarClosedClass);
       };
     }, [open, isMobile]);
@@ -146,27 +163,25 @@ const SidebarProvider = React.forwardRef<
     )
 
     return (
-      <SidebarContext.Provider value={contextValue}>
-        <TooltipProvider delayDuration={0}>
-          <div
-            style={
-              {
-                "--sidebar-width": SIDEBAR_WIDTH,
-                "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
-                ...style,
-              } as React.CSSProperties
-            }
-            className={cn(
-              "group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar",
-              className
-            )}
-            ref={ref}
-            {...props}
-          >
-            {children}
-          </div>
-        </TooltipProvider>
-      </SidebarContext.Provider>
+      <TooltipProvider delayDuration={0}>
+        <div
+          style={
+            {
+              "--sidebar-width": SIDEBAR_WIDTH, // Still useful for internal sidebar styles
+              "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
+              ...style,
+            } as React.CSSProperties
+          }
+          className={cn(
+            "group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar",
+            className
+          )}
+          ref={ref}
+          {...props}
+        >
+          {children}
+        </div>
+      </TooltipProvider>
     )
   }
 )
@@ -184,7 +199,7 @@ const Sidebar = React.forwardRef<
     {
       side = "left",
       variant = "sidebar",
-      collapsible = "offcanvas",
+      collapsible = "icon", // Defaulting to icon collapsible
       className,
       children,
       ...props
@@ -193,11 +208,13 @@ const Sidebar = React.forwardRef<
   ) => {
     const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
 
-    if (collapsible === "none") {
+    if (collapsible === "none" && !isMobile) { // collapsible="none" only for desktop
       return (
         <div
           className={cn(
-            "flex h-full w-[--sidebar-width] flex-col bg-sidebar text-sidebar-foreground",
+            "flex h-full flex-col bg-sidebar text-sidebar-foreground fixed inset-y-0 z-10",
+            side === "left" ? "left-0 border-r" : "right-0 border-l",
+            "w-[var(--sidebar-width)]", // Use CSS variable for width
             className
           )}
           ref={ref}
@@ -207,17 +224,17 @@ const Sidebar = React.forwardRef<
         </div>
       )
     }
-
+    
     if (isMobile) {
       return (
         <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
           <SheetContent
             data-sidebar="sidebar"
             data-mobile="true"
-            className="w-[--sidebar-width] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+            className="w-[var(--sidebar-width-mobile)] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
             style={
               {
-                "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
+                "--sidebar-width-mobile": SIDEBAR_WIDTH_MOBILE,
               } as React.CSSProperties
             }
             side={side}
@@ -228,41 +245,31 @@ const Sidebar = React.forwardRef<
       )
     }
 
+    // Desktop collapsible sidebar (icon or offcanvas)
     return (
       <div
         ref={ref}
-        className="group peer hidden md:block text-sidebar-foreground"
+        className={cn(
+          "group hidden md:block text-sidebar-foreground fixed inset-y-0 z-10 h-svh transition-[width] duration-200 ease-linear",
+           side === "left" ? "left-0 border-r" : "right-0 border-l",
+           state === "expanded" ? "w-[var(--sidebar-width)]" : "w-[var(--sidebar-width-icon)]",
+           collapsible === "offcanvas" && state === "collapsed" && (side === "left" ? "-left-[var(--sidebar-width)]" : "-right-[var(--sidebar-width)]"), // Hides offcanvas
+           className
+        )}
         data-state={state}
-        data-collapsible={state === "collapsed" ? collapsible : ""}
+        data-collapsible={collapsible} 
         data-variant={variant}
         data-side={side}
+        {...props}
       >
-        {/* This is what handles the sidebar gap on desktop */}
         <div
+          data-sidebar="sidebar"
           className={cn(
-            "duration-200 relative h-svh w-[--sidebar-width] bg-transparent transition-[width] ease-linear",
-            "group-data-[collapsible=icon]:w-[--sidebar-width-icon]"
+            "flex h-full w-full flex-col bg-sidebar",
+             variant === "floating" && "m-2 rounded-lg border border-sidebar-border shadow w-[calc(100%-1rem)]" // Adjust width for floating
           )}
-        />
-        <div
-          className={cn(
-            "duration-200 fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] transition-[left,right,width] ease-linear md:flex",
-            side === "left"
-              ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
-              : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
-            variant === "floating" || variant === "inset"
-              ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]"
-              : "group-data-[collapsible=icon]:w-[--sidebar-width-icon] group-data-[side=left]:border-r group-data-[side=right]:border-l",
-            className
-          )}
-          {...props}
         >
-          <div
-            data-sidebar="sidebar"
-            className="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
-          >
-            {children}
-          </div>
+          {children}
         </div>
       </div>
     )
@@ -326,20 +333,15 @@ const SidebarRail = React.forwardRef<
 SidebarRail.displayName = "SidebarRail"
 
 const SidebarInset = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentProps<"main">
+  HTMLDivElement, // Changed from main to div for flexibility
+  React.HTMLAttributes<HTMLDivElement> // Use HTMLAttributes for div
 >(({ className, ...props }, ref) => {
   return (
-    <main
+    <div // Changed from main to div
       ref={ref}
       className={cn(
         "relative flex min-h-svh flex-1 flex-col bg-background",
-        "peer-data-[variant=inset]:min-h-[calc(100svh-theme(spacing.4))] md:peer-data-[variant=inset]:m-2 md:peer-data-[state=collapsed]:peer-data-[variant=inset]:ml-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow",
-        // Default sidebar behavior (not floating, not inset)
-        "md:peer-data-[variant=sidebar]:peer-data-[side=left]:peer-data-[state=expanded]:ml-[var(--sidebar-width)]",
-        "md:peer-data-[variant=sidebar]:peer-data-[side=left]:peer-data-[state=collapsed]:peer-data-[collapsible=icon]:ml-[var(--sidebar-width-icon)]",
-        "md:peer-data-[variant=sidebar]:peer-data-[side=right]:peer-data-[state=expanded]:mr-[var(--sidebar-width)]",
-        "md:peer-data-[variant=sidebar]:peer-data-[side=right]:peer-data-[state=collapsed]:peer-data-[collapsible=icon]:mr-[var(--sidebar-width-icon)]",
+        "md:ml-[var(--main-content-area-margin-left,0px)] transition-[margin-left] duration-200 ease-linear", // Use CSS var for margin
         className
       )}
       {...props}
@@ -368,13 +370,13 @@ SidebarInput.displayName = "SidebarInput"
 
 const SidebarHeader = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<"div">
+  React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => {
   return (
     <div
       ref={ref}
       data-sidebar="header"
-      className={cn("flex flex-col gap-2 p-2", className)}
+      className={cn("flex flex-col gap-2 p-2", className)} // Padding handled by content inside
       {...props}
     />
   )
@@ -383,7 +385,7 @@ SidebarHeader.displayName = "SidebarHeader"
 
 const SidebarFooter = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<"div">
+  React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => {
   return (
     <div
@@ -413,7 +415,7 @@ SidebarSeparator.displayName = "SidebarSeparator"
 
 const SidebarContent = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<"div">
+  React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => {
   return (
     <div
@@ -431,7 +433,7 @@ SidebarContent.displayName = "SidebarContent"
 
 const SidebarGroup = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<"div">
+  React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => {
   return (
     <div
@@ -489,7 +491,7 @@ SidebarGroupAction.displayName = "SidebarGroupAction"
 
 const SidebarGroupContent = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<"div">
+  React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
@@ -502,7 +504,7 @@ SidebarGroupContent.displayName = "SidebarGroupContent"
 
 const SidebarMenu = React.forwardRef<
   HTMLUListElement,
-  React.ComponentProps<"ul">
+  React.HTMLAttributes<HTMLUListElement>
 >(({ className, ...props }, ref) => (
   <ul
     ref={ref}
@@ -515,7 +517,7 @@ SidebarMenu.displayName = "SidebarMenu"
 
 const SidebarMenuItem = React.forwardRef<
   HTMLLIElement,
-  React.ComponentProps<"li">
+  React.HTMLAttributes<HTMLLIElement>
 >(({ className, ...props }, ref) => (
   <li
     ref={ref}
@@ -639,7 +641,7 @@ SidebarMenuAction.displayName = "SidebarMenuAction"
 
 const SidebarMenuBadge = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<"div">
+  React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
@@ -697,7 +699,7 @@ SidebarMenuSkeleton.displayName = "SidebarMenuSkeleton"
 
 const SidebarMenuSub = React.forwardRef<
   HTMLUListElement,
-  React.ComponentProps<"ul">
+  React.HTMLAttributes<HTMLUListElement>
 >(({ className, ...props }, ref) => (
   <ul
     ref={ref}
@@ -714,7 +716,7 @@ SidebarMenuSub.displayName = "SidebarMenuSub"
 
 const SidebarMenuSubItem = React.forwardRef<
   HTMLLIElement,
-  React.ComponentProps<"li">
+  React.HTMLAttributes<HTMLLIElement>
 >(({ ...props }, ref) => <li ref={ref} {...props} />)
 SidebarMenuSubItem.displayName = "SidebarMenuSubItem"
 
@@ -774,4 +776,3 @@ export {
   SidebarTrigger,
   useSidebar,
 }
-
