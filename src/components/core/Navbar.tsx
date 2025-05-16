@@ -46,17 +46,24 @@ const Navbar = () => {
     <header className="sticky top-0 z-50 border-b border-border bg-card">
       <nav
         className={cn(
-          "py-3 flex justify-between items-center",
-          isDashboardPage 
-            ? "w-full px-4 md:px-6 lg:px-8 body-sidebar-collapsed:pl-20 body-sidebar-expanded:pl-[17rem]" 
-            // pl-20 (5rem) = 3rem icon sidebar + 2rem space for safety/padding
-            // pl-[17rem] = 16rem expanded sidebar + 1rem space for safety/padding
-            : "container mx-auto px-4"
+          "py-3 flex justify-between items-center", // Base styles
+          isDashboardPage
+            ? [
+                "w-full", // Full width for dashboard
+                // Right padding consistent with non-dashboard
+                "pr-4 md:pr-6 lg:pr-8",
+                // Dynamic left padding based on sidebar state
+                // Sidebar icon width (3rem) + 1rem padding = 4rem (pl-16)
+                // Expanded sidebar width (16rem) + 1rem padding = 17rem (pl-[17rem])
+                "body-sidebar-collapsed:pl-16",
+                "body-sidebar-expanded:pl-[17rem]"
+              ]
+            : "container mx-auto px-4" // Non-dashboard pages
         )}
       >
         <Logo />
         <div className="flex items-center space-x-2 md:space-x-4">
-          {!isDashboardPage && ( // Mostra "Cerca Professionisti" solo se non siamo in una dashboard
+          {(!isDashboardPage || (userProfile && userProfile.role === ROLES.COMPANY)) && (
             <Button variant="ghost" asChild>
               <Link href={ROUTES.PROFESSIONALS_MARKETPLACE}>
                 <Search className="mr-0 md:mr-2 h-4 w-4" />
@@ -137,4 +144,3 @@ const Navbar = () => {
 };
 
 export default Navbar;
-
