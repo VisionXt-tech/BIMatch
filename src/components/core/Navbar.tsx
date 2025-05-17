@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -25,7 +24,6 @@ const Navbar = () => {
   const pathname = usePathname();
   const isDashboardPage = pathname.startsWith(ROUTES.DASHBOARD);
 
-
   const handleLogout = async () => {
     await logout();
     router.push(ROUTES.HOME);
@@ -44,94 +42,100 @@ const Navbar = () => {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card">
-      <nav
-        className="py-3 flex justify-between items-center"
-        style={{
-          paddingLeft: `var(--navbar-content-padding-left, 1rem)`, // Uses CSS variable set by SidebarProvider, defaults to 1rem for non-dashboard
-          paddingRight: '1rem', // Consistent right padding
-          // For non-dashboard pages, max-width and mx-auto would typically be handled by a wrapper if needed, or this stays full-width.
-          // If a container effect is needed for non-dashboard, this logic would need to be conditional.
-          // For now, this keeps it simpler and assumes Navbar can be full-width, with content alignment handled by padding.
-        }}
+      <div // This div handles the container logic
+        className={cn(
+          isDashboardPage ? "w-full" : "container mx-auto px-4" 
+        )}
       >
-        <Logo />
-        <div className="flex items-center space-x-2 md:space-x-4">
-          {(!isDashboardPage || (userProfile && userProfile.role === ROLES.COMPANY)) && (
-            <Button variant="ghost" asChild>
-              <Link href={ROUTES.PROFESSIONALS_MARKETPLACE}>
-                <Search className="mr-0 md:mr-2 h-4 w-4" />
-                <span className="hidden md:inline">Cerca Professionisti</span>
-              </Link>
-            </Button>
-          )}
-
-          {loading ? (
-            <div className="h-10 w-40 animate-pulse bg-muted rounded-md"></div>
-          ) : user && userProfile ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={userProfile.photoURL || user.photoURL || undefined} alt={userProfile.displayName || user.displayName || 'User'} />
-                    <AvatarFallback>{getInitials(userProfile.displayName || user.displayName)}</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{userProfile.displayName || user.displayName}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push(dashboardLink)}>
-                  <LayoutDashboard className="mr-2 h-4 w-4" />
-                  <span>Dashboard</span>
-                </DropdownMenuItem>
-                {userProfile.role === ROLES.PROFESSIONAL && (
-                  <DropdownMenuItem onClick={() => router.push(ROUTES.DASHBOARD_PROFESSIONAL_PROFILE)}>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Il Mio Profilo</span>
-                  </DropdownMenuItem>
-                )}
-                 {userProfile.role === ROLES.COMPANY && (
-                  <DropdownMenuItem onClick={() => router.push(ROUTES.DASHBOARD_COMPANY_PROFILE)}>
-                    <Building className="mr-2 h-4 w-4" />
-                    <span>Profilo Azienda</span>
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Logout</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <>
+        <nav
+          className="py-3 flex justify-between items-center"
+          // On dashboard pages, paddingLeft is dynamically set by CSS variable from SidebarProvider
+          // This variable should account for sidebar width + desired page content padding (e.g., 1rem)
+          // On non-dashboard pages, the outer div with "container mx-auto px-4" handles all padding.
+          style={isDashboardPage ? {
+            paddingLeft: `var(--navbar-content-padding-left, 1rem)`, 
+            paddingRight: '1rem', // Standard right padding for dashboard navbar content
+          } : {}}
+        >
+          <Logo />
+          <div className="flex items-center space-x-2 md:space-x-4">
+            {(!isDashboardPage || (userProfile && userProfile.role === ROLES.COMPANY)) && (
               <Button variant="ghost" asChild>
-                <Link href={ROUTES.LOGIN}>Accedi</Link>
+                <Link href={ROUTES.PROFESSIONALS_MARKETPLACE}>
+                  <Search className="mr-0 md:mr-2 h-4 w-4" />
+                  <span className="hidden md:inline">Cerca Professionisti</span>
+                </Link>
               </Button>
+            )}
+
+            {loading ? (
+              <div className="h-10 w-40 animate-pulse bg-muted rounded-md"></div>
+            ) : user && userProfile ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button>Registrati</Button>
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={userProfile.photoURL || user.photoURL || undefined} alt={userProfile.displayName || user.displayName || 'User'} />
+                      <AvatarFallback>{getInitials(userProfile.displayName || user.displayName)}</AvatarFallback>
+                    </Avatar>
+                  </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => router.push(ROUTES.REGISTER_PROFESSIONAL)}>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Come Professionista</span>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{userProfile.displayName || user.displayName}</p>
+                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => router.push(dashboardLink)}>
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    <span>Dashboard</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push(ROUTES.REGISTER_COMPANY)}>
-                    <Briefcase className="mr-2 h-4 w-4" />
-                    <span>Come Azienda</span>
+                  {userProfile.role === ROLES.PROFESSIONAL && (
+                    <DropdownMenuItem onClick={() => router.push(ROUTES.DASHBOARD_PROFESSIONAL_PROFILE)}>
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Il Mio Profilo</span>
+                    </DropdownMenuItem>
+                  )}
+                   {userProfile.role === ROLES.COMPANY && (
+                    <DropdownMenuItem onClick={() => router.push(ROUTES.DASHBOARD_COMPANY_PROFILE)}>
+                      <Building className="mr-2 h-4 w-4" />
+                      <span>Profilo Azienda</span>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Logout</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </>
-          )}
-        </div>
-      </nav>
+            ) : (
+              <>
+                <Button variant="ghost" asChild>
+                  <Link href={ROUTES.LOGIN}>Accedi</Link>
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button>Registrati</Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => router.push(ROUTES.REGISTER_PROFESSIONAL)}>
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Come Professionista</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push(ROUTES.REGISTER_COMPANY)}>
+                      <Briefcase className="mr-2 h-4 w-4" />
+                      <span>Come Azienda</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            )}
+          </div>
+        </nav>
+      </div>
     </header>
   );
 };
