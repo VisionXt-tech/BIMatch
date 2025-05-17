@@ -25,7 +25,7 @@ export default function CompanyDashboardPage() {
   const isProfileComplete = userProfile.companyDescription && userProfile.industry;
 
   return (
-    <div className="space-y-3"> {/* Reduced space-y */}
+    <div className="space-y-3"> {/* Reduced space-y from 4 to 3 */}
       <Card className="bg-gradient-to-r from-primary/10 via-background to-primary/10 shadow-md">
         <CardHeader className="pb-2">
           <CardTitle className="text-xl font-bold text-primary">Benvenuta, {userProfile.companyName || userProfile.displayName}!</CardTitle> {/* Reduced font size */}
@@ -52,9 +52,11 @@ export default function CompanyDashboardPage() {
             <p className="text-xs text-muted-foreground">
               Progetti BIM attualmente pubblicati.
             </p>
-            <Button variant="link" asChild className="px-0 pt-1 text-primary text-xs"> {/* Reduced pt and font size */}
-              <Link href={ROUTES.DASHBOARD_COMPANY_PROJECTS}>Gestisci Progetti</Link>
-            </Button>
+            <Link href={ROUTES.DASHBOARD_COMPANY_PROJECTS} passHref legacyBehavior>
+              <Button variant="link" asChild className="px-0 pt-1 text-primary text-xs">
+                <a>Gestisci Progetti</a>
+              </Button>
+            </Link>
           </CardContent>
         </Card>
 
@@ -68,9 +70,11 @@ export default function CompanyDashboardPage() {
             <p className="text-xs text-muted-foreground">
               Professionisti interessati ai tuoi progetti.
             </p>
-            <Button variant="link" asChild className="px-0 pt-1 text-primary text-xs">  {/* Reduced pt and font size */}
-              <Link href={ROUTES.DASHBOARD_COMPANY_PROJECTS}>Visualizza Candidati</Link>
-            </Button>
+            <Link href={ROUTES.DASHBOARD_COMPANY_PROJECTS} passHref legacyBehavior> {/* Assuming this links to projects to see candidates */}
+              <Button variant="link" asChild className="px-0 pt-1 text-primary text-xs">
+                <a>Visualizza Candidati</a>
+              </Button>
+            </Link>
           </CardContent>
         </Card>
 
@@ -84,9 +88,11 @@ export default function CompanyDashboardPage() {
             <p className="text-xs text-muted-foreground">
               Mantieni il profilo della tua azienda aggiornato.
             </p>
-            <Button variant="link" asChild className="px-0 pt-1 text-primary text-xs">  {/* Reduced pt and font size */}
-              <Link href={ROUTES.DASHBOARD_COMPANY_PROFILE}>Modifica Profilo</Link>
-            </Button>
+            <Link href={ROUTES.DASHBOARD_COMPANY_PROFILE} passHref legacyBehavior>
+              <Button variant="link" asChild className="px-0 pt-1 text-primary text-xs">
+                <a>Modifica Profilo</a>
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
@@ -112,7 +118,7 @@ export default function CompanyDashboardPage() {
               </Button>
             </div>
           </div>
-          <div className="relative h-40 rounded-lg overflow-hidden"> {/* Reduced image height */}
+          <div className="relative h-40 rounded-lg overflow-hidden"> {/* Reduced image height to h-40 */}
             <Image 
               src="https://images.unsplash.com/photo-1744627049721-73c27008ad28?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxCSU18ZW58MHx8fHwxNzQ3NDEyNDUxfDA&ixlib=rb-4.1.0&q=80&w=1080" 
               alt="Team working on BIM project" 
