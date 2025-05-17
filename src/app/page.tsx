@@ -44,7 +44,6 @@ export default function HomePage() {
                        relative
                        focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-1
                        bg-transparent hover:bg-transparent 
-                       text-primary 
                        "
           >
             <span
@@ -84,7 +83,7 @@ export default function HomePage() {
                        py-3 px-6 md:py-4 md:px-8 
                        transform hover:scale-[1.03] transition-transform duration-300 shadow-md rounded-lg w-full sm:w-auto"
           >
-            <Link href={ROUTES.REGISTER_COMPANY}>
+            <Link href={ROUTES.LOGIN}> {/* Changed from ROUTES.REGISTER_COMPANY */}
               Sei un'Azienda?
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Link>
