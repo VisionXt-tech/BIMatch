@@ -120,7 +120,7 @@ export default function ProfessionalDashboardPage() {
               </Button>
             </Link>
           </div>
-          <div className="relative h-52 rounded-lg overflow-hidden">
+          <div className="relative h-40 rounded-lg overflow-hidden"> {/* Reduced image height */}
             <Image 
               src="https://images.unsplash.com/photo-1612888262725-6b300edf916c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHwzRCUyME1vZGVsaW5nfGVufDB8fHx8MTc0NzQxMTMyOXww&ixlib=rb-4.1.0&q=80&w=1080" 
               alt="BIM professional working" 

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ROUTES } from '@/constants';
-import { Building, Briefcase, Users, FolderPlus, Search } from 'lucide-react';
+import { Building, Briefcase, Users, FolderPlus } from 'lucide-react';
 import Image from 'next/image';
 
 
