@@ -25,14 +25,14 @@ export default function CompanyDashboardPage() {
   const isProfileComplete = userProfile.companyDescription && userProfile.industry;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <Card className="bg-gradient-to-r from-primary/10 via-background to-primary/10 shadow-md">
-        <CardHeader>
+        <CardHeader className="pb-2">
           <CardTitle className="text-3xl font-bold text-primary">Benvenuta, {userProfile.companyName || userProfile.displayName}!</CardTitle>
           <CardDescription className="text-lg">Gestisci i tuoi progetti BIM e trova i migliori talenti sulla tua dashboard BIMatch.</CardDescription>
         </CardHeader>
          {!isProfileComplete && (
-          <CardContent>
+          <CardContent className="pt-0 pb-4">
              <div className="bg-secondary border-l-4 border-primary text-secondary-foreground p-4 rounded-md" role="alert">
                 <p className="font-bold">Completa il profilo aziendale!</p>
                 <p>Un profilo dettagliato attira i migliori professionisti. <Link href={ROUTES.DASHBOARD_COMPANY_PROFILE} className="font-semibold underline hover:text-primary">Aggiorna ora</Link>.</p>
@@ -93,11 +93,11 @@ export default function CompanyDashboardPage() {
       </div>
       
       <Card className="shadow-lg">
-        <CardHeader>
+        <CardHeader className="pb-2">
           <CardTitle>Trova il Talento BIM Perfetto</CardTitle>
           <CardDescription>Pubblica i tuoi progetti e connettiti con professionisti qualificati in tutta Italia.</CardDescription>
         </CardHeader>
-        <CardContent className="grid md:grid-cols-2 gap-6 items-center">
+        <CardContent className="grid md:grid-cols-2 gap-6 items-center p-4 pt-2">
            <div>
             <p className="mb-4 text-foreground/90">
               BIMatch semplifica la ricerca di personale BIM qualificato. Descrivi i requisiti del tuo progetto o esplora il nostro database di professionisti.
@@ -111,15 +111,14 @@ export default function CompanyDashboardPage() {
               <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 <Link href={ROUTES.DASHBOARD_COMPANY_POST_PROJECT}> <FolderPlus className="mr-2 h-4 w-4" /> Pubblica Progetto</Link>
               </Button>
-              {/* Removed redundant "Cerca Professionisti" button as it's in the sidebar */}
             </div>
           </div>
           <div className="relative h-64 rounded-lg overflow-hidden">
             <Image 
               src="https://images.unsplash.com/photo-1744627049721-73c27008ad28?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxCSU18ZW58MHx8fHwxNzQ3NDEyNDUxfDA&ixlib=rb-4.1.0&q=80&w=1080" 
               alt="Team working on BIM project" 
-              layout="fill" 
-              objectFit="cover"
+              fill
+              style={{objectFit: 'cover'}}
               data-ai-hint="construction team"
             />
           </div>
