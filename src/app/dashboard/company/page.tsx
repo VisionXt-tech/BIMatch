@@ -113,9 +113,13 @@ export default function CompanyDashboardPage() {
               <li>Filtra i professionisti per competenze e software.</li>
             </ul>
             <div className="flex flex-wrap gap-2"> {/* Reduced gap */}
-              <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground text-sm py-1.5 px-3"> {/* Reduced font size and padding */}
-                <Link href={ROUTES.DASHBOARD_COMPANY_POST_PROJECT}> <FolderPlus className="mr-2 h-4 w-4" /> Pubblica Progetto</Link>
-              </Button>
+              <Link href={ROUTES.DASHBOARD_COMPANY_POST_PROJECT} passHref legacyBehavior>
+                <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground text-sm py-1.5 px-3">
+                  <a className="flex items-center">
+                    <FolderPlus className="mr-2 h-4 w-4" /> Pubblica Progetto
+                  </a>
+                </Button>
+              </Link>
             </div>
           </div>
           <div className="relative h-40 rounded-lg overflow-hidden"> {/* Reduced image height to h-40 */}
