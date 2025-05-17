@@ -73,7 +73,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   return (
-    <SidebarProvider defaultOpen> {/* defaultOpen is true by default in SidebarProvider */}
+    <SidebarProvider defaultOpen> 
       <Sidebar collapsible="icon" className="border-r">
         <SidebarHeader
           className="px-4"
@@ -92,7 +92,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     tooltip={{children: item.label, side: 'right', align: 'center'}}
                   >
                     <item.icon className="h-5 w-5" />
-                    {/* Corrected class: hide label only when the parent 'group' (Sidebar) has data-state="collapsed" */}
                     <span className="group-data-[state=collapsed]:hidden">{item.label}</span>
                   </SidebarMenuButton>
                 </Link>
@@ -127,7 +126,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <SidebarInset
         style={{ marginTop: `var(--main-content-area-margin-top, ${NAVBAR_HEIGHT_CSS_VAR_VALUE})` }}
       >
-        <div className="px-4 md:px-6 lg:px-8 pt-0 pb-8">
+        <div className="px-4 md:px-6 lg:px-8 pt-0 pb-4"> {/* Reduced pb-8 to pb-4 */}
          {children}
         </div>
       </SidebarInset>

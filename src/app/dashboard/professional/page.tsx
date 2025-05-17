@@ -25,14 +25,14 @@ export default function ProfessionalDashboardPage() {
 
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4"> {/* Reduced space-y */}
       <Card className="bg-gradient-to-r from-primary/10 via-background to-secondary/10 shadow-md">
         <CardHeader className="pb-2">
           <CardTitle className="text-3xl font-bold text-primary">Ciao, {userProfile.firstName || userProfile.displayName}!</CardTitle>
           <CardDescription className="text-lg">Benvenuto nella tua dashboard BIMatch. Qui puoi gestire il tuo profilo e trovare nuove opportunità.</CardDescription>
         </CardHeader>
         {!isProfileComplete && (
-          <CardContent className="pt-0 pb-4">
+          <CardContent className="pt-0 pb-4"> {/* Compacted padding */}
              <div className="bg-secondary border-l-4 border-primary text-secondary-foreground p-4 rounded-md" role="alert">
                 <p className="font-bold">Completa il tuo profilo!</p>
                 <p>Un profilo completo aumenta le tue possibilità di trovare il progetto giusto. <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROFILE} className="font-semibold underline hover:text-primary">Aggiorna ora</Link>.</p>
@@ -47,7 +47,7 @@ export default function ProfessionalDashboardPage() {
             <CardTitle className="text-sm font-medium">Progetti Compatibili</CardTitle>
             <Search className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-1 pb-3 px-4"> {/* Compacted padding */}
             <div className="text-2xl font-bold">{projectMatchesCount}</div>
             <p className="text-xs text-muted-foreground">
               Progetti che corrispondono alle tue competenze.
@@ -63,7 +63,7 @@ export default function ProfessionalDashboardPage() {
             <CardTitle className="text-sm font-medium">Il Mio Profilo</CardTitle>
             <User className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-1 pb-3 px-4"> {/* Compacted padding */}
             <div className="text-2xl font-bold">{isProfileComplete ? "Completo" : "Incompleto"}</div>
             <p className="text-xs text-muted-foreground">
               Mantieni il tuo profilo aggiornato.
@@ -79,7 +79,7 @@ export default function ProfessionalDashboardPage() {
             <CardTitle className="text-sm font-medium">Notifiche</CardTitle>
             <Bell className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-1 pb-3 px-4"> {/* Compacted padding */}
             <div className="text-2xl font-bold">{newNotificationsCount}</div>
             <p className="text-xs text-muted-foreground">
               Nuovi messaggi o aggiornamenti.
@@ -96,7 +96,7 @@ export default function ProfessionalDashboardPage() {
           <CardTitle>Potenzia la tua carriera BIM</CardTitle>
           <CardDescription>Scopri come BIMatch può aiutarti a crescere professionalmente.</CardDescription>
         </CardHeader>
-        <CardContent className="grid md:grid-cols-2 gap-6 items-center p-4 pt-2">
+        <CardContent className="grid md:grid-cols-2 gap-6 items-center p-3 pt-1"> {/* Compacted padding */}
           <div>
             <p className="mb-4 text-foreground/90">
               Con BIMatch, hai accesso a una vasta rete di aziende leader nel settore edilizio italiano. 
@@ -111,7 +111,7 @@ export default function ProfessionalDashboardPage() {
               <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS}>Esplora Opportunità</Link>
             </Button>
           </div>
-          <div className="relative h-64 rounded-lg overflow-hidden">
+          <div className="relative h-52 rounded-lg overflow-hidden"> {/* Reduced image height */}
             <Image 
               src="https://images.unsplash.com/photo-1612888262725-6b300edf916c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHwzRCUyME1vZGVsaW5nfGVufDB8fHx8MTc0NzQxMTMyOXww&ixlib=rb-4.1.0&q=80&w=1080" 
               alt="BIM professional working" 

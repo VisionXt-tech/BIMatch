@@ -25,14 +25,14 @@ export default function CompanyDashboardPage() {
   const isProfileComplete = userProfile.companyDescription && userProfile.industry;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4"> {/* Reduced space-y */}
       <Card className="bg-gradient-to-r from-primary/10 via-background to-primary/10 shadow-md">
         <CardHeader className="pb-2">
           <CardTitle className="text-3xl font-bold text-primary">Benvenuta, {userProfile.companyName || userProfile.displayName}!</CardTitle>
           <CardDescription className="text-lg">Gestisci i tuoi progetti BIM e trova i migliori talenti sulla tua dashboard BIMatch.</CardDescription>
         </CardHeader>
          {!isProfileComplete && (
-          <CardContent className="pt-0 pb-4">
+          <CardContent className="pt-0 pb-4"> {/* Compacted padding */}
              <div className="bg-secondary border-l-4 border-primary text-secondary-foreground p-4 rounded-md" role="alert">
                 <p className="font-bold">Completa il profilo aziendale!</p>
                 <p>Un profilo dettagliato attira i migliori professionisti. <Link href={ROUTES.DASHBOARD_COMPANY_PROFILE} className="font-semibold underline hover:text-primary">Aggiorna ora</Link>.</p>
@@ -47,7 +47,7 @@ export default function CompanyDashboardPage() {
             <CardTitle className="text-sm font-medium">Progetti Attivi</CardTitle>
             <Briefcase className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-1 pb-3 px-4"> {/* Compacted padding */}
             <div className="text-2xl font-bold">{activeProjectsCount}</div>
             <p className="text-xs text-muted-foreground">
               Progetti BIM attualmente pubblicati.
@@ -63,7 +63,7 @@ export default function CompanyDashboardPage() {
             <CardTitle className="text-sm font-medium">Nuovi Candidati</CardTitle>
             <Users className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-1 pb-3 px-4"> {/* Compacted padding */}
             <div className="text-2xl font-bold">{newCandidatesCount}</div>
             <p className="text-xs text-muted-foreground">
               Professionisti interessati ai tuoi progetti.
@@ -80,7 +80,7 @@ export default function CompanyDashboardPage() {
             <CardTitle className="text-sm font-medium">Profilo Azienda</CardTitle>
             <Building className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-1 pb-3 px-4"> {/* Compacted padding */}
             <div className="text-2xl font-bold">{isProfileComplete ? "Completo" : "Incompleto"}</div>
             <p className="text-xs text-muted-foreground">
               Mantieni il profilo della tua azienda aggiornato.
@@ -97,10 +97,10 @@ export default function CompanyDashboardPage() {
           <CardTitle>Trova il Talento BIM Perfetto</CardTitle>
           <CardDescription>Pubblica i tuoi progetti e connettiti con professionisti qualificati in tutta Italia.</CardDescription>
         </CardHeader>
-        <CardContent className="grid md:grid-cols-2 gap-6 items-center p-4 pt-2">
+        <CardContent className="grid md:grid-cols-2 gap-6 items-center p-3 pt-1"> {/* Compacted padding */}
            <div>
             <p className="mb-4 text-foreground/90">
-              BIMatch semplifica la ricerca di personale BIM qualificato. Descrivi i requisiti del tuo progetto o esplora il nostro database di professionisti.
+              BIMatch semplifica la ricerca di personale BIM qualificato. Descrivi i requisiti del tuo progetto.
             </p>
             <ul className="list-disc list-inside space-y-2 mb-4 text-foreground/80">
               <li>Pubblica offerte di progetto dettagliate.</li>
@@ -113,7 +113,7 @@ export default function CompanyDashboardPage() {
               </Button>
             </div>
           </div>
-          <div className="relative h-64 rounded-lg overflow-hidden">
+          <div className="relative h-52 rounded-lg overflow-hidden"> {/* Reduced image height */}
             <Image 
               src="https://images.unsplash.com/photo-1744627049721-73c27008ad28?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxCSU18ZW58MHx8fHwxNzQ3NDEyNDUxfDA&ixlib=rb-4.1.0&q=80&w=1080" 
               alt="Team working on BIM project" 
