@@ -38,16 +38,16 @@ const professionalProfileSchema = z.object({
   linkedInProfile: z.string().url({message: 'Inserisci un URL valido per LinkedIn.'}).optional().or(z.literal('')),
   hourlyRate: z.preprocess(
     (val) => {
-      if (val === "" || val === null || val === undefined) return undefined;
+      if (val === "" || val === null || val === undefined) return undefined; // Allow empty or null to be treated as undefined
       const strVal = String(val).trim();
-      if (strVal === "") return undefined; 
+      if (strVal === "") return undefined; // If string is empty after trim, treat as undefined
       const num = Number(strVal);
-      return isNaN(num) ? strVal : num; 
+      return isNaN(num) ? strVal : num; // Return original string if not a number, for Zod to catch as invalid_type
     },
     z.number({invalid_type_error: 'La tariffa oraria deve essere un numero valido.'})
       .positive({ message: 'La tariffa oraria deve essere un numero positivo.' })
       .optional()
-      .nullable()
+      .nullable() // Allow null to pass validation (will be converted to undefined by preprocess if null)
   ),
 });
 
@@ -112,7 +112,6 @@ export default function ProfessionalProfilePage() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
-      console.log("Profile image selected:", file.name, "Size:", file.size, "Type:", file.type); // Log file details
       if (!file.type.startsWith('image/')) {
           toast({ title: "Formato File Non Valido", description: "Seleziona un file immagine (es. JPG, PNG, WEBP).", variant: "destructive"});
           event.target.value = ''; 
@@ -125,7 +124,7 @@ export default function ProfessionalProfilePage() {
       }
       if (file.size === 0) {
         toast({ title: "File Vuoto", description: "Il file selezionato è vuoto e non può essere caricato.", variant: "destructive" });
-        event.target.value = ''; // Reset file input
+        event.target.value = ''; 
         return;
       }
       setProfileImageFile(file);
@@ -148,7 +147,6 @@ export default function ProfessionalProfilePage() {
     let photoURLToUpdate = userProfile.photoURL || '';
 
     if (profileImageFile && storage) {
-      console.log("Starting profile image upload. Storage instance:", storage ? 'Exists' : 'Missing');
       const filePath = `profileImages/${user.uid}/${Date.now()}_${profileImageFile.name}`;
       const fileRef = storageRef(storage, filePath);
       const uploadTask = uploadBytesResumable(fileRef, profileImageFile);
@@ -161,30 +159,20 @@ export default function ProfessionalProfilePage() {
               const progressPercentage = snapshot.totalBytes > 0
                 ? (snapshot.bytesTransferred / snapshot.totalBytes) * 100
                 : 0;
-
-              console.log('[PROFILE_IMAGE_UPLOAD_PROGRESS]', {
-                state: snapshot.state,
-                bytesTransferred: snapshot.bytesTransferred,
-                totalBytes: snapshot.totalBytes,
-                calculatedProgress: progressPercentage,
-              });
               setUploadProgress(progressPercentage);
             },
             (error: any) => { 
-              console.error('Firebase Storage profile image upload error (state_changed listener):', error);
+              console.error('Firebase Storage profile image upload error:', error);
               let userFriendlyMessage = "Errore durante il caricamento dell'immagine.";
               switch (error.code) {
                 case 'storage/unauthorized':
-                  userFriendlyMessage = "Non hai i permessi per caricare questo file. Controlla le regole di Firebase Storage.";
+                  userFriendlyMessage = "Non hai i permessi per caricare questo file.";
                   break;
                 case 'storage/canceled':
                   userFriendlyMessage = "Caricamento annullato.";
                   break;
-                case 'storage/unknown':
-                  userFriendlyMessage = "Errore sconosciuto durante il caricamento. Riprova o controlla la console per dettagli.";
-                  break;
                 default:
-                   userFriendlyMessage = `Errore caricamento: ${error.message || 'Vedi console per dettagli.'}`;
+                   userFriendlyMessage = `Errore caricamento: ${error.message || 'Vedi console.'}`;
               }
               toast({ title: "Errore Caricamento Immagine", description: userFriendlyMessage, variant: "destructive" });
               setIsUploading(false); 
@@ -212,8 +200,6 @@ export default function ProfessionalProfilePage() {
           setUploadProgress(null);
           return; 
       }
-    } else {
-       console.log("Skipping profile image upload. profileImageFile:", profileImageFile, "Storage instance:", storage ? 'Exists' : 'Missing');
     }
 
 
@@ -257,9 +243,9 @@ export default function ProfessionalProfilePage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <Card className="shadow-xl">
-        <CardHeader>
+        <CardHeader className="p-4">
           <div className="flex items-center space-x-3">
             <UserCircle2 className="h-8 w-8 text-primary" />
             <div>
@@ -268,9 +254,9 @@ export default function ProfessionalProfilePage() {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 pt-0">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormItem>
                 <FormLabel>Immagine del Profilo</FormLabel>
                 <div className="flex items-center space-x-4 mt-2">
@@ -300,7 +286,7 @@ export default function ProfessionalProfilePage() {
                 <FormMessage />
               </FormItem>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormInput control={form.control} name="firstName" label="Nome" placeholder="Mario" />
                 <FormInput control={form.control} name="lastName" label="Cognome" placeholder="Rossi" />
               </div>
@@ -330,7 +316,7 @@ export default function ProfessionalProfilePage() {
                 options={SOFTWARE_PROFICIENCY_OPTIONS}
                 placeholder="Indica i software che conosci"
               />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormSingleSelect
                   control={form.control}
                   name="availability"
@@ -347,12 +333,12 @@ export default function ProfessionalProfilePage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormInput control={form.control} name="portfolioUrl" label="Link al Portfolio (Opzionale)" placeholder="https://tuo.portfolio.com" />
                 <FormInput control={form.control} name="cvUrl" label="Link al CV (Opzionale)" placeholder="Link a Google Drive, Dropbox, etc." description="Assicurati che il link sia accessibile." />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormInput control={form.control} name="linkedInProfile" label="Profilo LinkedIn (Opzionale)" placeholder="https://linkedin.com/in/tuoprofilo" />
                  <FormItem>
                   <FormLabel>Tariffa Oraria Indicativa (€) (Opzionale)</FormLabel>
