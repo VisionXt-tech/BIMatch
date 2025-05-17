@@ -10,7 +10,7 @@ import { ArrowRight } from 'lucide-react';
 const initialTalentWords = ["Talenti", "Professionisti", "Esperti", "Innovatori", "Specialisti", "Consulenti"];
 
 export default function HomePage() {
-  const [talentWords, setTalentWords] = useState(initialTalentWords);
+  const [talentWords] = useState(initialTalentWords);
   const [currentTalentWord, setCurrentTalentWord] = useState(talentWords[0]);
   const [talentIndex, setTalentIndex] = useState(0);
 
@@ -36,7 +36,7 @@ export default function HomePage() {
           <Button
             variant="ghost"
             className="inline-block align-baseline text-center
-                       w-48 sm:w-52 md:w-64 lg:w-72 
+                       w-48 sm:w-52 md:w-60 lg:w-72
                        h-auto 
                        px-3 py-2 
                        text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight
@@ -64,13 +64,14 @@ export default function HomePage() {
           <Button
             asChild
             size="lg"
-            className="bg-primary hover:bg-primary/90 text-primary-foreground group text-base md:text-lg 
-                       py-3 px-6 md:py-4 md:px-8 
-                       transform hover:scale-[1.03] transition-transform duration-300 shadow-md rounded-lg w-full sm:w-auto"
+            variant="ghost" // Changed variant
+            className="border border-primary hover:border-accent group text-base md:text-lg py-3 px-6 md:py-4 md:px-8 transform hover:scale-[1.03] transition-transform duration-300 shadow-md rounded-lg w-full sm:w-auto" // Added border, hover:border-accent and removed bg/text classes
           >
-            <Link href={ROUTES.LOGIN}> {/* Changed from ROUTES.REGISTER_PROFESSIONAL */}
-              Sei un Professionista?
-              <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+            <Link href={ROUTES.LOGIN} className="flex items-center justify-center"> {/* Ensure content inside Link is centered */}
+              <span className="flex items-center bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 bg-clip-text text-transparent group-hover:from-teal-400 group-hover:via-cyan-400 group-hover:to-sky-400">
+                Sei un Professionista?
+                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </span>
             </Link>
           </Button>
 
@@ -78,12 +79,9 @@ export default function HomePage() {
             asChild
             size="lg"
             variant="outline"
-            className="text-primary border-primary hover:bg-primary hover:text-primary-foreground
-                       group text-base md:text-lg 
-                       py-3 px-6 md:py-4 md:px-8 
-                       transform hover:scale-[1.03] transition-transform duration-300 shadow-md rounded-lg w-full sm:w-auto"
+            className="text-primary border-primary hover:bg-primary hover:text-primary-foreground group text-base md:text-lg py-3 px-6 md:py-4 md:px-8 transform hover:scale-[1.03] transition-transform duration-300 shadow-md rounded-lg w-full sm:w-auto"
           >
-            <Link href={ROUTES.LOGIN}> {/* Changed from ROUTES.REGISTER_COMPANY */}
+            <Link href={ROUTES.LOGIN}>
               Sei un'Azienda?
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Link>
