@@ -70,10 +70,10 @@ export default function CompanyDashboardPage() {
             <p className="text-xs text-muted-foreground">
               Professionisti interessati ai tuoi progetti.
             </p>
-            <Link href={ROUTES.DASHBOARD_COMPANY_PROJECTS} passHref legacyBehavior> {/* Assuming this links to projects to see candidates */}
-              <Button variant="link" asChild className="px-0 pt-1 text-primary text-xs">
-                <a>Visualizza Candidati</a>
-              </Button>
+            <Link href={ROUTES.DASHBOARD_COMPANY_PROJECTS} passHref legacyBehavior>
+               <a className="px-0 pt-1 text-primary text-xs underline-offset-4 hover:underline">
+                Visualizza Candidati
+              </a>
             </Link>
           </CardContent>
         </Card>
