@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -64,10 +63,10 @@ export default function HomePage() {
           <Button
             asChild
             size="lg"
-            variant="ghost" // Changed variant
-            className="border border-primary hover:border-accent group text-base md:text-lg py-3 px-6 md:py-4 md:px-8 transform hover:scale-[1.03] transition-transform duration-300 shadow-md rounded-lg w-full sm:w-auto" // Added border, hover:border-accent and removed bg/text classes
+            variant="ghost" 
+            className="border border-primary hover:bg-primary/10 group text-base md:text-lg py-3 px-6 md:py-4 md:px-8 transform hover:scale-[1.03] transition-transform duration-300 shadow-md rounded-lg w-full sm:w-auto"
           >
-            <Link href={ROUTES.LOGIN} className="flex items-center justify-center"> {/* Ensure content inside Link is centered */}
+            <Link href={ROUTES.LOGIN}>
               <span className="flex items-center bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 bg-clip-text text-transparent group-hover:from-teal-400 group-hover:via-cyan-400 group-hover:to-sky-400">
                 Sei un Professionista?
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -78,8 +77,8 @@ export default function HomePage() {
           <Button
             asChild
             size="lg"
-            variant="outline"
-            className="text-primary border-primary hover:bg-primary hover:text-primary-foreground group text-base md:text-lg py-3 px-6 md:py-4 md:px-8 transform hover:scale-[1.03] transition-transform duration-300 shadow-md rounded-lg w-full sm:w-auto"
+            variant="default" // Changed to default for primary solid style
+            className="text-base md:text-lg py-3 px-6 md:py-4 md:px-8 transform hover:scale-[1.03] transition-transform duration-300 shadow-md rounded-lg w-full sm:w-auto group" // Removed specific border/text color, hover:bg-primary/90 will be applied by variant="default"
           >
             <Link href={ROUTES.LOGIN}>
               Sei un'Azienda?
