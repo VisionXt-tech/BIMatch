@@ -122,20 +122,16 @@ const SidebarProvider = React.forwardRef<
         const root = document.documentElement;
         let currentSidebarActualWidth = "0rem";
         let mainContentMarginLeft = "0rem";
-        let navbarContentPaddingLeft = PAGE_CONTENT_PADDING;
-        let mainContentAreaMarginTop = NAVBAR_HEIGHT_CSS_VAR_VALUE; // For main content area
-        let sidebarHeaderPaddingTop = NAVBAR_HEIGHT_CSS_VAR_VALUE; // For sidebar header to clear global navbar
+        let navbarContentPaddingLeft = PAGE_CONTENT_PADDING; // Default for non-dashboard or mobile
+        let mainContentAreaMarginTop = NAVBAR_HEIGHT_CSS_VAR_VALUE;
+        let sidebarHeaderPaddingTop = NAVBAR_HEIGHT_CSS_VAR_VALUE;
 
 
         if (!isMobile) {
             currentSidebarActualWidth = open ? SIDEBAR_WIDTH : SIDEBAR_WIDTH_ICON;
             mainContentMarginLeft = currentSidebarActualWidth;
+            // Navbar padding should be the sidebar width + the desired gap/padding for the content area
             navbarContentPaddingLeft = `calc(${currentSidebarActualWidth} + ${PAGE_CONTENT_PADDING})`;
-        } else {
-            // On mobile, the sidebar is an overlay, so main content doesn't shift
-            // and navbar padding is standard.
-            mainContentMarginLeft = "0rem";
-            navbarContentPaddingLeft = PAGE_CONTENT_PADDING;
         }
         
         root.style.setProperty("--sidebar-actual-width", currentSidebarActualWidth);
@@ -285,7 +281,7 @@ const Sidebar = React.forwardRef<
         {...props}
       >
         <div
-          data-sidebar="sidebar"
+          data-sidebar="sidebar" // Not a Tailwind group
           className={cn(
             "flex h-full w-full flex-col bg-sidebar",
              variant === "floating" && "m-2 rounded-lg border border-sidebar-border shadow w-[calc(100%-1rem)]"
@@ -363,8 +359,9 @@ const SidebarInset = React.forwardRef<
       ref={ref}
       className={cn(
         "relative flex min-h-svh flex-1 flex-col bg-background",
-        "md:ml-[var(--main-content-area-margin-left,0px)] transition-[margin-left] duration-200 ease-linear",
-        className
+        "transition-[margin-left] duration-200 ease-linear", // Ensure transition is applied
+        "md:ml-[var(--main-content-area-margin-left,0px)]" // Use CSS var for margin
+        ,className
       )}
       {...props}
     />
@@ -551,7 +548,7 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+  "peer/menu-button flex w-full items-center gap-2 rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[state=collapsed]:!size-8 group-data-[state=collapsed]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
   {
     variants: {
       variant: {
