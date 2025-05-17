@@ -29,8 +29,7 @@ const CompanyNavItems = [
   { href: ROUTES.PROFESSIONALS_MARKETPLACE, label: 'Cerca Professionisti', icon: Users },
 ];
 
-// This constant defines the expected height of the global Navbar.
-// It's used to set CSS variables that other components can consume for correct vertical offsetting.
+// These CSS variables are set by SidebarProvider and consumed by Navbar and SidebarInset
 const NAVBAR_HEIGHT_CSS_VAR_VALUE = "4rem"; // Assumes Navbar is h-16 (64px)
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
@@ -43,7 +42,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     }
   }, [user, loading, router]);
 
-  // Display a loading indicator while auth state is being determined
   if (loading || !user || !userProfile) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
@@ -74,16 +72,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     router.push(ROUTES.HOME);
   };
 
-  // SidebarProvider must wrap all components that use the useSidebar hook.
   return (
-    <SidebarProvider defaultOpen>
+    <SidebarProvider defaultOpen> {/* defaultOpen is true by default in SidebarProvider */}
       <Sidebar collapsible="icon" className="border-r">
         <SidebarHeader
           className="px-4"
-          // Uses CSS variable set by SidebarProvider, falling back to Navbar height
           style={{ paddingTop: `var(--sidebar-header-padding-top, ${NAVBAR_HEIGHT_CSS_VAR_VALUE})` }}
         >
-          {/* Logo and SidebarTrigger were removed as per previous requests */}
+          {/* Logo and SidebarTrigger were removed */}
         </SidebarHeader>
 
         <SidebarContent>
@@ -96,7 +92,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     tooltip={{children: item.label, side: 'right', align: 'center'}}
                   >
                     <item.icon className="h-5 w-5" />
-                    <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                    {/* Corrected class: hide label only when the parent 'group' (Sidebar) has data-state="collapsed" */}
+                    <span className="group-data-[state=collapsed]:hidden">{item.label}</span>
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
@@ -107,12 +104,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <SidebarSeparator />
 
         <SidebarFooter className="p-2">
-           <div className="flex items-center p-2 space-x-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:space-x-0">
-              <Avatar className="h-9 w-9 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8">
+           <div className="flex items-center p-2 space-x-3 group-data-[state=collapsed]:justify-center group-data-[state=collapsed]:p-0 group-data-[state=collapsed]:space-x-0">
+              <Avatar className="h-9 w-9 group-data-[state=collapsed]:h-8 group-data-[state=collapsed]:w-8">
                 <AvatarImage src={userProfile.photoURL || user.photoURL || undefined} alt={userProfile.displayName || 'User'} />
                 <AvatarFallback>{getInitials(userProfile.displayName)}</AvatarFallback>
               </Avatar>
-              <div className="group-data-[collapsible=icon]:hidden">
+              <div className="group-data-[state=collapsed]:hidden">
                 <p className="text-sm font-medium text-sidebar-foreground truncate">{userProfile.displayName}</p>
                 <p className="text-xs text-sidebar-foreground/70 truncate">{userProfile.email}</p>
               </div>
@@ -121,14 +118,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <SidebarMenuItem>
               <SidebarMenuButton onClick={handleLogout} tooltip={{children: "Logout", side: 'right', align: 'center'}}>
                 <LogOut className="h-5 w-5" />
-                <span className="group-data-[collapsible=icon]:hidden">Logout</span>
+                <span className="group-data-[state=collapsed]:hidden">Logout</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset
-        // Uses CSS variable set by SidebarProvider for margin-top, falling back to Navbar height
         style={{ marginTop: `var(--main-content-area-margin-top, ${NAVBAR_HEIGHT_CSS_VAR_VALUE})` }}
       >
         <div className="px-4 md:px-6 lg:px-8 pt-0 pb-8">
