@@ -29,9 +29,9 @@ const CompanyNavItems = [
   { href: ROUTES.PROFESSIONALS_MARKETPLACE, label: 'Cerca Professionisti', icon: Users },
 ];
 
-// Approximate height of the global Navbar, used for offsetting content.
-// Corresponds to h-16 in Tailwind or a similar fixed height.
-const NAVBAR_HEIGHT_CSS_VAR_VALUE = "4rem"; 
+// This constant defines the expected height of the global Navbar.
+// It's used to set CSS variables that other components can consume for correct vertical offsetting.
+const NAVBAR_HEIGHT_CSS_VAR_VALUE = "4rem"; // Assumes Navbar is h-16 (64px)
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, userProfile, loading, logout } = useAuth();
@@ -42,7 +42,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       router.push(ROUTES.LOGIN);
     }
   }, [user, loading, router]);
-  
+
+  // Display a loading indicator while auth state is being determined
   if (loading || !user || !userProfile) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
@@ -58,7 +59,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   const navItems = userProfile.role === ROLES.PROFESSIONAL ? ProfessionalNavItems : CompanyNavItems;
-  
+
   const getInitials = (name: string | null | undefined) => {
     if (!name) return 'B';
     const names = name.split(' ');
@@ -73,22 +74,24 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     router.push(ROUTES.HOME);
   };
 
+  // SidebarProvider must wrap all components that use the useSidebar hook.
   return (
     <SidebarProvider defaultOpen>
       <Sidebar collapsible="icon" className="border-r">
-        <SidebarHeader 
-          className="px-4" 
+        <SidebarHeader
+          className="px-4"
+          // Uses CSS variable set by SidebarProvider, falling back to Navbar height
           style={{ paddingTop: `var(--sidebar-header-padding-top, ${NAVBAR_HEIGHT_CSS_VAR_VALUE})` }}
         >
-          {/* Logo and SidebarTrigger were removed in previous steps and are intentionally left out */}
+          {/* Logo and SidebarTrigger were removed as per previous requests */}
         </SidebarHeader>
-        
+
         <SidebarContent>
           <SidebarMenu>
             {navItems.map((item) => (
               <SidebarMenuItem key={item.href}>
                 <Link href={item.href} passHref legacyBehavior>
-                  <SidebarMenuButton 
+                  <SidebarMenuButton
                     isActive={router.pathname === item.href}
                     tooltip={{children: item.label, side: 'right', align: 'center'}}
                   >
@@ -102,7 +105,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </SidebarContent>
 
         <SidebarSeparator />
-        
+
         <SidebarFooter className="p-2">
            <div className="flex items-center p-2 space-x-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:space-x-0">
               <Avatar className="h-9 w-9 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8">
@@ -124,7 +127,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
-      <SidebarInset style={{ marginTop: `var(--main-content-area-margin-top, ${NAVBAR_HEIGHT_CSS_VAR_VALUE})` }}>
+      <SidebarInset
+        // Uses CSS variable set by SidebarProvider for margin-top, falling back to Navbar height
+        style={{ marginTop: `var(--main-content-area-margin-top, ${NAVBAR_HEIGHT_CSS_VAR_VALUE})` }}
+      >
         <div className="px-4 md:px-6 lg:px-8 pt-0 pb-8">
          {children}
         </div>
