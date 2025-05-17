@@ -25,8 +25,13 @@ const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
 const SIDEBAR_WIDTH = "16rem" // 256px
 const SIDEBAR_WIDTH_MOBILE = "18rem" // 288px
 const SIDEBAR_WIDTH_ICON = "3rem" // 48px
-const PAGE_CONTENT_PADDING = "1rem"; // Standard page padding (e.g., px-4)
+const PAGE_CONTENT_PADDING = "1rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
+
+// This constant defines the expected height of the global Navbar.
+// It's used to set CSS variables that other components can consume for correct vertical offsetting.
+const NAVBAR_HEIGHT_CSS_VAR_VALUE = "4rem"; // Assumes Navbar is h-16 (64px)
+
 
 type SidebarContext = {
   state: "expanded" | "collapsed"
@@ -73,7 +78,7 @@ const SidebarProvider = React.forwardRef<
     const [openMobile, setOpenMobile] = React.useState(false)
 
     const [_open, _setOpen] = React.useState(defaultOpen)
-    const open = openProp ?? _open // Desktop sidebar state
+    const open = openProp ?? _open
     const setOpen = React.useCallback(
       (value: boolean | ((value: boolean) => boolean)) => {
         const openState = typeof value === "function" ? value(open) : value
@@ -82,7 +87,9 @@ const SidebarProvider = React.forwardRef<
         } else {
           _setOpen(openState)
         }
-        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+        if (typeof document !== 'undefined') {
+            document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+        }
       },
       [setOpenProp, open]
     )
@@ -94,6 +101,7 @@ const SidebarProvider = React.forwardRef<
     }, [isMobile, setOpen, setOpenMobile])
 
     React.useEffect(() => {
+      if (typeof window === 'undefined') return;
       const handleKeyDown = (event: KeyboardEvent) => {
         if (
           event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
@@ -110,42 +118,55 @@ const SidebarProvider = React.forwardRef<
     const state = open ? "expanded" : "collapsed"
 
     React.useEffect(() => {
-      const root = document.documentElement;
-      let currentSidebarActualWidth = "0rem";
-      let mainContentMarginLeft = "0rem";
-      let navbarContentPaddingLeft = PAGE_CONTENT_PADDING; // e.g., "1rem"
+        if (typeof document === 'undefined') return;
+        const root = document.documentElement;
+        let currentSidebarActualWidth = "0rem";
+        let mainContentMarginLeft = "0rem";
+        let navbarContentPaddingLeft = PAGE_CONTENT_PADDING;
+        let mainContentAreaMarginTop = NAVBAR_HEIGHT_CSS_VAR_VALUE; // For main content area
+        let sidebarHeaderPaddingTop = NAVBAR_HEIGHT_CSS_VAR_VALUE; // For sidebar header to clear global navbar
 
-      if (!isMobile) {
-        currentSidebarActualWidth = open ? SIDEBAR_WIDTH : SIDEBAR_WIDTH_ICON;
-        mainContentMarginLeft = currentSidebarActualWidth;
-        navbarContentPaddingLeft = `calc(${currentSidebarActualWidth} + ${PAGE_CONTENT_PADDING})`;
-      }
-      
-      root.style.setProperty("--sidebar-actual-width", currentSidebarActualWidth);
-      root.style.setProperty("--main-content-area-margin-left", mainContentMarginLeft);
-      root.style.setProperty("--navbar-content-padding-left", navbarContentPaddingLeft);
-      
-      // For body classes if still needed elsewhere, though CSS vars are now primary
-      const sidebarOpenClass = "body-sidebar-expanded";
-      const sidebarClosedClass = "body-sidebar-collapsed";
-      if (isMobile) {
-        document.body.classList.remove(sidebarOpenClass, sidebarClosedClass);
-      } else {
-        if (open) {
-          document.body.classList.add(sidebarOpenClass);
-          document.body.classList.remove(sidebarClosedClass);
+
+        if (!isMobile) {
+            currentSidebarActualWidth = open ? SIDEBAR_WIDTH : SIDEBAR_WIDTH_ICON;
+            mainContentMarginLeft = currentSidebarActualWidth;
+            navbarContentPaddingLeft = `calc(${currentSidebarActualWidth} + ${PAGE_CONTENT_PADDING})`;
         } else {
-          document.body.classList.add(sidebarClosedClass);
-          document.body.classList.remove(sidebarOpenClass);
+            // On mobile, the sidebar is an overlay, so main content doesn't shift
+            // and navbar padding is standard.
+            mainContentMarginLeft = "0rem";
+            navbarContentPaddingLeft = PAGE_CONTENT_PADDING;
         }
-      }
+        
+        root.style.setProperty("--sidebar-actual-width", currentSidebarActualWidth);
+        root.style.setProperty("--main-content-area-margin-left", mainContentMarginLeft);
+        root.style.setProperty("--navbar-content-padding-left", navbarContentPaddingLeft);
+        root.style.setProperty("--main-content-area-margin-top", mainContentAreaMarginTop);
+        root.style.setProperty("--sidebar-header-padding-top", sidebarHeaderPaddingTop);
 
-      return () => {
-        root.style.removeProperty("--sidebar-actual-width");
-        root.style.removeProperty("--main-content-area-margin-left");
-        root.style.removeProperty("--navbar-content-padding-left");
-        document.body.classList.remove(sidebarOpenClass, sidebarClosedClass);
-      };
+
+        const sidebarOpenClass = "body-sidebar-expanded";
+        const sidebarClosedClass = "body-sidebar-collapsed";
+        if (isMobile) {
+            document.body.classList.remove(sidebarOpenClass, sidebarClosedClass);
+        } else {
+            if (open) {
+            document.body.classList.add(sidebarOpenClass);
+            document.body.classList.remove(sidebarClosedClass);
+            } else {
+            document.body.classList.add(sidebarClosedClass);
+            document.body.classList.remove(sidebarOpenClass);
+            }
+        }
+
+        return () => {
+            root.style.removeProperty("--sidebar-actual-width");
+            root.style.removeProperty("--main-content-area-margin-left");
+            root.style.removeProperty("--navbar-content-padding-left");
+            root.style.removeProperty("--main-content-area-margin-top");
+            root.style.removeProperty("--sidebar-header-padding-top");
+            document.body.classList.remove(sidebarOpenClass, sidebarClosedClass);
+        };
     }, [open, isMobile]);
 
 
@@ -164,23 +185,25 @@ const SidebarProvider = React.forwardRef<
 
     return (
       <TooltipProvider delayDuration={0}>
-        <div
-          style={
-            {
-              "--sidebar-width": SIDEBAR_WIDTH, // Still useful for internal sidebar styles
-              "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
-              ...style,
-            } as React.CSSProperties
-          }
-          className={cn(
-            "group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar",
-            className
-          )}
-          ref={ref}
-          {...props}
-        >
-          {children}
-        </div>
+        <SidebarContext.Provider value={contextValue}>
+          <div
+            style={
+              {
+                "--sidebar-width": SIDEBAR_WIDTH,
+                "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
+                ...style,
+              } as React.CSSProperties
+            }
+            className={cn(
+              "group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar",
+              className
+            )}
+            ref={ref}
+            {...props}
+          >
+            {children}
+          </div>
+        </SidebarContext.Provider>
       </TooltipProvider>
     )
   }
@@ -199,7 +222,7 @@ const Sidebar = React.forwardRef<
     {
       side = "left",
       variant = "sidebar",
-      collapsible = "icon", // Defaulting to icon collapsible
+      collapsible = "icon",
       className,
       children,
       ...props
@@ -208,13 +231,13 @@ const Sidebar = React.forwardRef<
   ) => {
     const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
 
-    if (collapsible === "none" && !isMobile) { // collapsible="none" only for desktop
+    if (collapsible === "none" && !isMobile) {
       return (
         <div
           className={cn(
             "flex h-full flex-col bg-sidebar text-sidebar-foreground fixed inset-y-0 z-10",
             side === "left" ? "left-0 border-r" : "right-0 border-l",
-            "w-[var(--sidebar-width)]", // Use CSS variable for width
+            "w-[var(--sidebar-width)]",
             className
           )}
           ref={ref}
@@ -245,7 +268,6 @@ const Sidebar = React.forwardRef<
       )
     }
 
-    // Desktop collapsible sidebar (icon or offcanvas)
     return (
       <div
         ref={ref}
@@ -253,7 +275,7 @@ const Sidebar = React.forwardRef<
           "group hidden md:block text-sidebar-foreground fixed inset-y-0 z-10 h-svh transition-[width] duration-200 ease-linear",
            side === "left" ? "left-0 border-r" : "right-0 border-l",
            state === "expanded" ? "w-[var(--sidebar-width)]" : "w-[var(--sidebar-width-icon)]",
-           collapsible === "offcanvas" && state === "collapsed" && (side === "left" ? "-left-[var(--sidebar-width)]" : "-right-[var(--sidebar-width)]"), // Hides offcanvas
+           collapsible === "offcanvas" && state === "collapsed" && (side === "left" ? "-left-[var(--sidebar-width)]" : "-right-[var(--sidebar-width)]"),
            className
         )}
         data-state={state}
@@ -266,7 +288,7 @@ const Sidebar = React.forwardRef<
           data-sidebar="sidebar"
           className={cn(
             "flex h-full w-full flex-col bg-sidebar",
-             variant === "floating" && "m-2 rounded-lg border border-sidebar-border shadow w-[calc(100%-1rem)]" // Adjust width for floating
+             variant === "floating" && "m-2 rounded-lg border border-sidebar-border shadow w-[calc(100%-1rem)]"
           )}
         >
           {children}
@@ -333,15 +355,15 @@ const SidebarRail = React.forwardRef<
 SidebarRail.displayName = "SidebarRail"
 
 const SidebarInset = React.forwardRef<
-  HTMLDivElement, // Changed from main to div for flexibility
-  React.HTMLAttributes<HTMLDivElement> // Use HTMLAttributes for div
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => {
   return (
-    <div // Changed from main to div
+    <div
       ref={ref}
       className={cn(
         "relative flex min-h-svh flex-1 flex-col bg-background",
-        "md:ml-[var(--main-content-area-margin-left,0px)] transition-[margin-left] duration-200 ease-linear", // Use CSS var for margin
+        "md:ml-[var(--main-content-area-margin-left,0px)] transition-[margin-left] duration-200 ease-linear",
         className
       )}
       {...props}
@@ -376,7 +398,7 @@ const SidebarHeader = React.forwardRef<
     <div
       ref={ref}
       data-sidebar="header"
-      className={cn("flex flex-col gap-2 p-2", className)} // Padding handled by content inside
+      className={cn("flex flex-col gap-2 p-2", className)}
       {...props}
     />
   )
