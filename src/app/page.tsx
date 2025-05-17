@@ -36,20 +36,20 @@ export default function HomePage() {
           <Button
             variant="ghost"
             className="inline-block align-baseline text-center
-                       w-48 sm:w-52 md:w-64 lg:w-72 /* Adjusted widths */
+                       w-48 sm:w-52 md:w-64 lg:w-72 
                        h-auto 
-                       px-3 py-2 /* Increased padding slightly for better button feel */
+                       px-3 py-2 
                        text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight
                        border border-primary rounded-lg 
                        relative
                        focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-1
-                       bg-transparent hover:bg-transparent /* Ensure no button background interferes */
-                       text-primary /* Make button text primary by default */
+                       bg-transparent hover:bg-transparent 
+                       text-primary 
                        "
           >
             <span
               key={currentTalentWord}
-              className="animate-fadeIn inline-block bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 bg-clip-text text-transparent" /* Gradient applied here */
+              className="animate-fadeIn inline-block bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 bg-clip-text text-transparent"
             >
               {currentTalentWord}
             </span>
@@ -69,7 +69,7 @@ export default function HomePage() {
                        py-3 px-6 md:py-4 md:px-8 
                        transform hover:scale-[1.03] transition-transform duration-300 shadow-md rounded-lg w-full sm:w-auto"
           >
-            <Link href={ROUTES.REGISTER_PROFESSIONAL}>
+            <Link href={ROUTES.LOGIN}> {/* Changed from ROUTES.REGISTER_PROFESSIONAL */}
               Sei un Professionista?
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Link>
