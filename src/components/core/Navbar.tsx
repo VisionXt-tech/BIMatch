@@ -17,12 +17,19 @@ import { LogOut, User, LayoutDashboard, Briefcase, Building, Search } from 'luci
 import Logo from './Logo';
 import { ROUTES, ROLES } from '@/constants';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 
-const DEFAULT_PAGE_PADDING = '1rem'; // Corresponds to px-4
-// A common max-width for containers, adjust if your theme uses something different (e.g., theme('screens.xl'))
-const DEFAULT_CONTAINER_MAX_WIDTH = '1280px';
+// Define these constants outside the component for stable references
+const DEFAULT_NAVBAR_PAGE_CONTENT_PADDING = '1rem'; // Corresponds to px-4 in Tailwind
+const DEFAULT_CONTAINER_MAX_WIDTH = '1280px'; // Example: theme('screens.xl')
+
+const initialNavStyle: React.CSSProperties = {
+  maxWidth: DEFAULT_CONTAINER_MAX_WIDTH,
+  marginInline: 'auto',
+  paddingLeft: DEFAULT_NAVBAR_PAGE_CONTENT_PADDING,
+  paddingRight: DEFAULT_NAVBAR_PAGE_CONTENT_PADDING,
+};
 
 const Navbar = () => {
   const { user, userProfile, loading, logout } = useAuth();
@@ -30,14 +37,7 @@ const Navbar = () => {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
 
-  // Initial style for SSR and first client render (mimics container behavior)
-  const initialNavStyle: React.CSSProperties = {
-    maxWidth: DEFAULT_CONTAINER_MAX_WIDTH,
-    marginInline: 'auto',
-    paddingLeft: DEFAULT_PAGE_PADDING,
-    paddingRight: DEFAULT_PAGE_PADDING,
-  };
-
+  // Initialize currentNavStyle with the stable initialNavStyle
   const [currentNavStyle, setCurrentNavStyle] = useState<React.CSSProperties>(initialNavStyle);
 
   useEffect(() => {
@@ -49,16 +49,17 @@ const Navbar = () => {
       const onDashboard = pathname.startsWith(ROUTES.DASHBOARD);
       if (onDashboard) {
         setCurrentNavStyle({
-          maxWidth: 'none', // Full width for dashboard nav content area
+          maxWidth: 'none',
           marginInline: '0',
-          paddingLeft: `var(--navbar-content-padding-left, ${DEFAULT_PAGE_PADDING})`,
-          paddingRight: DEFAULT_PAGE_PADDING,
+          paddingLeft: `var(--navbar-content-padding-left, ${DEFAULT_NAVBAR_PAGE_CONTENT_PADDING})`, // Fallback
+          paddingRight: DEFAULT_NAVBAR_PAGE_CONTENT_PADDING,
         });
       } else {
         setCurrentNavStyle(initialNavStyle); // Revert to container style for non-dashboard
       }
     }
-  }, [mounted, pathname, initialNavStyle]); // Added initialNavStyle to dependency array as it's used in the effect
+    // Dependencies are only `mounted` and `pathname`. `initialNavStyle` is a stable constant.
+  }, [mounted, pathname]);
 
   const getInitials = (name: string | null | undefined) => {
     if (!name) return 'B';
@@ -75,18 +76,18 @@ const Navbar = () => {
   };
 
   const dashboardLink = userProfile?.role === ROLES.PROFESSIONAL ? ROUTES.DASHBOARD_PROFESSIONAL : ROUTES.DASHBOARD_COMPANY;
+  const isDashboardPage = mounted && pathname.startsWith(ROUTES.DASHBOARD);
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card">
       <div className="w-full"> {/* Outer div is always w-full */}
         <nav
           className="py-3 flex justify-between items-center" // Base structural classes
-          style={currentNavStyle} // Style is now state-driven, defaulting to non-dashboard
+          style={currentNavStyle} // Style is now state-driven
         >
           <Logo />
           <div className="flex items-center space-x-2 md:space-x-4">
-            {/* Conditional rendering for "Cerca Professionisti" - only if mounted */}
-            {mounted && (!pathname.startsWith(ROUTES.DASHBOARD) || (userProfile && userProfile.role === ROLES.COMPANY)) && (
+            {mounted && (!isDashboardPage || (userProfile && userProfile.role === ROLES.COMPANY)) && (
               <Button variant="ghost" asChild>
                 <Link href={ROUTES.PROFESSIONALS_MARKETPLACE}>
                   <Search className="mr-0 md:mr-2 h-4 w-4" />
@@ -95,7 +96,6 @@ const Navbar = () => {
               </Button>
             )}
 
-            {/* Auth section: Skeleton if not mounted or auth is loading. */}
             {!mounted || (mounted && loading) ? (
               <div className="h-10 w-28 md:w-40 bg-muted rounded-md animate-pulse"></div>
             ) : mounted && user && userProfile ? (
@@ -160,7 +160,7 @@ const Navbar = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </>
-            ) : null } {/* Fallback for auth section if !mounted */}
+            ) : null }
           </div>
         </nav>
       </div>
