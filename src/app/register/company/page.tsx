@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -26,7 +27,7 @@ const companyRegistrationSchema = z.object({
   companyName: z.string().min(2, { message: 'Il nome azienda deve contenere almeno 2 caratteri.' }),
   companyVat: z.string().regex(/^[0-9]{11}$/, { message: 'La Partita IVA deve essere di 11 cifre.' }),
   companyLocation: z.string().min(1, { message: 'La localizzazione è richiesta.' }),
-  companyWebsite: z.string().url({ message: 'Inserisci un URL valido per il sito web.' }).optional().or(z.literal('')),
+  // companyWebsite: z.string().url({ message: 'Inserisci un URL valido per il sito web.' }).optional().or(z.literal('')), // Rimosso perché opzionale
   email: z.string().email({ message: 'Inserisci un indirizzo email valido.' }),
   password: z.string().min(6, { message: 'La password deve contenere almeno 6 caratteri.' }),
   confirmPassword: z.string(),
@@ -39,25 +40,25 @@ export default function CompanyRegistrationPage() {
   const { registerCompany, loading: authLoading } = useAuth();
   const router = useRouter();
 
-  const form = useForm<CompanyRegistrationFormData>({
-    resolver: zodResolver(companyRegistrationSchema),
+  const form = useForm<Omit<CompanyRegistrationFormData, 'companyWebsite'>>({ // Omit companyWebsite from form data type
+    resolver: zodResolver(companyRegistrationSchema.omit({ companyWebsite: true })), // Omit from schema validation for the form
     defaultValues: {
       companyName: '',
       companyVat: '',
       companyLocation: '',
-      companyWebsite: '',
       email: '',
       password: '',
       confirmPassword: '',
     },
   });
 
-  const onSubmit = async (data: CompanyRegistrationFormData) => {
+  const onSubmit = async (data: Omit<CompanyRegistrationFormData, 'companyWebsite'>) => {
     try {
-      await registerCompany(data);
-      router.push(ROUTES.DASHBOARD_COMPANY_PROFILE); // Redirect to complete company profile
+      // Pass the data including an empty companyWebsite if your registerCompany function expects it,
+      // or adjust registerCompany to handle its absence.
+      await registerCompany({ ...data, companyWebsite: '' }); 
+      router.push(ROUTES.DASHBOARD_COMPANY_PROFILE); 
     } catch (error) {
-      // Error is handled by useAuth and displayed via toast
       console.error('Company registration failed on page:', error);
     }
   };
@@ -65,16 +66,16 @@ export default function CompanyRegistrationPage() {
   return (
     <div className="flex justify-center items-center min-h-[calc(100vh-200px)] py-12">
       <Card className="w-full max-w-lg shadow-xl">
-        <CardHeader className="text-center">
+        <CardHeader className="text-center p-6">
           <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-4">
             <Building2 className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle className="text-3xl font-bold">Registra la Tua Azienda</CardTitle>
-          <CardDescription>Trova i migliori talenti BIM per i tuoi progetti.</CardDescription>
+          <CardTitle className="text-2xl md:text-3xl font-bold">Registra la Tua Azienda</CardTitle>
+          <CardDescription className="text-sm md:text-base">Trova i migliori talenti BIM per i tuoi progetti.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
                 name="companyName"
@@ -82,62 +83,51 @@ export default function CompanyRegistrationPage() {
                   <FormItem>
                     <FormLabel>Nome Azienda</FormLabel>
                     <FormControl>
-                      <Input placeholder="Azienda S.p.A." {...field} />
+                      <Input placeholder="Nome della tua Azienda S.r.l." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="companyVat"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Partita IVA</FormLabel>
-                    <FormControl>
-                      <Input placeholder="12345678901" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-               <FormField
-                control={form.control}
-                name="companyLocation"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sede Azienda (Regione)</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="companyVat"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Partita IVA</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleziona la regione della sede" />
-                        </SelectTrigger>
+                        <Input placeholder="12345678901" {...field} />
                       </FormControl>
-                      <SelectContent>
-                        {ITALIAN_REGIONS.map(region => (
-                          <SelectItem key={region} value={region}>
-                            {region}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="companyWebsite"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sito Web Aziendale (Opzionale)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="https://www.azienda.it" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="companyLocation"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Sede (Regione)</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleziona regione" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {ITALIAN_REGIONS.map(region => (
+                            <SelectItem key={region} value={region}>
+                              {region}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <FormField
                 control={form.control}
                 name="email"
@@ -177,7 +167,7 @@ export default function CompanyRegistrationPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={authLoading}>
+              <Button type="submit" className="w-full mt-6" disabled={authLoading}>
                 {authLoading ? 'Registrazione in corso...' : 'Registra Azienda'}
               </Button>
             </form>
