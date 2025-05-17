@@ -243,7 +243,7 @@ export default function ProfessionalProfilePage() {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-0">
       <Card className="shadow-xl">
         <CardHeader className="p-4">
           <div className="flex items-center space-x-3">
