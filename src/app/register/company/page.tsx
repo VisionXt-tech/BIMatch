@@ -27,7 +27,6 @@ const companyRegistrationSchema = z.object({
   companyName: z.string().min(2, { message: 'Il nome azienda deve contenere almeno 2 caratteri.' }),
   companyVat: z.string().regex(/^[0-9]{11}$/, { message: 'La Partita IVA deve essere di 11 cifre.' }),
   companyLocation: z.string().min(1, { message: 'La localizzazione è richiesta.' }),
-  // companyWebsite: z.string().url({ message: 'Inserisci un URL valido per il sito web.' }).optional().or(z.literal('')), // Rimosso perché opzionale
   email: z.string().email({ message: 'Inserisci un indirizzo email valido.' }),
   password: z.string().min(6, { message: 'La password deve contenere almeno 6 caratteri.' }),
   confirmPassword: z.string(),
@@ -36,12 +35,15 @@ const companyRegistrationSchema = z.object({
   path: ['confirmPassword'],
 });
 
+// The form data type will not include companyWebsite as it's removed from the form fields
+type CompanyRegistrationPageFormData = Omit<CompanyRegistrationFormData, 'companyWebsite'>;
+
 export default function CompanyRegistrationPage() {
   const { registerCompany, loading: authLoading } = useAuth();
   const router = useRouter();
 
-  const form = useForm<Omit<CompanyRegistrationFormData, 'companyWebsite'>>({ // Omit companyWebsite from form data type
-    resolver: zodResolver(companyRegistrationSchema.omit({ companyWebsite: true })), // Omit from schema validation for the form
+  const form = useForm<CompanyRegistrationPageFormData>({
+    resolver: zodResolver(companyRegistrationSchema), // Removed .omit() as schema already excludes companyWebsite
     defaultValues: {
       companyName: '',
       companyVat: '',
@@ -52,14 +54,14 @@ export default function CompanyRegistrationPage() {
     },
   });
 
-  const onSubmit = async (data: Omit<CompanyRegistrationFormData, 'companyWebsite'>) => {
+  const onSubmit = async (data: CompanyRegistrationPageFormData) => {
     try {
-      // Pass the data including an empty companyWebsite if your registerCompany function expects it,
-      // or adjust registerCompany to handle its absence.
+      // Pass the data including an empty companyWebsite as registerCompany function expects it
       await registerCompany({ ...data, companyWebsite: '' }); 
       router.push(ROUTES.DASHBOARD_COMPANY_PROFILE); 
     } catch (error) {
       console.error('Company registration failed on page:', error);
+      // Error is handled by useAuth and displayed via toast
     }
   };
 
