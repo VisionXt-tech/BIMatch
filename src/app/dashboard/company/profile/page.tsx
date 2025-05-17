@@ -90,15 +90,14 @@ export default function CompanyProfilePage() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
-      console.log("File selected:", file.name, "Size:", file.size, "Type:", file.type); // Log file details
       if (!file.type.startsWith('image/')) {
           toast({ title: "Formato File Non Valido", description: "Seleziona un file immagine (es. JPG, PNG, WEBP).", variant: "destructive"});
-          event.target.value = ''; 
+          event.target.value = '';
           return;
       }
       if (file.size > 2 * 1024 * 1024) { // 2MB limit
           toast({ title: "File Troppo Grande", description: "Il logo non deve superare i 2MB.", variant: "destructive"});
-          event.target.value = ''; 
+          event.target.value = '';
           return;
       }
       if (file.size === 0) {
@@ -122,12 +121,11 @@ export default function CompanyProfilePage() {
     }
 
     setIsUploading(true);
-    setUploadProgress(0); 
+    setUploadProgress(0);
 
     let logoUrlToUpdate = (userProfile as CompanyProfile)?.logoUrl || '';
 
     if (logoFile && storage) {
-      console.log("Starting logo upload. Storage instance:", storage ? 'Exists' : 'Missing');
       const filePath = `companyLogos/${user.uid}/${Date.now()}_${logoFile.name}`;
       const fileRef = storageRef(storage, filePath);
       const uploadTask = uploadBytesResumable(fileRef, logoFile);
@@ -140,17 +138,9 @@ export default function CompanyProfilePage() {
               const progressPercentage = snapshot.totalBytes > 0
                 ? (snapshot.bytesTransferred / snapshot.totalBytes) * 100
                 : 0;
-              
-              console.log('[COMPANY_LOGO_UPLOAD_PROGRESS]', {
-                state: snapshot.state,
-                bytesTransferred: snapshot.bytesTransferred,
-                totalBytes: snapshot.totalBytes,
-                calculatedProgress: progressPercentage,
-              });
               setUploadProgress(progressPercentage);
             },
-            (error: any) => { 
-              console.error('Firebase Storage logo upload error (state_changed listener):', error);
+            (error: any) => {
               let userFriendlyMessage = "Errore durante il caricamento del logo.";
               switch (error.code) {
                 case 'storage/unauthorized':
@@ -170,13 +160,11 @@ export default function CompanyProfilePage() {
               setUploadProgress(null);
               reject(error);
             },
-            async () => { 
+            async () => {
               try {
                 logoUrlToUpdate = await getDownloadURL(uploadTask.snapshot.ref);
-                console.log('Logo file available at', logoUrlToUpdate);
                 resolve();
               } catch (getUrlError: any) {
-                console.error('Failed to get logo download URL', getUrlError);
                 toast({ title: "Errore URL Logo", description: `Impossibile ottenere l'URL del logo: ${(getUrlError as Error).message}`, variant: "destructive" });
                 setIsUploading(false);
                 setUploadProgress(null);
@@ -185,15 +173,11 @@ export default function CompanyProfilePage() {
             }
           );
         });
-      } catch (uploadError) { 
-        console.error('Logo upload process promise failed:', uploadError);
-        // Toast should have been shown by inner error handler
+      } catch (uploadError) {
         setIsUploading(false);
         setUploadProgress(null);
-        return; 
+        return;
       }
-    } else {
-      console.log("Skipping logo upload. logoFile:", logoFile, "Storage instance:", storage ? 'Exists' : 'Missing');
     }
 
     const dataToUpdate : Partial<CompanyProfile> = {
@@ -204,9 +188,8 @@ export default function CompanyProfilePage() {
 
     try {
       await updateUserProfile(user.uid, dataToUpdate);
-      setLogoFile(null); // Clear the selected file after successful profile update
+      setLogoFile(null);
     } catch (error) {
-      console.error('Company profile update failed on page:', error);
       // updateUserProfile in AuthContext should handle its own toasts
     } finally {
       setIsUploading(false);
@@ -215,7 +198,7 @@ export default function CompanyProfilePage() {
   };
 
   const getInitials = (name: string | null | undefined) => {
-    if (!name) return 'A'; 
+    if (!name) return 'A';
     return name.substring(0, 2).toUpperCase();
   };
 
@@ -229,56 +212,56 @@ export default function CompanyProfilePage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <Card className="shadow-xl">
-        <CardHeader>
+        <CardHeader className="p-4">
           <div className="flex items-center space-x-3">
-            <Building className="h-8 w-8 text-primary" />
+            <Building className="h-6 w-6 text-primary" />
             <div>
-              <CardTitle className="text-3xl font-bold">Profilo Aziendale</CardTitle>
+              <CardTitle className="text-2xl font-bold">Profilo Aziendale</CardTitle>
               <CardDescription>Gestisci le informazioni della tua azienda per attrarre i migliori talenti BIM.</CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 pt-0">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 
               <FormItem>
                 <FormLabel>Logo Aziendale</FormLabel>
-                <div className="flex items-center space-x-4 mt-2">
-                  <Avatar className="h-24 w-24 rounded-md">
+                <div className="flex items-center space-x-4 mt-1">
+                  <Avatar className="h-20 w-20 rounded-md">
                     <AvatarImage src={logoPreview || (userProfile as CompanyProfile).logoUrl || undefined} alt={userProfile.companyName || 'Logo Azienda'} data-ai-hint="company logo" className="object-contain"/>
-                    <AvatarFallback className="rounded-md text-2xl">{getInitials(userProfile.companyName)}</AvatarFallback>
+                    <AvatarFallback className="rounded-md text-xl">{getInitials(userProfile.companyName)}</AvatarFallback>
                   </Avatar>
                   <FormControl>
-                    <Input 
-                        type="file" 
-                        accept="image/jpeg, image/png, image/webp" 
-                        onChange={handleFileChange} 
+                    <Input
+                        type="file"
+                        accept="image/jpeg, image/png, image/webp"
+                        onChange={handleFileChange}
                         className="max-w-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90" />
                   </FormControl>
                 </div>
                 {isUploading && uploadProgress !== null && (
                   <div className="mt-2">
-                    <Progress value={uploadProgress} className="w-full h-2" />
-                    <p className="text-xs text-muted-foreground mt-1">Caricamento: {Math.round(uploadProgress)}%</p>
+                    <Progress value={uploadProgress} className="w-full h-1.5" />
+                    <p className="text-xs text-muted-foreground mt-0.5">Caricamento: {Math.round(uploadProgress)}%</p>
                   </div>
                 )}
                 {!isUploading && uploadProgress === null && logoFile && (
-                   <p className="text-xs text-green-600 mt-1">Nuovo logo selezionato. Salva per applicare.</p>
+                   <p className="text-xs text-green-600 mt-0.5">Nuovo logo selezionato. Salva per applicare.</p>
                  )}
-                <FormDescription className="mt-1">Carica il logo (max 2MB, es. JPG, PNG, WEBP).</FormDescription>
+                <FormDescription className="text-xs mt-0.5">Carica il logo (max 2MB, es. JPG, PNG, WEBP).</FormDescription>
                  <FormMessage />
               </FormItem>
 
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormInput control={form.control} name="companyName" label="Nome Azienda" placeholder="La Mia Azienda S.r.l." />
                 <FormInput control={form.control} name="companyVat" label="Partita IVA" placeholder="12345678901" />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <FormSingleSelect
                   control={form.control}
                   name="companyLocation"
@@ -289,7 +272,7 @@ export default function CompanyProfilePage() {
                 <FormInput control={form.control} name="companyWebsite" label="Sito Web (Opzionale)" placeholder="https://www.lamiaazienda.it" />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormSingleSelect
                   control={form.control}
                   name="companySize"
@@ -306,10 +289,10 @@ export default function CompanyProfilePage() {
                 />
               </div>
 
-              <FormTextarea control={form.control} name="companyDescription" label="Descrizione Azienda (Opzionale)" placeholder="Descrivi la tua azienda, la mission, i valori e i tipi di progetti..." rows={5} />
+              <FormTextarea control={form.control} name="companyDescription" label="Descrizione Azienda (Opzionale)" placeholder="Descrivi la tua azienda, la mission, i valori e i tipi di progetti..." rows={4} />
 
-              <CardTitle className="text-xl font-semibold pt-4 border-t mt-4">Informazioni di Contatto</CardTitle>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <CardTitle className="text-lg font-semibold pt-3 border-t mt-3">Informazioni di Contatto</CardTitle>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormInput control={form.control} name="contactPerson" label="Persona di Riferimento (Opzionale)" placeholder="Mario Rossi" />
                 <FormInput control={form.control} name="contactEmail" label="Email di Contatto (Opzionale)" placeholder="info@lamiaazienda.it" type="email"/>
                 <FormInput control={form.control} name="contactPhone" label="Telefono di Contatto (Opzionale)" placeholder="+39 02 1234567" type="tel"/>
@@ -326,4 +309,3 @@ export default function CompanyProfilePage() {
     </div>
   );
 }
-

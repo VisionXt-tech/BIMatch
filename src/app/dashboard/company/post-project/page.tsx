@@ -52,7 +52,7 @@ export default function PostProjectPage() {
       applicationDeadline: '',
     },
   });
-  
+
   const onSubmit = async (data: ProjectFormData) => {
     if (!user || !userProfile || userProfile.role !== 'company') {
       toast({ title: "Errore", description: "Devi essere un'azienda autenticata per pubblicare un progetto.", variant: "destructive" });
@@ -79,7 +79,7 @@ export default function PostProjectPage() {
       toast({ title: "Errore Pubblicazione", description: error.message || "Impossibile pubblicare il progetto.", variant: "destructive" });
     }
   };
-  
+
   const projectTypeOptions = [
     { value: "full-time", label: "Full-time (Dipendente)" },
     { value: "part-time", label: "Part-time (Dipendente)" },
@@ -98,22 +98,22 @@ export default function PostProjectPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <Card className="shadow-xl">
-        <CardHeader>
+        <CardHeader className="p-4">
           <div className="flex items-center space-x-3">
-            <FolderPlus className="h-8 w-8 text-primary" />
+            <FolderPlus className="h-6 w-6 text-primary" />
             <div>
-              <CardTitle className="text-3xl font-bold">Pubblica un Nuovo Progetto BIM</CardTitle>
+              <CardTitle className="text-2xl font-bold">Pubblica un Nuovo Progetto BIM</CardTitle>
               <CardDescription>Descrivi il tuo progetto per trovare i professionisti BIM più adatti.</CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 pt-0">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormInput control={form.control} name="title" label="Titolo del Progetto" placeholder="Es. Modellatore BIM per Progetto Residenziale" />
-              
+
               <FormSingleSelect
                 control={form.control}
                 name="location"
@@ -121,9 +121,9 @@ export default function PostProjectPage() {
                 options={ITALIAN_REGIONS.map(r => ({ value: r, label: r }))}
                 placeholder="Seleziona la regione del progetto"
               />
-              
-              <FormTextarea control={form.control} name="description" label="Descrizione Dettagliata del Progetto" placeholder="Descrivi gli obiettivi, le responsabilità, il contesto del progetto..." rows={8} />
-              
+
+              <FormTextarea control={form.control} name="description" label="Descrizione Dettagliata del Progetto" placeholder="Descrivi gli obiettivi, le responsabilità, il contesto del progetto..." rows={6} />
+
               <FormMultiSelect
                 control={form.control}
                 name="requiredSkills"
@@ -131,7 +131,7 @@ export default function PostProjectPage() {
                 options={BIM_SKILLS_OPTIONS}
                 placeholder="Seleziona le competenze necessarie"
               />
-              
+
               <FormMultiSelect
                 control={form.control}
                 name="requiredSoftware"
@@ -140,7 +140,7 @@ export default function PostProjectPage() {
                 placeholder="Indica i software che il professionista deve conoscere"
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormSingleSelect
                   control={form.control}
                   name="projectType"
@@ -151,11 +151,11 @@ export default function PostProjectPage() {
                  <FormInput control={form.control} name="duration" label="Durata Progetto/Contratto (Opzionale)" placeholder="Es. 6 mesi, Indeterminato" />
               </div>
 
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormInput control={form.control} name="budgetRange" label="Range di Budget/RAL (Opzionale)" placeholder="Es. €30k-€40k RAL, €40-€60/ora" />
                 <FormInput control={form.control} name="applicationDeadline" label="Scadenza Candidature (Opzionale)" type="date" />
               </div>
-              
+
               <Button type="submit" className="w-full md:w-auto" disabled={authLoading || form.formState.isSubmitting}>
                 <Save className="mr-2 h-4 w-4" />
                 {form.formState.isSubmitting ? 'Pubblicazione in corso...' : 'Pubblica Progetto'}

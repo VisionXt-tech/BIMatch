@@ -38,16 +38,16 @@ const professionalProfileSchema = z.object({
   linkedInProfile: z.string().url({message: 'Inserisci un URL valido per LinkedIn.'}).optional().or(z.literal('')),
   hourlyRate: z.preprocess(
     (val) => {
-      if (val === "" || val === null || val === undefined) return undefined; // Allow empty or null to be treated as undefined
+      if (val === "" || val === null || val === undefined) return undefined;
       const strVal = String(val).trim();
-      if (strVal === "") return undefined; // If string is empty after trim, treat as undefined
+      if (strVal === "") return undefined;
       const num = Number(strVal);
-      return isNaN(num) ? strVal : num; // Return original string if not a number, for Zod to catch as invalid_type
+      return isNaN(num) ? strVal : num;
     },
     z.number({invalid_type_error: 'La tariffa oraria deve essere un numero valido.'})
       .positive({ message: 'La tariffa oraria deve essere un numero positivo.' })
       .optional()
-      .nullable() // Allow null to pass validation (will be converted to undefined by preprocess if null)
+      .nullable()
   ),
 });
 
@@ -114,17 +114,17 @@ export default function ProfessionalProfilePage() {
       const file = event.target.files[0];
       if (!file.type.startsWith('image/')) {
           toast({ title: "Formato File Non Valido", description: "Seleziona un file immagine (es. JPG, PNG, WEBP).", variant: "destructive"});
-          event.target.value = ''; 
+          event.target.value = '';
           return;
       }
       if (file.size > 2 * 1024 * 1024) { // 2MB limit
           toast({ title: "File Troppo Grande", description: "L'immagine non deve superare i 2MB.", variant: "destructive"});
-          event.target.value = ''; 
+          event.target.value = '';
           return;
       }
       if (file.size === 0) {
         toast({ title: "File Vuoto", description: "Il file selezionato è vuoto e non può essere caricato.", variant: "destructive" });
-        event.target.value = ''; 
+        event.target.value = '';
         return;
       }
       setProfileImageFile(file);
@@ -142,7 +142,7 @@ export default function ProfessionalProfilePage() {
     }
 
     setIsUploading(true);
-    setUploadProgress(0); 
+    setUploadProgress(0);
 
     let photoURLToUpdate = userProfile.photoURL || '';
 
@@ -161,8 +161,7 @@ export default function ProfessionalProfilePage() {
                 : 0;
               setUploadProgress(progressPercentage);
             },
-            (error: any) => { 
-              console.error('Firebase Storage profile image upload error:', error);
+            (error: any) => {
               let userFriendlyMessage = "Errore durante il caricamento dell'immagine.";
               switch (error.code) {
                 case 'storage/unauthorized':
@@ -175,17 +174,15 @@ export default function ProfessionalProfilePage() {
                    userFriendlyMessage = `Errore caricamento: ${error.message || 'Vedi console.'}`;
               }
               toast({ title: "Errore Caricamento Immagine", description: userFriendlyMessage, variant: "destructive" });
-              setIsUploading(false); 
+              setIsUploading(false);
               setUploadProgress(null);
               reject(error);
             },
-            async () => { 
+            async () => {
               try {
                 photoURLToUpdate = await getDownloadURL(uploadTask.snapshot.ref);
-                console.log('Profile image file available at', photoURLToUpdate);
                 resolve();
               } catch (getUrlError: any) {
-                 console.error('Failed to get profile image download URL:', getUrlError);
                  toast({ title: "Errore URL Immagine", description: `Impossibile ottenere l'URL dell'immagine: ${getUrlError.message}`, variant: "destructive" });
                  setIsUploading(false);
                  setUploadProgress(null);
@@ -194,11 +191,10 @@ export default function ProfessionalProfilePage() {
             }
           );
         });
-      } catch (uploadError) { 
-          console.error('Profile image upload process promise failed:', uploadError);
-          setIsUploading(false); 
+      } catch (uploadError) {
+          setIsUploading(false);
           setUploadProgress(null);
-          return; 
+          return;
       }
     }
 
@@ -214,12 +210,12 @@ export default function ProfessionalProfilePage() {
 
     try {
       await updateUserProfile(user.uid, dataToUpdate);
-      setProfileImageFile(null); 
+      setProfileImageFile(null);
     } catch (error) {
-      console.error('Profile update failed on page:', error);
+      // Profile update error is handled by updateUserProfile in AuthContext
     } finally {
       setIsUploading(false);
-      setUploadProgress(null); 
+      setUploadProgress(null);
     }
   };
 
@@ -243,13 +239,13 @@ export default function ProfessionalProfilePage() {
   }
 
   return (
-    <div className="space-y-0">
+    <div className="space-y-4">
       <Card className="shadow-xl">
         <CardHeader className="p-4">
           <div className="flex items-center space-x-3">
-            <UserCircle2 className="h-8 w-8 text-primary" />
+            <UserCircle2 className="h-6 w-6 text-primary" />
             <div>
-              <CardTitle className="text-3xl font-bold">Il Mio Profilo Professionale</CardTitle>
+              <CardTitle className="text-2xl font-bold">Il Mio Profilo Professionale</CardTitle>
               <CardDescription>Mantieni aggiornate le tue informazioni per attrarre le migliori opportunità.</CardDescription>
             </div>
           </div>
@@ -259,10 +255,10 @@ export default function ProfessionalProfilePage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormItem>
                 <FormLabel>Immagine del Profilo</FormLabel>
-                <div className="flex items-center space-x-4 mt-2">
-                  <Avatar className="h-24 w-24">
+                <div className="flex items-center space-x-4 mt-1">
+                  <Avatar className="h-20 w-20">
                     <AvatarImage src={imagePreview || userProfile.photoURL || undefined} alt={userProfile.displayName || 'User'} data-ai-hint="profile person" />
-                    <AvatarFallback className="text-3xl">{getInitials(userProfile.displayName)}</AvatarFallback>
+                    <AvatarFallback className="text-2xl">{getInitials(userProfile.displayName)}</AvatarFallback>
                   </Avatar>
                   <FormControl>
                      <Input
@@ -275,14 +271,14 @@ export default function ProfessionalProfilePage() {
                 </div>
                 {isUploading && uploadProgress !== null && (
                   <div className="mt-2">
-                    <Progress value={uploadProgress} className="w-full h-2" />
-                    <p className="text-xs text-muted-foreground mt-1">Caricamento: {Math.round(uploadProgress)}%</p>
+                    <Progress value={uploadProgress} className="w-full h-1.5" />
+                    <p className="text-xs text-muted-foreground mt-0.5">Caricamento: {Math.round(uploadProgress)}%</p>
                   </div>
                 )}
                  {!isUploading && uploadProgress === null && profileImageFile && (
-                   <p className="text-xs text-green-600 mt-1">Nuova immagine selezionata. Salva per applicare.</p>
+                   <p className="text-xs text-green-600 mt-0.5">Nuova immagine selezionata. Salva per applicare.</p>
                  )}
-                <FormDescription className="mt-1">Carica un&apos;immagine (max 2MB, es. JPG, PNG, WEBP).</FormDescription>
+                <FormDescription className="text-xs mt-0.5">Carica un&apos;immagine (max 2MB, es. JPG, PNG, WEBP).</FormDescription>
                 <FormMessage />
               </FormItem>
 
@@ -299,7 +295,7 @@ export default function ProfessionalProfilePage() {
                 placeholder="Seleziona la tua regione principale"
               />
 
-              <FormTextarea control={form.control} name="bio" label="Breve Bio Professionale" placeholder="Descrivi la tua esperienza, specializzazioni e obiettivi..." rows={5} />
+              <FormTextarea control={form.control} name="bio" label="Breve Bio Professionale" placeholder="Descrivi la tua esperienza, specializzazioni e obiettivi..." rows={4} />
 
               <FormMultiSelect
                 control={form.control}
@@ -374,4 +370,3 @@ export default function ProfessionalProfilePage() {
     </div>
   );
 }
-
