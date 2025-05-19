@@ -22,6 +22,7 @@ import { LogIn } from 'lucide-react';
 import { ROUTES } from '@/constants';
 import type { LoginFormData } from '@/types/auth';
 import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Inserisci un indirizzo email valido.' }),
@@ -32,6 +33,7 @@ export default function LoginPage() {
   const { login, loading: authLoading, requestPasswordReset } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -46,39 +48,45 @@ export default function LoginPage() {
       await login(data);
       router.push(ROUTES.DASHBOARD); 
     } catch (error) {
+      // Error toast is handled within the login function in AuthContext
       console.error('Login failed on page:', error);
     }
   };
 
   const handlePasswordReset = async () => {
-    const email = form.getValues("email"); // Get email from the form if filled
-    let userEmail = email;
+    setIsResettingPassword(true);
+    const emailFromForm = form.getValues("email");
+    let userEmailToReset = emailFromForm;
 
-    if (!userEmail) {
-      userEmail = window.prompt("Inserisci la tua email per reimpostare la password:");
+    if (!userEmailToReset) {
+      userEmailToReset = window.prompt("Inserisci la tua email per reimpostare la password:");
     } else {
-      const confirmReset = window.confirm(`Vuoi inviare un'email di reset password a ${userEmail}?`);
+      const confirmReset = window.confirm(`Vuoi inviare un'email di reset password a ${userEmailToReset}?`);
       if (!confirmReset) {
+        setIsResettingPassword(false);
         return;
       }
     }
     
-    if (userEmail) {
+    if (userEmailToReset) {
       try {
-        await requestPasswordReset(userEmail);
+        await requestPasswordReset(userEmailToReset);
         // Success toast is handled within requestPasswordReset
       } catch (error) {
         // Error toast is handled within requestPasswordReset
-        console.error("Password reset request failed:", error);
+        console.error("Password reset request failed on page:", error);
       }
-    } else if (email === "" && userEmail === null) { // Prompt cancelled and form email was empty
+    } else if (emailFromForm === "" && userEmailToReset === null) { // Prompt cancelled and form email was empty
       toast({
         title: "Operazione Annullata",
         description: "Nessuna email fornita per il reset della password.",
         variant: "default",
       });
     }
+    setIsResettingPassword(false);
   };
+
+  const isSubmitting = form.formState.isSubmitting || authLoading;
 
   return (
     <div className="flex justify-center items-center py-6 w-full"> 
@@ -100,7 +108,12 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel className="text-xs">Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="iltuonome@esempio.com" {...field} className="h-9" />
+                      <Input 
+                        placeholder="iltuonome@esempio.com" 
+                        {...field} 
+                        className="h-9" 
+                        disabled={isSubmitting || isResettingPassword}
+                      />
                     </FormControl>
                     <FormMessage className="text-xs" />
                   </FormItem>
@@ -113,7 +126,13 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel className="text-xs">Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="********" {...field} className="h-9" />
+                      <Input 
+                        type="password" 
+                        placeholder="********" 
+                        {...field} 
+                        className="h-9" 
+                        disabled={isSubmitting || isResettingPassword}
+                      />
                     </FormControl>
                     <FormMessage className="text-xs" />
                   </FormItem>
@@ -125,12 +144,18 @@ export default function LoginPage() {
                   variant="link"
                   className="px-0 text-xs h-auto py-0 text-primary hover:underline"
                   onClick={handlePasswordReset}
+                  disabled={isSubmitting || isResettingPassword}
                 >
-                  Password dimenticata?
+                  {isResettingPassword ? 'Invio in corso...' : 'Password dimenticata?'}
                 </Button>
               </div>
-              <Button type="submit" className="w-full" size="sm" disabled={authLoading}>
-                {authLoading ? 'Accesso in corso...' : 'Accedi'}
+              <Button 
+                type="submit" 
+                className="w-full" 
+                size="sm" 
+                disabled={isSubmitting || isResettingPassword}
+              >
+                {isSubmitting ? 'Accesso in corso...' : 'Accedi'}
               </Button>
             </form>
           </Form>
