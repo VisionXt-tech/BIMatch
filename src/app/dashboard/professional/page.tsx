@@ -96,41 +96,6 @@ export default function ProfessionalDashboardPage() {
           </CardContent>
         </Card>
       </div>
-      
-      <Card className="shadow-lg">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Potenzia la tua carriera BIM</CardTitle>
-          <CardDescription className="text-sm">Scopri come BIMatch può aiutarti a crescere.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid md:grid-cols-2 gap-2 items-center p-2 pt-1">
-          <div>
-            <p className="mb-2 text-sm text-foreground/90">
-              BIMatch ti connette con aziende leader e progetti su misura per le tue competenze BIM.
-            </p>
-            <ul className="list-disc list-inside space-y-1 mb-2 text-sm text-foreground/80">
-              <li>Mostra le tue abilità.</li>
-              <li>Ricevi offerte pertinenti.</li>
-              <li>Candidati facilmente.</li>
-            </ul>
-            <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS} passHref legacyBehavior>
-              <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground text-sm py-1.5 px-3">
-                <a>Esplora Opportunità</a>
-              </Button>
-            </Link>
-          </div>
-          <div className="relative h-20 rounded-lg overflow-hidden">
-            <Image 
-              src="https://images.unsplash.com/photo-1612888262725-6b300edf916c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHwzRCUyME1vZGVsaW5nfGVufDB8fHx8MTc0NzQxMTMyOXww&ixlib=rb-4.1.0&q=80&w=1080" 
-              alt="BIM professional working" 
-              fill
-              style={{objectFit: 'cover'}}
-              data-ai-hint="BIM professional"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
     </div>
   );
 }
-
