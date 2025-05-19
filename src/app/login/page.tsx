@@ -102,7 +102,7 @@ export default function LoginPage() {
         priority
         data-ai-hint="architecture studio"
       />
-      <div className="absolute inset-0 bg-black/60 -z-10 backdrop-blur-sm"></div>
+      <div className="absolute inset-0 bg-black/60 -z-10"></div> {/* Removed backdrop-blur-sm */}
 
       <Card className="w-full max-w-md shadow-xl bg-card border-border">
         <CardHeader className="text-center p-6">
@@ -120,7 +120,7 @@ export default function LoginPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs">Email</FormLabel>
+                    <FormLabel className="text-xs text-foreground">Email</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="iltuonome@esempio.com" 
@@ -138,7 +138,7 @@ export default function LoginPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs">Password</FormLabel>
+                    <FormLabel className="text-xs text-foreground">Password</FormLabel>
                     <FormControl>
                       <Input 
                         type="password" 
