@@ -38,16 +38,16 @@ const professionalProfileSchema = z.object({
   linkedInProfile: z.string().url({message: 'Inserisci un URL valido per LinkedIn.'}).optional().or(z.literal('')),
   monthlyRate: z.preprocess(
     (val) => {
-      if (val === "" || val === null || val === undefined) return undefined;
+      if (val === "" || val === null || val === undefined) return undefined; // Allow empty string to be treated as undefined
       const strVal = String(val).trim();
-      if (strVal === "") return undefined;
+      if (strVal === "") return undefined; // If string is empty after trim, treat as undefined
       const num = Number(strVal);
-      return isNaN(num) ? undefined : num;
+      return isNaN(num) ? undefined : num; // If not a number, Zod will catch it with invalid_type_error
     },
     z.number({invalid_type_error: 'La retribuzione mensile deve essere un numero.'})
       .positive({ message: 'La retribuzione mensile deve essere un numero positivo.' })
       .optional()
-      .nullable()
+      .nullable() // Allow null to be stored if field is emptied
   ),
 });
 
@@ -129,8 +129,8 @@ export default function ProfessionalProfilePage() {
       }
       setProfileImageFile(file);
       setImagePreview(URL.createObjectURL(file));
-      setUploadProgress(null);
-      setIsUploading(false);
+      setUploadProgress(null); // Reset progress for new file
+      setIsUploading(false); // Reset uploading state for new file
     } else {
       setProfileImageFile(null);
       setImagePreview(userProfile?.photoURL || null);
@@ -177,30 +177,28 @@ export default function ProfessionalProfilePage() {
               toast({ title: "Errore Caricamento Immagine", description: userFriendlyMessage, variant: "destructive" });
               setIsUploading(false);
               setUploadProgress(null);
-              reject(error);
+              reject(error); // Reject the promise on error
             },
             async () => {
               try {
                 photoURLToUpdate = await getDownloadURL(uploadTask.snapshot.ref);
-                resolve();
+                resolve(); // Resolve the promise on successful upload and URL retrieval
               } catch (getUrlError: any) {
                  toast({ title: "Errore URL Immagine", description: `Impossibile ottenere l'URL dell'immagine: ${getUrlError.message}`, variant: "destructive" });
-                 reject(getUrlError);
+                 setIsUploading(false); // Ensure these are reset here too
+                 setUploadProgress(null);
+                 reject(getUrlError); // Reject the promise if getDownloadURL fails
               }
             }
           );
         });
       } catch (uploadError) {
-          // Error is already toasted in the error callback of uploadTask.on
-      } finally {
+        // This catch block will handle rejections from the promise created above
+        // Error is already toasted in the error callback of uploadTask.on or getDownloadURL catch
+        // Ensure uploading state is reset if we bail out here
         setIsUploading(false);
         setUploadProgress(null);
-      }
-       // If upload failed, and we are in a state where uploadProgress is null but setIsUploading is false, it means an error occurred.
-      // We should return early if photoURLToUpdate hasn't been set by a successful upload.
-      if (profileImageFile && photoURLToUpdate === userProfile.photoURL) {
-        // This means uploadTask didn't complete successfully to update photoURLToUpdate
-        return;
+        return; // Stop submission if upload failed
       }
     }
 
@@ -211,16 +209,23 @@ export default function ProfessionalProfilePage() {
       ...data,
       displayName: updatedDisplayName || userProfile.displayName,
       photoURL: photoURLToUpdate,
+      // Ensure monthlyRate is either a number or null (for Firestore)
+      // If undefined or empty string from form, it becomes null
       monthlyRate: data.monthlyRate === undefined || data.monthlyRate === null || String(data.monthlyRate).trim() === '' ? null : Number(data.monthlyRate),
     };
 
     try {
       await updateUserProfile(user.uid, dataToUpdate);
-      setProfileImageFile(null);
+      // Toast for profile update success is handled within updateUserProfile
+      setProfileImageFile(null); // Reset file input state after successful submission
     } catch (error) {
-      // Profile update error is handled by updateUserProfile in AuthContext
+      // Error toast is handled within updateUserProfile
     } finally {
-      // setIsUploading and setUploadProgress are reset in the upload block
+      // Reset uploading state regardless of profile update success, if an upload was attempted
+      if (profileImageFile) {
+        setIsUploading(false);
+        setUploadProgress(null);
+      }
     }
   };
 
@@ -290,7 +295,7 @@ export default function ProfessionalProfilePage() {
               <Tabs defaultValue="info-personali" className="w-full">
                 <TabsList className="grid w-full grid-cols-3 mb-4">
                   <TabsTrigger value="info-personali">Info Personali</TabsTrigger>
-                  <TabsTrigger value="bio-competenze">Bio e Competenze</TabsTrigger>
+                  <TabsTrigger value="bio-competenze">Competenze</TabsTrigger>
                   <TabsTrigger value="dettagli-link">Economia e Link</TabsTrigger>
                 </TabsList>
 
@@ -352,12 +357,12 @@ export default function ProfessionalProfilePage() {
                         step="1"
                         className="h-9"
                         {...form.register("monthlyRate", {
-                            setValueAs: (value) => {
-                              if (value === "" || value === null || value === undefined) return null;
+                            setValueAs: (value) => { // Ensure empty string is converted to null/undefined
+                              if (value === "" || value === null || value === undefined) return null; // Treat empty as null
                               const strVal = String(value).trim();
-                              if (strVal === "") return null;
+                              if (strVal === "") return null; // If string is empty after trim, treat as null
                               const num = parseFloat(strVal);
-                              return isNaN(num) ? undefined : num;
+                              return isNaN(num) ? undefined : num; // Let Zod handle if it's not a number after trying
                             }
                         })}
                       />
@@ -382,3 +387,4 @@ export default function ProfessionalProfilePage() {
     </div>
   );
 }
+
