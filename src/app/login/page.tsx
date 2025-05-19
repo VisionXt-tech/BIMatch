@@ -104,13 +104,13 @@ export default function LoginPage() {
       />
       <div className="absolute inset-0 bg-black/60 -z-10 backdrop-blur-sm"></div>
 
-      <Card className="w-full max-w-md shadow-xl bg-card/70 dark:bg-neutral-900/80 backdrop-blur-md border border-white/10">
+      <Card className="w-full max-w-md shadow-xl bg-card border-border">
         <CardHeader className="text-center p-6">
           <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-3">
             <LogIn className="h-6 w-6 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-bold text-white">Accedi a BIMatch</CardTitle>
-          <CardDescription className="text-sm text-neutral-200">Bentornato! Inserisci le tue credenziali.</CardDescription>
+          <CardTitle className="text-2xl font-bold text-primary">Accedi a BIMatch</CardTitle>
+          <CardDescription className="text-sm text-muted-foreground">Bentornato! Inserisci le tue credenziali.</CardDescription>
         </CardHeader>
         <CardContent className="p-6">
           <Form {...form}>
@@ -120,12 +120,12 @@ export default function LoginPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs text-neutral-200">Email</FormLabel>
+                    <FormLabel className="text-xs">Email</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="iltuonome@esempio.com" 
                         {...field} 
-                        className="h-9 bg-background/80 text-foreground placeholder:text-muted-foreground" 
+                        className="h-9 text-foreground placeholder:text-muted-foreground" 
                         disabled={isSubmitting || isResettingPassword}
                       />
                     </FormControl>
@@ -138,13 +138,13 @@ export default function LoginPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs text-neutral-200">Password</FormLabel>
+                    <FormLabel className="text-xs">Password</FormLabel>
                     <FormControl>
                       <Input 
                         type="password" 
                         placeholder="********" 
                         {...field} 
-                        className="h-9 bg-background/80 text-foreground placeholder:text-muted-foreground" 
+                        className="h-9 text-foreground placeholder:text-muted-foreground" 
                         disabled={isSubmitting || isResettingPassword}
                       />
                     </FormControl>
@@ -156,7 +156,7 @@ export default function LoginPage() {
                 <Button
                   type="button"
                   variant="link"
-                  className="px-0 text-xs h-auto py-0 text-neutral-300 hover:text-white hover:underline"
+                  className="px-0 text-xs h-auto py-0 text-muted-foreground hover:text-primary hover:underline"
                   onClick={handlePasswordReset}
                   disabled={isSubmitting || isResettingPassword}
                 >
@@ -175,11 +175,11 @@ export default function LoginPage() {
           </Form>
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Non hai un account?{' '}
-            <Link href={ROUTES.REGISTER_PROFESSIONAL} className="font-medium text-white hover:underline">
+            <Link href={ROUTES.REGISTER_PROFESSIONAL} className="font-medium text-primary hover:underline">
               Registrati come Professionista
             </Link>
             {' o '}
-            <Link href={ROUTES.REGISTER_COMPANY} className="font-medium text-white hover:underline">
+            <Link href={ROUTES.REGISTER_COMPANY} className="font-medium text-primary hover:underline">
               Azienda
             </Link>
           </p>
