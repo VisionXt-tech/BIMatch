@@ -62,26 +62,26 @@ export default function ProfessionalRegistrationPage() {
   };
 
   return (
-    <div className="flex justify-center items-center py-6 w-full">
+    <div className="flex justify-center items-center py-4 w-full">
       <Card className="w-full max-w-lg shadow-xl">
-        <CardHeader className="text-center p-4">
-          <CardTitle className="text-xl font-bold">Registrati come Professionista BIM</CardTitle>
+        <CardHeader className="text-center p-3">
+          <CardTitle className="text-lg font-bold">Registrati come Professionista BIM</CardTitle>
           <CardDescription className="text-xs">Unisciti a BIMatch e trova nuove opportunità.</CardDescription>
         </CardHeader>
-        <CardContent className="p-4">
+        <CardContent className="p-3">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <FormField
                   control={form.control}
                   name="firstName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nome</FormLabel>
+                      <FormLabel className="text-xs">Nome</FormLabel>
                       <FormControl>
-                        <Input placeholder="Mario" {...field} />
+                        <Input placeholder="Mario" {...field} className="h-9" />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-xs" />
                     </FormItem>
                   )}
                 />
@@ -90,11 +90,11 @@ export default function ProfessionalRegistrationPage() {
                   name="lastName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Cognome</FormLabel>
+                      <FormLabel className="text-xs">Cognome</FormLabel>
                       <FormControl>
-                        <Input placeholder="Rossi" {...field} />
+                        <Input placeholder="Rossi" {...field} className="h-9" />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-xs" />
                     </FormItem>
                   )}
                 />
@@ -104,11 +104,11 @@ export default function ProfessionalRegistrationPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel className="text-xs">Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="mario.rossi@esempio.com" {...field} />
+                      <Input type="email" placeholder="mario.rossi@esempio.com" {...field} className="h-9" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-xs" />
                   </FormItem>
                 )}
               />
@@ -117,10 +117,10 @@ export default function ProfessionalRegistrationPage() {
                 name="location"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Localizzazione (Regione)</FormLabel>
+                    <FormLabel className="text-xs">Localizzazione (Regione)</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="h-9">
                           <SelectValue placeholder="Seleziona la tua regione" />
                         </SelectTrigger>
                       </FormControl>
@@ -132,7 +132,7 @@ export default function ProfessionalRegistrationPage() {
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage />
+                    <FormMessage className="text-xs" />
                   </FormItem>
                 )}
               />
@@ -141,11 +141,11 @@ export default function ProfessionalRegistrationPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel className="text-xs">Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="Min. 6 caratteri" {...field} />
+                      <Input type="password" placeholder="Min. 6 caratteri" {...field} className="h-9" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-xs" />
                   </FormItem>
                 )}
               />
@@ -154,26 +154,26 @@ export default function ProfessionalRegistrationPage() {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Conferma Password</FormLabel>
+                    <FormLabel className="text-xs">Conferma Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="Ripeti la password" {...field} />
+                      <Input type="password" placeholder="Ripeti la password" {...field} className="h-9" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-xs" />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={authLoading}>
+              <Button type="submit" className="w-full" size="sm" disabled={authLoading}>
                 {authLoading ? 'Registrazione in corso...' : 'Registrati'}
               </Button>
             </form>
           </Form>
-          <p className="mt-6 text-center text-sm text-muted-foreground">
+          <p className="mt-4 text-center text-xs text-muted-foreground">
             Hai già un account?{' '}
             <Link href={ROUTES.LOGIN} className="font-medium text-primary hover:underline">
               Accedi
             </Link>
           </p>
-          <p className="mt-2 text-center text-sm text-muted-foreground">
+          <p className="mt-1 text-center text-xs text-muted-foreground">
             Sei un'azienda?{' '}
             <Link href={ROUTES.REGISTER_COMPANY} className="font-medium text-primary hover:underline">
               Registrati qui
