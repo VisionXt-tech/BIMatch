@@ -17,7 +17,6 @@ import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useFirebase } from '@/contexts/FirebaseContext';
-import Image from 'next/image';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
@@ -42,9 +41,9 @@ const professionalProfileSchema = z.object({
       const strVal = String(val).trim();
       if (strVal === "") return undefined;
       const num = Number(strVal);
-      return isNaN(num) ? strVal : num;
+      return isNaN(num) ? undefined : num; // Return undefined if not a valid number to allow optional validation
     },
-    z.number({invalid_type_error: 'La tariffa oraria deve essere un numero valido.'})
+    z.number({invalid_type_error: 'La tariffa oraria deve essere un numero.'})
       .positive({ message: 'La tariffa oraria deve essere un numero positivo.' })
       .optional()
       .nullable()
@@ -129,6 +128,8 @@ export default function ProfessionalProfilePage() {
       }
       setProfileImageFile(file);
       setImagePreview(URL.createObjectURL(file));
+      setUploadProgress(null); // Reset progress for new file
+      setIsUploading(false); // Ensure not in uploading state if a previous attempt failed
     } else {
       setProfileImageFile(null);
       setImagePreview(userProfile?.photoURL || null);
@@ -141,12 +142,11 @@ export default function ProfessionalProfilePage() {
       return;
     }
 
-    setIsUploading(true);
-    setUploadProgress(0);
-
     let photoURLToUpdate = userProfile.photoURL || '';
-
+    
     if (profileImageFile && storage) {
+      setIsUploading(true);
+      setUploadProgress(0);
       const filePath = `profileImages/${user.uid}/${Date.now()}_${profileImageFile.name}`;
       const fileRef = storageRef(storage, filePath);
       const uploadTask = uploadBytesResumable(fileRef, profileImageFile);
@@ -174,27 +174,30 @@ export default function ProfessionalProfilePage() {
                    userFriendlyMessage = `Errore caricamento: ${error.message || 'Vedi console.'}`;
               }
               toast({ title: "Errore Caricamento Immagine", description: userFriendlyMessage, variant: "destructive" });
-              setIsUploading(false);
-              setUploadProgress(null);
-              reject(error);
+              reject(error); // Reject the promise on error
             },
             async () => {
               try {
                 photoURLToUpdate = await getDownloadURL(uploadTask.snapshot.ref);
-                resolve();
+                resolve(); // Resolve the promise on success
               } catch (getUrlError: any) {
                  toast({ title: "Errore URL Immagine", description: `Impossibile ottenere l'URL dell'immagine: ${getUrlError.message}`, variant: "destructive" });
-                 setIsUploading(false);
-                 setUploadProgress(null);
-                 reject(getUrlError);
+                 reject(getUrlError); // Reject if getDownloadURL fails
               }
             }
           );
         });
       } catch (uploadError) {
+          // Error already toasted inside the promise
           setIsUploading(false);
           setUploadProgress(null);
-          return;
+          return; // Stop submission if upload fails
+      }
+      // Upload finished, whether success or failure handled inside, now proceed only if successful
+      setIsUploading(false); // This will now be set after promise resolves or rejects
+      setUploadProgress(null);
+      if (!photoURLToUpdate && profileImageFile) { // If upload was attempted but URL not set (error)
+        return;
       }
     }
 
@@ -210,12 +213,15 @@ export default function ProfessionalProfilePage() {
 
     try {
       await updateUserProfile(user.uid, dataToUpdate);
-      setProfileImageFile(null);
+      setProfileImageFile(null); // Clear the selected file only after successful profile update
     } catch (error) {
       // Profile update error is handled by updateUserProfile in AuthContext
     } finally {
-      setIsUploading(false);
-      setUploadProgress(null);
+       // Ensure these are reset regardless of updateUserProfile outcome, especially if photo upload happened
+      if (!profileImageFile) { // Only reset upload states if no file was involved in this submission
+         setIsUploading(false);
+         setUploadProgress(null);
+      }
     }
   };
 
@@ -245,8 +251,8 @@ export default function ProfessionalProfilePage() {
           <div className="flex items-center space-x-3">
             <UserCircle2 className="h-6 w-6 text-primary" />
             <div>
-              <CardTitle className="text-2xl font-bold">Il Mio Profilo Professionale</CardTitle>
-              <CardDescription>Mantieni aggiornate le tue informazioni per attrarre le migliori opportunità.</CardDescription>
+              <CardTitle className="text-lg font-bold">Il Mio Profilo Professionale</CardTitle>
+              <CardDescription className="text-xs">Mantieni aggiornate le tue informazioni per attrarre le migliori opportunità.</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -254,7 +260,7 @@ export default function ProfessionalProfilePage() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormItem>
-                <FormLabel>Immagine del Profilo</FormLabel>
+                <FormLabel className="text-xs">Immagine del Profilo</FormLabel>
                 <div className="flex items-center space-x-4 mt-1">
                   <Avatar className="h-20 w-20">
                     <AvatarImage src={imagePreview || userProfile.photoURL || undefined} alt={userProfile.displayName || 'User'} data-ai-hint="profile person" />
@@ -265,7 +271,7 @@ export default function ProfessionalProfilePage() {
                         type="file"
                         accept="image/jpeg, image/png, image/webp"
                         onChange={handleFileChange}
-                        className="max-w-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+                        className="max-w-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 h-9"
                       />
                   </FormControl>
                 </div>
@@ -279,87 +285,83 @@ export default function ProfessionalProfilePage() {
                    <p className="text-xs text-green-600 mt-0.5">Nuova immagine selezionata. Salva per applicare.</p>
                  )}
                 <FormDescription className="text-xs mt-0.5">Carica un&apos;immagine (max 2MB, es. JPG, PNG, WEBP).</FormDescription>
-                <FormMessage />
+                <FormMessage className="text-xs" />
               </FormItem>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormInput control={form.control} name="firstName" label="Nome" placeholder="Mario" />
-                <FormInput control={form.control} name="lastName" label="Cognome" placeholder="Rossi" />
+              <div className="grid md:grid-cols-2 gap-4">
+                {/* Colonna Sinistra */}
+                <div className="space-y-4">
+                  <FormInput control={form.control} name="firstName" label="Nome" placeholder="Mario" />
+                  <FormInput control={form.control} name="lastName" label="Cognome" placeholder="Rossi" />
+                  <FormSingleSelect
+                    control={form.control}
+                    name="location"
+                    label="Localizzazione (Regione Principale)"
+                    options={ITALIAN_REGIONS.map(r => ({ value: r, label: r }))}
+                    placeholder="Seleziona la tua regione principale"
+                  />
+                  <FormSingleSelect
+                    control={form.control}
+                    name="experienceLevel"
+                    label="Livello di Esperienza"
+                    options={EXPERIENCE_LEVEL_OPTIONS}
+                    placeholder="Seleziona il tuo livello"
+                  />
+                   <FormSingleSelect
+                    control={form.control}
+                    name="availability"
+                    label="Disponibilità"
+                    options={AVAILABILITY_OPTIONS}
+                    placeholder="Seleziona la tua disponibilità"
+                  />
+                  <FormTextarea control={form.control} name="bio" label="Breve Bio Professionale" placeholder="Descrivi la tua esperienza, specializzazioni e obiettivi..." rows={5} />
+                </div>
+
+                {/* Colonna Destra */}
+                <div className="space-y-4">
+                  <FormMultiSelect
+                    control={form.control}
+                    name="bimSkills"
+                    label="Competenze BIM"
+                    options={BIM_SKILLS_OPTIONS}
+                    placeholder="Seleziona le tue competenze BIM principali"
+                  />
+                  <FormMultiSelect
+                    control={form.control}
+                    name="softwareProficiency"
+                    label="Software BIM Utilizzati"
+                    options={SOFTWARE_PROFICIENCY_OPTIONS}
+                    placeholder="Indica i software che conosci"
+                  />
+                   <FormItem>
+                    <FormLabel className="text-xs">Tariffa Oraria Indicativa (€) (Opzionale)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="Es. 50"
+                        step="0.01"
+                        className="h-9"
+                        {...form.register("hourlyRate", {
+                            setValueAs: (value) => {
+                              if (value === "" || value === null || value === undefined) return undefined;
+                              const strVal = String(value).trim();
+                              if (strVal === "") return undefined;
+                              const num = parseFloat(strVal);
+                              return isNaN(num) ? undefined : num;
+                            }
+                        })}
+                        defaultValue={form.getValues('hourlyRate') ?? ''}
+                      />
+                    </FormControl>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                  <FormInput control={form.control} name="portfolioUrl" label="Link al Portfolio (Opzionale)" placeholder="https://tuo.portfolio.com" />
+                  <FormInput control={form.control} name="cvUrl" label="Link al CV (Opzionale)" placeholder="Link a Google Drive, Dropbox, etc." description="Assicurati che il link sia accessibile." />
+                  <FormInput control={form.control} name="linkedInProfile" label="Profilo LinkedIn (Opzionale)" placeholder="https://linkedin.com/in/tuoprofilo" />
+                </div>
               </div>
 
-              <FormSingleSelect
-                control={form.control}
-                name="location"
-                label="Localizzazione (Regione Principale)"
-                options={ITALIAN_REGIONS.map(r => ({ value: r, label: r }))}
-                placeholder="Seleziona la tua regione principale"
-              />
-
-              <FormTextarea control={form.control} name="bio" label="Breve Bio Professionale" placeholder="Descrivi la tua esperienza, specializzazioni e obiettivi..." rows={4} />
-
-              <FormMultiSelect
-                control={form.control}
-                name="bimSkills"
-                label="Competenze BIM"
-                options={BIM_SKILLS_OPTIONS}
-                placeholder="Seleziona le tue competenze BIM principali"
-              />
-
-              <FormMultiSelect
-                control={form.control}
-                name="softwareProficiency"
-                label="Software BIM Utilizzati"
-                options={SOFTWARE_PROFICIENCY_OPTIONS}
-                placeholder="Indica i software che conosci"
-              />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormSingleSelect
-                  control={form.control}
-                  name="availability"
-                  label="Disponibilità"
-                  options={AVAILABILITY_OPTIONS}
-                  placeholder="Seleziona la tua disponibilità"
-                />
-                <FormSingleSelect
-                  control={form.control}
-                  name="experienceLevel"
-                  label="Livello di Esperienza"
-                  options={EXPERIENCE_LEVEL_OPTIONS}
-                  placeholder="Seleziona il tuo livello"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormInput control={form.control} name="portfolioUrl" label="Link al Portfolio (Opzionale)" placeholder="https://tuo.portfolio.com" />
-                <FormInput control={form.control} name="cvUrl" label="Link al CV (Opzionale)" placeholder="Link a Google Drive, Dropbox, etc." description="Assicurati che il link sia accessibile." />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormInput control={form.control} name="linkedInProfile" label="Profilo LinkedIn (Opzionale)" placeholder="https://linkedin.com/in/tuoprofilo" />
-                 <FormItem>
-                  <FormLabel>Tariffa Oraria Indicativa (€) (Opzionale)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="Es. 50"
-                      step="0.01"
-                      {...form.register("hourlyRate", {
-                          setValueAs: (value) => {
-                            if (value === "" || value === null || value === undefined) return undefined;
-                            const strVal = String(value).trim();
-                            if (strVal === "") return undefined;
-                            const num = parseFloat(strVal);
-                            return isNaN(num) ? undefined : num;
-                          }
-                       })}
-                      defaultValue={form.getValues('hourlyRate') ?? ''}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              </div>
-
-              <Button type="submit" className="w-full md:w-auto" disabled={authLoading || form.formState.isSubmitting || isUploading}>
+              <Button type="submit" className="w-full md:w-auto mt-6" size="sm" disabled={authLoading || form.formState.isSubmitting || isUploading}>
                 <Save className="mr-2 h-4 w-4" />
                 {isUploading ? `Caricamento... ${uploadProgress !== null ? Math.round(uploadProgress) + '%' : ''}` : (form.formState.isSubmitting ? 'Salvataggio in corso...' : 'Salva Modifiche')}
               </Button>
