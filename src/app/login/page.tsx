@@ -94,7 +94,7 @@ export default function LoginPage() {
   return (
     <div className="relative flex flex-grow items-center justify-center w-full px-4">
       <Image
-        src="https://images.unsplash.com/photo-1504297050568-910d24c426d3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzdHVkaW8lMjBhcmNoaXRlY3R1cmV8ZW58MHx8fHwxNzQ3Njc1MTY1fDA&ixlib=rb-4.1.0&q=80&w=1080"
+        src="https://images.unsplash.com/photo-1511818966892-d7d671e672a2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxhcmNoaXRlY3R1cmV8ZW58MHx8fHwxNzQ3Njc2MTkwfDA&ixlib=rb-4.1.0&q=80&w=1080"
         alt="Architecture studio background"
         layout="fill"
         objectFit="cover"
@@ -102,7 +102,7 @@ export default function LoginPage() {
         priority
         data-ai-hint="architecture studio"
       />
-      <div className="absolute inset-0 bg-black/60 -z-10"></div> {/* Removed backdrop-blur-sm */}
+      <div className="absolute inset-0 bg-black/60 -z-10"></div>
 
       <Card className="w-full max-w-md shadow-xl bg-card border-border">
         <CardHeader className="text-center p-6">
