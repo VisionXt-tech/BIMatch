@@ -25,13 +25,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 const companyProfileSchema = z.object({
-  companyName: z.string().min(2, { message: 'Il nome azienda deve contenere almeno 2 caratteri.' }).optional(),
-  companyVat: z.string().regex(/^[0-9]{11}$/, { message: 'La Partita IVA deve essere di 11 cifre.' }).optional(),
-  companyLocation: z.string().min(1, { message: 'La localizzazione è richiesta.' }).optional(),
-  companyWebsite: z.string().url({ message: 'Inserisci un URL valido.' }).optional().or(z.literal('')),
-  companySize: z.string().optional().or(z.literal('')),
-  industry: z.string().optional().or(z.literal('')),
-  companyDescription: z.string().max(2000, "La descrizione non può superare i 2000 caratteri.").optional().or(z.literal('')),
+  companyName: z.string().min(2, { message: 'Il nome azienda deve contenere almeno 2 caratteri.' }),
+  companyVat: z.string().regex(/^[0-9]{11}$/, { message: 'La Partita IVA deve essere di 11 cifre.' }),
+  companyLocation: z.string().min(1, { message: 'La sede è richiesta.' }),
+  companyWebsite: z.string().url({ message: 'Inserisci un URL valido per il sito web.' }),
+  companySize: z.string().min(1, { message: 'Le dimensioni azienda sono richieste.' }),
+  industry: z.string().min(1, { message: 'Il settore di attività è richiesto.' }),
+  companyDescription: z.string().min(1, "La descrizione azienda è richiesta.").max(2000, "La descrizione non può superare i 2000 caratteri."),
   contactPerson: z.string().min(2, "Il nome della persona di riferimento è richiesto."),
   contactEmail: z.string().email("L'email di contatto è richiesta e deve essere valida."),
   contactPhone: z.string().regex(/^\+?[0-9\s-()]{7,20}$/, "Il numero di telefono di contatto è richiesto e deve essere valido."),
@@ -98,19 +98,19 @@ export default function CompanyProfilePage() {
       const file = event.target.files[0];
       if (!file.type.startsWith('image/')) {
           toast({ title: "Formato File Non Valido", description: "Seleziona un file immagine (es. JPG, PNG, WEBP).", variant: "destructive"});
-          event.target.value = ''; // Reset the input
+          event.target.value = ''; 
           setLogoFile(null);
           return;
       }
       if (file.size > 2 * 1024 * 1024) { // 2MB limit
           toast({ title: "File Troppo Grande", description: "Il logo non deve superare i 2MB.", variant: "destructive"});
-          event.target.value = ''; // Reset the input
+          event.target.value = ''; 
           setLogoFile(null);
           return;
       }
       if (file.size === 0) {
         toast({ title: "File Vuoto", description: "Il file selezionato è vuoto e non può essere caricato.", variant: "destructive" });
-        event.target.value = ''; // Reset the input
+        event.target.value = ''; 
         setLogoFile(null);
         return;
       }
@@ -199,8 +199,8 @@ export default function CompanyProfilePage() {
 
     try {
       await updateUserProfile(user.uid, dataToUpdate);
-      setLogoFile(null); // Clear the file input after successful update
-      if (logoInputRef.current) { // Reset the hidden file input as well
+      setLogoFile(null); 
+      if (logoInputRef.current) { 
         logoInputRef.current.value = "";
       }
     } catch (error) {
@@ -308,26 +308,26 @@ export default function CompanyProfilePage() {
                       options={ITALIAN_REGIONS.map(r => ({ value: r, label: r }))}
                       placeholder="Seleziona la regione della sede"
                     />
-                    <FormInput control={form.control} name="companyWebsite" label="Sito Web (Opzionale)" placeholder="https://www.lamiaazienda.it" />
+                    <FormInput control={form.control} name="companyWebsite" label="Sito Web" placeholder="https://www.lamiaazienda.it" />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormSingleSelect
                       control={form.control}
                       name="companySize"
-                      label="Dimensioni Azienda (Opzionale)"
+                      label="Dimensioni Azienda"
                       options={COMPANY_SIZE_OPTIONS}
                       placeholder="Seleziona dimensioni"
                     />
                     <FormSingleSelect
                       control={form.control}
                       name="industry"
-                      label="Settore di Attività (Opzionale)"
+                      label="Settore di Attività"
                       options={INDUSTRY_SECTORS}
                       placeholder="Seleziona settore"
                     />
                   </div>
-                  <FormTextarea control={form.control} name="companyDescription" label="Descrizione Azienda (Opzionale)" placeholder="Descrivi la tua azienda, la mission, i valori e i tipi di progetti..." rows={4} />
+                  <FormTextarea control={form.control} name="companyDescription" label="Descrizione Azienda" placeholder="Descrivi la tua azienda, la mission, i valori e i tipi di progetti..." rows={4} />
                 </TabsContent>
 
                 <TabsContent value="info-contatto" className="space-y-4">
