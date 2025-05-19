@@ -18,7 +18,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { UserPlus } from 'lucide-react';
 import type { ProfessionalRegistrationFormData } from '@/types/auth';
 import { ROUTES, ITALIAN_REGIONS } from '@/constants';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -66,9 +65,6 @@ export default function ProfessionalRegistrationPage() {
     <div className="flex justify-center items-center py-6 w-full">
       <Card className="w-full max-w-lg shadow-xl">
         <CardHeader className="text-center p-4">
-          <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-4">
-            <UserPlus className="h-8 w-8 text-primary" />
-          </div>
           <CardTitle className="text-xl font-bold">Registrati come Professionista BIM</CardTitle>
           <CardDescription className="text-xs">Unisciti a BIMatch e trova nuove opportunità.</CardDescription>
         </CardHeader>
