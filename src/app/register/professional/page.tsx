@@ -21,7 +21,8 @@ import { useRouter } from 'next/navigation';
 import type { ProfessionalRegistrationFormData } from '@/types/auth';
 import { ROUTES, ITALIAN_REGIONS } from '@/constants';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
+import Image from 'next/image';
+import { UserPlus } from 'lucide-react';
 
 const professionalRegistrationSchema = z.object({
   firstName: z.string().min(2, { message: 'Il nome deve contenere almeno 2 caratteri.' }),
@@ -54,19 +55,32 @@ export default function ProfessionalRegistrationPage() {
   const onSubmit = async (data: ProfessionalRegistrationFormData) => {
     try {
       await registerProfessional(data);
-      router.push(ROUTES.DASHBOARD_PROFESSIONAL_PROFILE); // Redirect to complete profile
+      router.push(ROUTES.DASHBOARD_PROFESSIONAL_PROFILE); 
     } catch (error) {
-      // Error is handled by useAuth and displayed via toast
       console.error('Professional registration failed on page:', error);
     }
   };
 
   return (
-    <div className="flex justify-center items-center py-4 w-full">
-      <Card className="w-full max-w-lg shadow-xl">
+    <div className="relative flex flex-grow items-center justify-center w-full px-4 py-4">
+      <Image
+        src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx3b3JraW5nJTIwcHJvZmVzc2lvbmFsc3xlbnwwfHx8fDE3NDc2NzY1MDV8MA&ixlib=rb-4.1.0&q=80&w=1080"
+        alt="Professionals working in an office"
+        layout="fill"
+        objectFit="cover"
+        className="-z-10"
+        priority
+        data-ai-hint="professionals office"
+      />
+      <div className="absolute inset-0 bg-black/50 -z-10"></div>
+
+      <Card className="w-full max-w-lg shadow-xl bg-card border-border">
         <CardHeader className="text-center p-3">
-          <CardTitle className="text-lg font-bold">Registrati come Professionista BIM</CardTitle>
-          <CardDescription className="text-xs">Unisciti a BIMatch e trova nuove opportunità.</CardDescription>
+           <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-2">
+            <UserPlus className="h-5 w-5 text-primary" />
+          </div>
+          <CardTitle className="text-lg font-bold text-primary">Registrati come Professionista BIM</CardTitle>
+          <CardDescription className="text-xs text-muted-foreground">Unisciti a BIMatch e trova nuove opportunità.</CardDescription>
         </CardHeader>
         <CardContent className="p-3">
           <Form {...form}>
@@ -77,9 +91,9 @@ export default function ProfessionalRegistrationPage() {
                   name="firstName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs">Nome</FormLabel>
+                      <FormLabel className="text-xs text-foreground">Nome</FormLabel>
                       <FormControl>
-                        <Input placeholder="Mario" {...field} className="h-9" />
+                        <Input placeholder="Mario" {...field} className="h-9 text-foreground placeholder:text-muted-foreground" />
                       </FormControl>
                       <FormMessage className="text-xs" />
                     </FormItem>
@@ -90,9 +104,9 @@ export default function ProfessionalRegistrationPage() {
                   name="lastName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs">Cognome</FormLabel>
+                      <FormLabel className="text-xs text-foreground">Cognome</FormLabel>
                       <FormControl>
-                        <Input placeholder="Rossi" {...field} className="h-9" />
+                        <Input placeholder="Rossi" {...field} className="h-9 text-foreground placeholder:text-muted-foreground" />
                       </FormControl>
                       <FormMessage className="text-xs" />
                     </FormItem>
@@ -104,9 +118,9 @@ export default function ProfessionalRegistrationPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs">Email</FormLabel>
+                    <FormLabel className="text-xs text-foreground">Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="mario.rossi@esempio.com" {...field} className="h-9" />
+                      <Input type="email" placeholder="mario.rossi@esempio.com" {...field} className="h-9 text-foreground placeholder:text-muted-foreground" />
                     </FormControl>
                     <FormMessage className="text-xs" />
                   </FormItem>
@@ -117,10 +131,10 @@ export default function ProfessionalRegistrationPage() {
                 name="location"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs">Localizzazione (Regione)</FormLabel>
+                    <FormLabel className="text-xs text-foreground">Localizzazione (Regione)</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger className="h-9">
+                        <SelectTrigger className="h-9 text-foreground">
                           <SelectValue placeholder="Seleziona la tua regione" />
                         </SelectTrigger>
                       </FormControl>
@@ -141,9 +155,9 @@ export default function ProfessionalRegistrationPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs">Password</FormLabel>
+                    <FormLabel className="text-xs text-foreground">Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="Min. 6 caratteri" {...field} className="h-9" />
+                      <Input type="password" placeholder="Min. 6 caratteri" {...field} className="h-9 text-foreground placeholder:text-muted-foreground" />
                     </FormControl>
                     <FormMessage className="text-xs" />
                   </FormItem>
@@ -154,9 +168,9 @@ export default function ProfessionalRegistrationPage() {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs">Conferma Password</FormLabel>
+                    <FormLabel className="text-xs text-foreground">Conferma Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="Ripeti la password" {...field} className="h-9" />
+                      <Input type="password" placeholder="Ripeti la password" {...field} className="h-9 text-foreground placeholder:text-muted-foreground" />
                     </FormControl>
                     <FormMessage className="text-xs" />
                   </FormItem>
@@ -167,7 +181,7 @@ export default function ProfessionalRegistrationPage() {
               </Button>
             </form>
           </Form>
-          <p className="mt-4 text-center text-xs text-muted-foreground">
+          <p className="mt-3 text-center text-xs text-muted-foreground">
             Hai già un account?{' '}
             <Link href={ROUTES.LOGIN} className="font-medium text-primary hover:underline">
               Accedi
