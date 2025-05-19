@@ -228,7 +228,7 @@ export default function CompanyProfilePage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 
               <FormItem>
-                <FormLabel>Logo Aziendale</FormLabel>
+                <FormLabel className="text-xs">Logo Aziendale</FormLabel>
                 <div className="flex items-center space-x-4 mt-1">
                   <Avatar className="h-20 w-20 rounded-md">
                     <AvatarImage src={logoPreview || (userProfile as CompanyProfile).logoUrl || undefined} alt={userProfile.companyName || 'Logo Azienda'} data-ai-hint="company logo" className="object-contain"/>
@@ -239,7 +239,8 @@ export default function CompanyProfilePage() {
                         type="file"
                         accept="image/jpeg, image/png, image/webp"
                         onChange={handleFileChange}
-                        className="max-w-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90" />
+                        className="max-w-xs h-9 text-sm file:border-0 file:bg-accent file:text-accent-foreground file:hover:bg-accent/90 file:rounded-sm file:px-3 file:py-1.5 file:mr-4 file:text-xs file:font-medium"
+                         />
                   </FormControl>
                 </div>
                 {isUploading && uploadProgress !== null && (

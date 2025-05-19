@@ -38,16 +38,16 @@ const professionalProfileSchema = z.object({
   linkedInProfile: z.string().url({message: 'Inserisci un URL valido per LinkedIn.'}).optional().or(z.literal('')),
   monthlyRate: z.preprocess(
     (val) => {
-      if (val === "" || val === null || val === undefined) return undefined; // Allow empty string to be treated as undefined
+      if (val === "" || val === null || val === undefined) return undefined;
       const strVal = String(val).trim();
-      if (strVal === "") return undefined; // If string is empty after trim, treat as undefined
+      if (strVal === "") return undefined;
       const num = Number(strVal);
-      return isNaN(num) ? undefined : num; // If not a number, Zod will catch it with invalid_type_error
+      return isNaN(num) ? undefined : num;
     },
     z.number({invalid_type_error: 'La retribuzione mensile deve essere un numero.'})
       .positive({ message: 'La retribuzione mensile deve essere un numero positivo.' })
       .optional()
-      .nullable() // Allow null to be stored if field is emptied
+      .nullable()
   ),
 });
 
@@ -129,8 +129,8 @@ export default function ProfessionalProfilePage() {
       }
       setProfileImageFile(file);
       setImagePreview(URL.createObjectURL(file));
-      setUploadProgress(null); // Reset progress for new file
-      setIsUploading(false); // Reset uploading state for new file
+      setUploadProgress(null); 
+      setIsUploading(false); 
     } else {
       setProfileImageFile(null);
       setImagePreview(userProfile?.photoURL || null);
@@ -177,31 +177,27 @@ export default function ProfessionalProfilePage() {
               toast({ title: "Errore Caricamento Immagine", description: userFriendlyMessage, variant: "destructive" });
               setIsUploading(false);
               setUploadProgress(null);
-              reject(error); // Reject the promise on error
+              reject(error);
             },
             async () => {
               try {
                 photoURLToUpdate = await getDownloadURL(uploadTask.snapshot.ref);
-                resolve(); // Resolve the promise on successful upload and URL retrieval
+                resolve(); 
               } catch (getUrlError: any) {
                  toast({ title: "Errore URL Immagine", description: `Impossibile ottenere l'URL dell'immagine: ${getUrlError.message}`, variant: "destructive" });
-                 setIsUploading(false); // Ensure these are reset here too
+                 setIsUploading(false); 
                  setUploadProgress(null);
-                 reject(getUrlError); // Reject the promise if getDownloadURL fails
+                 reject(getUrlError); 
               }
             }
           );
         });
       } catch (uploadError) {
-        // This catch block will handle rejections from the promise created above
-        // Error is already toasted in the error callback of uploadTask.on or getDownloadURL catch
-        // Ensure uploading state is reset if we bail out here
         setIsUploading(false);
         setUploadProgress(null);
-        return; // Stop submission if upload failed
+        return; 
       }
     }
-
 
     const updatedDisplayName = `${data.firstName || userProfile.firstName || ''} ${data.lastName || userProfile.lastName || ''}`.trim();
 
@@ -209,20 +205,16 @@ export default function ProfessionalProfilePage() {
       ...data,
       displayName: updatedDisplayName || userProfile.displayName,
       photoURL: photoURLToUpdate,
-      // Ensure monthlyRate is either a number or null (for Firestore)
-      // If undefined or empty string from form, it becomes null
       monthlyRate: data.monthlyRate === undefined || data.monthlyRate === null || String(data.monthlyRate).trim() === '' ? null : Number(data.monthlyRate),
     };
 
     try {
       await updateUserProfile(user.uid, dataToUpdate);
-      // Toast for profile update success is handled within updateUserProfile
-      setProfileImageFile(null); // Reset file input state after successful submission
+      setProfileImageFile(null); 
     } catch (error) {
       // Error toast is handled within updateUserProfile
     } finally {
-      // Reset uploading state regardless of profile update success, if an upload was attempted
-      if (profileImageFile) {
+      if (profileImageFile || isUploading) { // Reset if an upload was attempted or in progress
         setIsUploading(false);
         setUploadProgress(null);
       }
@@ -275,7 +267,7 @@ export default function ProfessionalProfilePage() {
                         type="file"
                         accept="image/jpeg, image/png, image/webp"
                         onChange={handleFileChange}
-                        className="max-w-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 h-9"
+                        className="max-w-xs h-9 text-sm file:border-0 file:bg-accent file:text-accent-foreground file:hover:bg-accent/90 file:rounded-sm file:px-3 file:py-1.5 file:mr-4 file:text-xs file:font-medium"
                       />
                   </FormControl>
                 </div>
@@ -295,7 +287,7 @@ export default function ProfessionalProfilePage() {
               <Tabs defaultValue="info-personali" className="w-full">
                 <TabsList className="grid w-full grid-cols-3 mb-4">
                   <TabsTrigger value="info-personali">Info Personali</TabsTrigger>
-                  <TabsTrigger value="bio-competenze">Competenze</TabsTrigger>
+                  <TabsTrigger value="competenze">Competenze</TabsTrigger>
                   <TabsTrigger value="dettagli-link">Economia e Link</TabsTrigger>
                 </TabsList>
 
@@ -327,10 +319,10 @@ export default function ProfessionalProfilePage() {
                       placeholder="Seleziona la tua disponibilità"
                     />
                   </div>
-                  <FormTextarea control={form.control} name="bio" label="Breve Bio Professionale" placeholder="Descrivi la tua esperienza, specializzazioni e obiettivi..." rows={5} />
+                   <FormTextarea control={form.control} name="bio" label="Breve Bio Professionale" placeholder="Descrivi la tua esperienza, specializzazioni e obiettivi..." rows={5} />
                 </TabsContent>
 
-                <TabsContent value="bio-competenze" className="space-y-4">
+                <TabsContent value="competenze" className="space-y-4">
                   <FormMultiSelect
                     control={form.control}
                     name="bimSkills"
@@ -357,12 +349,12 @@ export default function ProfessionalProfilePage() {
                         step="1"
                         className="h-9"
                         {...form.register("monthlyRate", {
-                            setValueAs: (value) => { // Ensure empty string is converted to null/undefined
-                              if (value === "" || value === null || value === undefined) return null; // Treat empty as null
+                            setValueAs: (value) => {
+                              if (value === "" || value === null || value === undefined) return null; 
                               const strVal = String(value).trim();
-                              if (strVal === "") return null; // If string is empty after trim, treat as null
+                              if (strVal === "") return null; 
                               const num = parseFloat(strVal);
-                              return isNaN(num) ? undefined : num; // Let Zod handle if it's not a number after trying
+                              return isNaN(num) ? undefined : num; 
                             }
                         })}
                       />
@@ -387,4 +379,3 @@ export default function ProfessionalProfilePage() {
     </div>
   );
 }
-
