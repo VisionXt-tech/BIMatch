@@ -3,7 +3,7 @@ import Link from 'next/link';
 const Footer = () => {
   const currentYear = new Date().getFullYear();
   return (
-    <footer className="bg-muted/50 text-muted-foreground py-8 mt-auto">
+    <footer className="bg-muted/50 text-muted-foreground py-8">
       <div className="container mx-auto px-4 text-center">
         <p className="text-sm">
           &copy; {currentYear === 2025 ? 2024 : currentYear} VisionXt. Tutti i diritti riservati.
