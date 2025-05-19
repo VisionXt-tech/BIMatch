@@ -25,23 +25,23 @@ export default function CompanyDashboardPage() {
   const isProfileComplete = userProfile.companyDescription && userProfile.industry;
 
   return (
-    <div className="space-y-3"> {/* Reduced space-y from 4 to 3 */}
+    <div className="space-y-3">
       <Card className="bg-gradient-to-r from-primary/10 via-background to-primary/10 shadow-md">
         <CardHeader className="pb-2">
-          <CardTitle className="text-xl font-bold text-primary">Benvenuta, {userProfile.companyName || userProfile.displayName}!</CardTitle> {/* Reduced font size */}
-          <CardDescription className="text-base">Gestisci i tuoi progetti BIM e trova i migliori talenti sulla tua dashboard BIMatch.</CardDescription> {/* Reduced font size */}
+          <CardTitle className="text-xl font-bold text-primary">Benvenuta, {userProfile.companyName || userProfile.displayName}!</CardTitle>
+          <CardDescription className="text-base">Gestisci i tuoi progetti BIM e trova i migliori talenti sulla tua dashboard BIMatch.</CardDescription>
         </CardHeader>
          {!isProfileComplete && (
-          <CardContent className="pt-0 pb-4"> 
-             <div className="bg-secondary border-l-4 border-primary text-secondary-foreground p-3 rounded-md" role="alert"> {/* Reduced padding */}
+          <CardContent className="pt-0 pb-3"> 
+             <div className="bg-secondary border-l-4 border-primary text-secondary-foreground p-3 rounded-md" role="alert">
                 <p className="font-bold">Completa il profilo aziendale!</p>
-                <p className="text-sm">Un profilo dettagliato attira i migliori professionisti. <Link href={ROUTES.DASHBOARD_COMPANY_PROFILE} className="font-semibold underline hover:text-primary">Aggiorna ora</Link>.</p> {/* Reduced font size */}
+                <p className="text-sm">Un profilo dettagliato attira i migliori professionisti. <Link href={ROUTES.DASHBOARD_COMPANY_PROFILE} className="font-semibold underline hover:text-primary">Aggiorna ora</Link>.</p>
             </div>
           </CardContent>
         )}
       </Card>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3"> {/* Reduced gap */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
         <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Progetti Attivi</CardTitle>
@@ -99,20 +99,20 @@ export default function CompanyDashboardPage() {
       
       <Card className="shadow-lg">
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Trova il Talento BIM Perfetto</CardTitle> {/* Reduced font size */}
-          <CardDescription className="text-sm">Pubblica i tuoi progetti e connettiti con professionisti qualificati in tutta Italia.</CardDescription> {/* Reduced font size */}
+          <CardTitle className="text-lg">Trova il Talento BIM Perfetto</CardTitle>
+          <CardDescription className="text-sm">Pubblica i tuoi progetti e connettiti con professionisti qualificati in tutta Italia.</CardDescription>
         </CardHeader>
-        <CardContent className="grid md:grid-cols-2 gap-4 items-center p-3 pt-1"> {/* Reduced gap and padding */}
+        <CardContent className="grid md:grid-cols-2 gap-3 items-center p-3 pt-1">
            <div>
-            <p className="mb-2 text-sm text-foreground/90"> {/* Reduced mb and font size */}
+            <p className="mb-2 text-sm text-foreground/90">
               BIMatch semplifica la ricerca di personale BIM qualificato. Descrivi i requisiti del tuo progetto.
             </p>
-            <ul className="list-disc list-inside space-y-1 mb-2 text-sm text-foreground/80"> {/* Reduced space-y, mb and font size */}
+            <ul className="list-disc list-inside space-y-1 mb-2 text-sm text-foreground/80">
               <li>Pubblica offerte di progetto dettagliate.</li>
               <li>Esplora profili di professionisti verificati.</li>
               <li>Filtra i professionisti per competenze e software.</li>
             </ul>
-            <div className="flex flex-wrap gap-2"> {/* Reduced gap */}
+            <div className="flex flex-wrap gap-2">
               <Link href={ROUTES.DASHBOARD_COMPANY_POST_PROJECT} passHref legacyBehavior>
                 <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground text-sm py-1.5 px-3">
                   <a className="flex items-center">
@@ -122,7 +122,7 @@ export default function CompanyDashboardPage() {
               </Link>
             </div>
           </div>
-          <div className="relative h-40 rounded-lg overflow-hidden"> {/* Reduced image height to h-40 */}
+          <div className="relative h-32 rounded-lg overflow-hidden">
             <Image 
               src="https://images.unsplash.com/photo-1744627049721-73c27008ad28?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxCSU18ZW58MHx8fHwxNzQ3NDEyNDUxfDA&ixlib=rb-4.1.0&q=80&w=1080" 
               alt="Team working on BIM project" 

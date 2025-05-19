@@ -32,7 +32,7 @@ export default function ProfessionalDashboardPage() {
           <CardDescription className="text-base">Benvenuto nella tua dashboard BIMatch. Qui puoi gestire il tuo profilo e trovare nuove opportunità.</CardDescription>
         </CardHeader>
         {!isProfileComplete && (
-          <CardContent className="pt-0 pb-4"> 
+          <CardContent className="pt-0 pb-3"> 
              <div className="bg-secondary border-l-4 border-primary text-secondary-foreground p-3 rounded-md" role="alert">
                 <p className="font-bold">Completa il tuo profilo!</p>
                 <p className="text-sm">Un profilo completo aumenta le tue possibilità di trovare il progetto giusto. <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROFILE} className="font-semibold underline hover:text-primary">Aggiorna ora</Link>.</p>
@@ -103,7 +103,7 @@ export default function ProfessionalDashboardPage() {
           <CardTitle className="text-lg">Potenzia la tua carriera BIM</CardTitle>
           <CardDescription className="text-sm">Scopri come BIMatch può aiutarti a crescere professionalmente.</CardDescription>
         </CardHeader>
-        <CardContent className="grid md:grid-cols-2 gap-4 items-center p-3 pt-1">
+        <CardContent className="grid md:grid-cols-2 gap-3 items-center p-3 pt-1">
           <div>
             <p className="mb-2 text-sm text-foreground/90">
               Con BIMatch, hai accesso a una vasta rete di aziende leader nel settore edilizio italiano. 
@@ -120,7 +120,7 @@ export default function ProfessionalDashboardPage() {
               </Button>
             </Link>
           </div>
-          <div className="relative h-40 rounded-lg overflow-hidden"> {/* Reduced image height */}
+          <div className="relative h-32 rounded-lg overflow-hidden">
             <Image 
               src="https://images.unsplash.com/photo-1612888262725-6b300edf916c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHwzRCUyME1vZGVsaW5nfGVufDB8fHx8MTc0NzQxMTMyOXww&ixlib=rb-4.1.0&q=80&w=1080" 
               alt="BIM professional working" 
