@@ -35,15 +35,12 @@ const companyRegistrationSchema = z.object({
   path: ['confirmPassword'],
 });
 
-// The form data type will not include companyWebsite as it's removed from the form fields
-type CompanyRegistrationPageFormData = Omit<CompanyRegistrationFormData, 'companyWebsite'>;
-
 export default function CompanyRegistrationPage() {
   const { registerCompany, loading: authLoading } = useAuth();
   const router = useRouter();
 
-  const form = useForm<CompanyRegistrationPageFormData>({
-    resolver: zodResolver(companyRegistrationSchema),
+  const form = useForm<Omit<CompanyRegistrationFormData, 'companyWebsite'>>({
+    resolver: zodResolver(companyRegistrationSchema), 
     defaultValues: {
       companyName: '',
       companyVat: '',
@@ -54,28 +51,26 @@ export default function CompanyRegistrationPage() {
     },
   });
 
-  const onSubmit = async (data: CompanyRegistrationPageFormData) => {
+  const onSubmit = async (data: Omit<CompanyRegistrationFormData, 'companyWebsite'>) => {
     try {
-      // Pass the data including an empty companyWebsite as registerCompany function expects it
       await registerCompany({ ...data, companyWebsite: '' }); 
       router.push(ROUTES.DASHBOARD_COMPANY_PROFILE); 
     } catch (error) {
       console.error('Company registration failed on page:', error);
-      // Error is handled by useAuth and displayed via toast
     }
   };
 
   return (
-    <div className="flex justify-center items-center py-12 w-full">
+    <div className="flex justify-center items-center py-6 w-full">
       <Card className="w-full max-w-lg shadow-xl">
-        <CardHeader className="text-center p-6">
+        <CardHeader className="text-center p-4">
           <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-4">
             <Building2 className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl md:text-3xl font-bold">Registra la Tua Azienda</CardTitle>
-          <CardDescription className="text-sm md:text-base">Trova i migliori talenti BIM per i tuoi progetti.</CardDescription>
+          <CardTitle className="text-xl font-bold">Registra la Tua Azienda</CardTitle>
+          <CardDescription className="text-xs">Trova i migliori talenti BIM per i tuoi progetti.</CardDescription>
         </CardHeader>
-        <CardContent className="p-6">
+        <CardContent className="p-4">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField

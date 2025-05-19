@@ -63,16 +63,16 @@ export default function ProfessionalRegistrationPage() {
   };
 
   return (
-    <div className="flex justify-center items-center py-12 w-full">
+    <div className="flex justify-center items-center py-6 w-full">
       <Card className="w-full max-w-lg shadow-xl">
-        <CardHeader className="text-center">
+        <CardHeader className="text-center p-4">
           <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-4">
             <UserPlus className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle className="text-3xl font-bold">Registrati come Professionista BIM</CardTitle>
-          <CardDescription>Unisciti a BIMatch e trova nuove opportunità.</CardDescription>
+          <CardTitle className="text-xl font-bold">Registrati come Professionista BIM</CardTitle>
+          <CardDescription className="text-xs">Unisciti a BIMatch e trova nuove opportunità.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
