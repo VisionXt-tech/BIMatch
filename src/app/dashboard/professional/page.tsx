@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ROUTES } from '@/constants';
-import { User, Briefcase, Bell, Search } from 'lucide-react';
-import Image from 'next/image';
+import { User, Search, Bell } from 'lucide-react';
+// Removed Briefcase and Image imports as the action card is removed
 
 export default function ProfessionalDashboardPage() {
   const { userProfile } = useAuth();
@@ -25,14 +25,14 @@ export default function ProfessionalDashboardPage() {
 
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-6">
       <Card className="bg-gradient-to-r from-primary/10 via-background to-secondary/10 shadow-md">
-        <CardHeader className="pb-1 px-4 pt-3">
-          <CardTitle className="text-xl font-bold text-primary">{userProfile.firstName ? `Ciao, ${userProfile.firstName}!` : `Ciao, ${userProfile.displayName}!`}</CardTitle>
-          <CardDescription className="text-base">Benvenuto nella tua dashboard BIMatch. Qui puoi gestire il tuo profilo e trovare nuove opportunità.</CardDescription>
+        <CardHeader className="pb-3 px-6 pt-6">
+          <CardTitle className="text-2xl font-bold text-primary">{userProfile.firstName ? `Ciao, ${userProfile.firstName}!` : `Ciao, ${userProfile.displayName}!`}</CardTitle>
+          <CardDescription className="text-md">Benvenuto nella tua dashboard BIMatch. Qui puoi gestire il tuo profilo e trovare nuove opportunità.</CardDescription>
         </CardHeader>
         {!isProfileComplete && (
-          <CardContent className="px-4 pt-0 pb-2"> 
+          <CardContent className="px-6 pt-0 pb-4"> 
              <div className="bg-secondary border-l-4 border-primary text-secondary-foreground p-3 rounded-md" role="alert">
                 <p className="font-bold">Completa il tuo profilo!</p>
                 <p className="text-sm">Un profilo completo aumenta le tue possibilità di trovare il progetto giusto. <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROFILE} className="font-semibold underline hover:text-primary">Aggiorna ora</Link>.</p>
@@ -41,19 +41,19 @@ export default function ProfessionalDashboardPage() {
         )}
       </Card>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-2">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 px-3 pt-2 pb-1">
-            <CardTitle className="text-sm font-medium">Progetti Compatibili</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-1">
+            <CardTitle className="text-md font-semibold">Progetti Compatibili</CardTitle>
             <Search className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="px-3 pt-0 pb-2"> 
-            <div className="text-2xl font-bold">{projectMatchesCount}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="p-4 pt-0"> 
+            <div className="text-3xl font-bold">{projectMatchesCount}</div>
+            <p className="text-sm text-muted-foreground">
               Progetti che corrispondono alle tue competenze.
             </p>
             <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS} passHref legacyBehavior>
-              <Button variant="link" asChild className="px-0 pt-0 text-primary text-xs">
+              <Button variant="link" asChild className="px-0 pt-1 text-primary text-sm hover:underline">
                 <a>Visualizza Progetti</a>
               </Button>
             </Link>
@@ -61,17 +61,17 @@ export default function ProfessionalDashboardPage() {
         </Card>
 
         <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 px-3 pt-2 pb-1">
-            <CardTitle className="text-sm font-medium">Il Mio Profilo</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-1">
+            <CardTitle className="text-md font-semibold">Il Mio Profilo</CardTitle>
             <User className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="px-3 pt-0 pb-2"> 
-            <div className="text-2xl font-bold">{isProfileComplete ? "Completo" : "Incompleto"}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="p-4 pt-0"> 
+            <div className="text-3xl font-bold">{isProfileComplete ? "Completo" : "Incompleto"}</div>
+            <p className="text-sm text-muted-foreground">
               Mantieni il tuo profilo aggiornato.
             </p>
             <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROFILE} passHref legacyBehavior>
-              <Button variant="link" asChild className="px-0 pt-0 text-primary text-xs">
+              <Button variant="link" asChild className="px-0 pt-1 text-primary text-sm hover:underline">
                 <a>Gestisci Profilo</a>
               </Button>
             </Link>
@@ -79,17 +79,17 @@ export default function ProfessionalDashboardPage() {
         </Card>
         
         <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 px-3 pt-2 pb-1">
-            <CardTitle className="text-sm font-medium">Notifiche</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-1">
+            <CardTitle className="text-md font-semibold">Notifiche</CardTitle>
             <Bell className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="px-3 pt-0 pb-2">
-            <div className="text-2xl font-bold">{newNotificationsCount}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="p-4 pt-0">
+            <div className="text-3xl font-bold">{newNotificationsCount}</div>
+            <p className="text-sm text-muted-foreground">
               Nuovi messaggi o aggiornamenti.
             </p>
-            <Link href="#" passHref legacyBehavior>
-              <Button variant="link" asChild className="px-0 pt-0 text-primary text-xs">
+            <Link href="#" passHref legacyBehavior> 
+              <Button variant="link" asChild className="px-0 pt-1 text-primary text-sm hover:underline">
                  <a>Visualizza Notifiche</a>
               </Button>
             </Link>
