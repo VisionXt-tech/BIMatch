@@ -11,11 +11,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { FolderPlus, Save } from 'lucide-react';
 import { FormInput, FormTextarea, FormMultiSelect, FormSingleSelect } from '@/components/ProfileFormElements';
-import { ROUTES, BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, AVAILABILITY_OPTIONS, ITALIAN_REGIONS } from '@/constants';
+import { ROUTES, BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, ITALIAN_REGIONS } from '@/constants';
 import { useToast } from '@/hooks/use-toast';
 // Firestore imports for adding project
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useFirebase } from '@/contexts/FirebaseContext';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 const projectSchema = z.object({
@@ -27,7 +28,7 @@ const projectSchema = z.object({
   projectType: z.string().min(1, "Il tipo di progetto è richiesto."), // e.g., Full-time, Part-time, Contract
   duration: z.string().optional().or(z.literal('')), // e.g., 3 mesi, 6+ mesi, Indeterminato
   budgetRange: z.string().optional().or(z.literal('')), // e.g., €X - €Y, Da definire
-  applicationDeadline: z.string().optional().refine(val => !val || !isNaN(Date.parse(val)), { message: "Data non valida" }),
+  applicationDeadline: z.string().optional().refine(val => !val || !isNaN(Date.parse(val)) || val === '', { message: "Data non valida" }),
 });
 
 type ProjectFormData = z.infer<typeof projectSchema>;
@@ -68,12 +69,12 @@ export default function PostProjectPage() {
         status: 'attivo', // Default status
         postedAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-        applicationDeadline: data.applicationDeadline ? new Date(data.applicationDeadline) : null,
+        applicationDeadline: data.applicationDeadline && data.applicationDeadline !== '' ? new Date(data.applicationDeadline) : null,
       };
 
       const docRef = await addDoc(collection(db, "projects"), projectData);
       toast({ title: "Progetto Pubblicato!", description: `Il tuo progetto "${data.title}" è ora online.` });
-      router.push(`${ROUTES.DASHBOARD_COMPANY_PROJECTS}`); // Redirect to company's project list
+      router.push(ROUTES.DASHBOARD_COMPANY_PROJECTS); 
     } catch (error: any) {
       console.error("Error posting project:", error);
       toast({ title: "Errore Pubblicazione", description: error.message || "Impossibile pubblicare il progetto.", variant: "destructive" });
@@ -98,65 +99,75 @@ export default function PostProjectPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Card className="shadow-xl">
         <CardHeader className="p-4">
           <div className="flex items-center space-x-3">
             <FolderPlus className="h-6 w-6 text-primary" />
             <div>
               <CardTitle className="text-2xl font-bold">Pubblica un Nuovo Progetto BIM</CardTitle>
-              <CardDescription>Descrivi il tuo progetto per trovare i professionisti BIM più adatti.</CardDescription>
+              <CardDescription className="text-xs">Descrivi il tuo progetto per trovare i professionisti BIM più adatti.</CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-4 pt-0">
+        <CardContent className="p-4 pt-2">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormInput control={form.control} name="title" label="Titolo del Progetto" placeholder="Es. Modellatore BIM per Progetto Residenziale" />
+              <Tabs defaultValue="info-principali" className="w-full">
+                <TabsList className="grid w-full grid-cols-3 mb-6">
+                  <TabsTrigger value="info-principali">Info Principali</TabsTrigger>
+                  <TabsTrigger value="requisiti">Requisiti</TabsTrigger>
+                  <TabsTrigger value="dettagli-contratto">Dettagli Contratto</TabsTrigger>
+                </TabsList>
 
-              <FormSingleSelect
-                control={form.control}
-                name="location"
-                label="Localizzazione del Progetto (Regione)"
-                options={ITALIAN_REGIONS.map(r => ({ value: r, label: r }))}
-                placeholder="Seleziona la regione del progetto"
-              />
+                <TabsContent value="info-principali" className="space-y-4">
+                  <FormInput control={form.control} name="title" label="Titolo del Progetto" placeholder="Es. Modellatore BIM per Progetto Residenziale" />
+                  <FormSingleSelect
+                    control={form.control}
+                    name="location"
+                    label="Localizzazione del Progetto (Regione)"
+                    options={ITALIAN_REGIONS.map(r => ({ value: r, label: r }))}
+                    placeholder="Seleziona la regione del progetto"
+                  />
+                  <FormTextarea control={form.control} name="description" label="Descrizione Dettagliata del Progetto" placeholder="Descrivi gli obiettivi, le responsabilità, il contesto del progetto..." rows={6} />
+                </TabsContent>
 
-              <FormTextarea control={form.control} name="description" label="Descrizione Dettagliata del Progetto" placeholder="Descrivi gli obiettivi, le responsabilità, il contesto del progetto..." rows={6} />
+                <TabsContent value="requisiti" className="space-y-4">
+                  <FormMultiSelect
+                    control={form.control}
+                    name="requiredSkills"
+                    label="Competenze BIM Richieste"
+                    options={BIM_SKILLS_OPTIONS}
+                    placeholder="Seleziona le competenze necessarie"
+                  />
+                  <FormMultiSelect
+                    control={form.control}
+                    name="requiredSoftware"
+                    label="Software Richiesti"
+                    options={SOFTWARE_PROFICIENCY_OPTIONS}
+                    placeholder="Indica i software che il professionista deve conoscere"
+                  />
+                </TabsContent>
 
-              <FormMultiSelect
-                control={form.control}
-                name="requiredSkills"
-                label="Competenze BIM Richieste"
-                options={BIM_SKILLS_OPTIONS}
-                placeholder="Seleziona le competenze necessarie"
-              />
+                <TabsContent value="dettagli-contratto" className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormSingleSelect
+                      control={form.control}
+                      name="projectType"
+                      label="Tipo di Contratto/Collaborazione"
+                      options={projectTypeOptions}
+                      placeholder="Seleziona il tipo di contratto"
+                    />
+                    <FormInput control={form.control} name="duration" label="Durata Progetto/Contratto (Opzionale)" placeholder="Es. 6 mesi, Indeterminato" />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormInput control={form.control} name="budgetRange" label="Range di Budget/RAL (Opzionale)" placeholder="Es. €30k-€40k RAL, €40-€60/ora" />
+                    <FormInput control={form.control} name="applicationDeadline" label="Scadenza Candidature (Opzionale)" type="date" />
+                  </div>
+                </TabsContent>
+              </Tabs>
 
-              <FormMultiSelect
-                control={form.control}
-                name="requiredSoftware"
-                label="Software Richiesti"
-                options={SOFTWARE_PROFICIENCY_OPTIONS}
-                placeholder="Indica i software che il professionista deve conoscere"
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormSingleSelect
-                  control={form.control}
-                  name="projectType"
-                  label="Tipo di Contratto/Collaborazione"
-                  options={projectTypeOptions}
-                  placeholder="Seleziona il tipo di contratto"
-                />
-                 <FormInput control={form.control} name="duration" label="Durata Progetto/Contratto (Opzionale)" placeholder="Es. 6 mesi, Indeterminato" />
-              </div>
-
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormInput control={form.control} name="budgetRange" label="Range di Budget/RAL (Opzionale)" placeholder="Es. €30k-€40k RAL, €40-€60/ora" />
-                <FormInput control={form.control} name="applicationDeadline" label="Scadenza Candidature (Opzionale)" type="date" />
-              </div>
-
-              <Button type="submit" className="w-full md:w-auto" disabled={authLoading || form.formState.isSubmitting}>
+              <Button type="submit" className="w-full md:w-auto mt-6" size="sm" disabled={authLoading || form.formState.isSubmitting}>
                 <Save className="mr-2 h-4 w-4" />
                 {form.formState.isSubmitting ? 'Pubblicazione in corso...' : 'Pubblica Progetto'}
               </Button>
