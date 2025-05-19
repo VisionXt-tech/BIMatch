@@ -42,7 +42,7 @@ const professionalProfileSchema = z.object({
       const strVal = String(val).trim();
       if (strVal === "") return undefined;
       const num = Number(strVal);
-      return isNaN(num) ? undefined : num; 
+      return isNaN(num) ? undefined : num;
     },
     z.number({invalid_type_error: 'La retribuzione mensile deve essere un numero.'})
       .positive({ message: 'La retribuzione mensile deve essere un numero positivo.' })
@@ -117,7 +117,7 @@ export default function ProfessionalProfilePage() {
           event.target.value = '';
           return;
       }
-      if (file.size > 2 * 1024 * 1024) { 
+      if (file.size > 2 * 1024 * 1024) {
           toast({ title: "File Troppo Grande", description: "L'immagine non deve superare i 2MB.", variant: "destructive"});
           event.target.value = '';
           return;
@@ -129,8 +129,8 @@ export default function ProfessionalProfilePage() {
       }
       setProfileImageFile(file);
       setImagePreview(URL.createObjectURL(file));
-      setUploadProgress(null); 
-      setIsUploading(false); 
+      setUploadProgress(null);
+      setIsUploading(false);
     } else {
       setProfileImageFile(null);
       setImagePreview(userProfile?.photoURL || null);
@@ -144,7 +144,7 @@ export default function ProfessionalProfilePage() {
     }
 
     let photoURLToUpdate = userProfile.photoURL || '';
-    
+
     if (profileImageFile && storage) {
       setIsUploading(true);
       setUploadProgress(0);
@@ -177,27 +177,30 @@ export default function ProfessionalProfilePage() {
               toast({ title: "Errore Caricamento Immagine", description: userFriendlyMessage, variant: "destructive" });
               setIsUploading(false);
               setUploadProgress(null);
-              reject(error); 
+              reject(error);
             },
             async () => {
               try {
                 photoURLToUpdate = await getDownloadURL(uploadTask.snapshot.ref);
-                setIsUploading(false);
-                setUploadProgress(null);
-                resolve(); 
+                resolve();
               } catch (getUrlError: any) {
                  toast({ title: "Errore URL Immagine", description: `Impossibile ottenere l'URL dell'immagine: ${getUrlError.message}`, variant: "destructive" });
-                 setIsUploading(false);
-                 setUploadProgress(null);
-                 reject(getUrlError); 
+                 reject(getUrlError);
               }
             }
           );
         });
       } catch (uploadError) {
-          setIsUploading(false); // Ensure this is reset on error too
-          setUploadProgress(null);
-          return; 
+          // Error is already toasted in the error callback of uploadTask.on
+      } finally {
+        setIsUploading(false);
+        setUploadProgress(null);
+      }
+       // If upload failed, and we are in a state where uploadProgress is null but setIsUploading is false, it means an error occurred.
+      // We should return early if photoURLToUpdate hasn't been set by a successful upload.
+      if (profileImageFile && photoURLToUpdate === userProfile.photoURL) {
+        // This means uploadTask didn't complete successfully to update photoURLToUpdate
+        return;
       }
     }
 
@@ -213,12 +216,11 @@ export default function ProfessionalProfilePage() {
 
     try {
       await updateUserProfile(user.uid, dataToUpdate);
-      setProfileImageFile(null); 
+      setProfileImageFile(null);
     } catch (error) {
       // Profile update error is handled by updateUserProfile in AuthContext
     } finally {
-      setIsUploading(false); // Ensure this is reset after submission attempt
-      setUploadProgress(null);
+      // setIsUploading and setUploadProgress are reset in the upload block
     }
   };
 
@@ -320,10 +322,10 @@ export default function ProfessionalProfilePage() {
                       placeholder="Seleziona la tua disponibilità"
                     />
                   </div>
-                </TabsContent>
-                
-                <TabsContent value="bio-competenze" className="space-y-4">
                   <FormTextarea control={form.control} name="bio" label="Breve Bio Professionale" placeholder="Descrivi la tua esperienza, specializzazioni e obiettivi..." rows={5} />
+                </TabsContent>
+
+                <TabsContent value="bio-competenze" className="space-y-4">
                   <FormMultiSelect
                     control={form.control}
                     name="bimSkills"
@@ -351,11 +353,11 @@ export default function ProfessionalProfilePage() {
                         className="h-9"
                         {...form.register("monthlyRate", {
                             setValueAs: (value) => {
-                              if (value === "" || value === null || value === undefined) return null; 
+                              if (value === "" || value === null || value === undefined) return null;
                               const strVal = String(value).trim();
-                              if (strVal === "") return null; 
+                              if (strVal === "") return null;
                               const num = parseFloat(strVal);
-                              return isNaN(num) ? undefined : num; 
+                              return isNaN(num) ? undefined : num;
                             }
                         })}
                       />
