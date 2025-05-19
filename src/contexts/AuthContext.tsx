@@ -1,7 +1,8 @@
+
 'use client';
 
 import type { User } from 'firebase/auth';
-import { onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import type { DocumentData, DocumentReference } from 'firebase/firestore';
 import { doc, getDoc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
@@ -20,6 +21,7 @@ interface AuthContextType {
   registerCompany: (data: CompanyRegistrationFormData) => Promise<void>;
   logout: () => Promise<void>;
   updateUserProfile: (userId: string, data: Partial<UserProfile>) => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<void>; // Added this
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -51,8 +53,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (userDocSnap.exists()) {
         setUserProfile(userDocSnap.data() as UserProfile);
       } else {
-        // This case might happen if a user is authenticated but their profile doc doesn't exist yet
-        // or was deleted. For BIMatch, profile creation is part of registration.
         console.warn(`User profile for ${firebaseUser.uid} not found in Firestore.`);
         setUserProfile(null); 
       }
@@ -75,8 +75,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await signInWithEmailAndPassword(auth, data.email, data.password);
       toast({ title: "Accesso Effettuato", description: "Bentornato!" });
-      // User profile will be fetched by onAuthStateChanged listener
-      // router.push(ROUTES.DASHBOARD) is handled by login page after successful promise
     } catch (error: any) {
       console.error("Login error:", error);
       toast({ title: "Errore di Accesso", description: error.message || "Credenziali non valide.", variant: "destructive" });
@@ -98,7 +96,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         firstName: data.firstName,
         lastName: data.lastName,
         location: data.location,
-        // Initialize other professional-specific fields as empty or default
         photoURL: newUser.photoURL || '',
         bimSkills: [],
         softwareProficiency: [],
@@ -110,9 +107,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         updatedAt: serverTimestamp(),
       };
       await setDoc(userDocRef, professionalProfile);
-      setUserProfile(professionalProfile); // Update local state
+      setUserProfile(professionalProfile); 
       toast({ title: "Registrazione Completata", description: "Benvenuto in BIMatch! Completa il tuo profilo." });
-      // router.push(ROUTES.DASHBOARD_PROFESSIONAL_PROFILE) is handled by registration page
     } catch (error: any) {
       console.error("Professional registration error:", error);
       toast({ title: "Errore di Registrazione", description: error.message || "Impossibile registrarsi.", variant: "destructive" });
@@ -135,7 +131,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         companyVat: data.companyVat,
         companyWebsite: data.companyWebsite || '',
         companyLocation: data.companyLocation,
-        // Initialize other company-specific fields
         photoURL: newUser.photoURL || '',
         companySize: '',
         industry: '',
@@ -145,9 +140,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         updatedAt: serverTimestamp(),
       };
       await setDoc(userDocRef, companyProfile);
-      setUserProfile(companyProfile); // Update local state
+      setUserProfile(companyProfile); 
       toast({ title: "Registrazione Azienda Completata", description: "Benvenuta in BIMatch! Crea il profilo della tua azienda." });
-      // router.push(ROUTES.DASHBOARD_COMPANY_PROFILE) is handled by registration page
     } catch (error: any) {
       console.error("Company registration error:", error);
       toast({ title: "Errore di Registrazione", description: error.message || "Impossibile registrarsi.", variant: "destructive" });
@@ -161,7 +155,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(null);
       setUserProfile(null);
       toast({ title: "Logout Effettuato", description: "A presto!" });
-      // router.push(ROUTES.HOME) handled by Navbar/DashboardLayout
     } catch (error: any) {
       console.error("Logout error:", error);
       toast({ title: "Errore di Logout", description: error.message, variant: "destructive" });
@@ -175,7 +168,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         ...data,
         updatedAt: serverTimestamp(),
       });
-      // Re-fetch or update local userProfile state
       const updatedDocSnap = await getDoc(userDocRef);
       if (updatedDocSnap.exists()) {
         setUserProfile(updatedDocSnap.data() as UserProfile);
@@ -185,6 +177,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error("Error updating user profile:", error);
       toast({ title: "Errore Aggiornamento Profilo", description: error.message, variant: "destructive" });
       throw error;
+    }
+  };
+
+  const requestPasswordReset = async (email: string) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast({
+        title: "Email di Recupero Inviata",
+        description: `Se l'indirizzo ${email} è associato a un account, riceverai un'email con le istruzioni per reimpostare la password.`,
+      });
+    } catch (error: any) {
+      console.error("Password reset error:", error);
+      let errorMessage = "Impossibile inviare l'email di recupero password. Riprova.";
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = "Nessun utente trovato con questa email.";
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = "L'indirizzo email non è valido.";
+      }
+      toast({
+        title: "Errore Recupero Password",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      throw error; // Rethrow error for the calling component if needed
     }
   };
 
@@ -198,6 +214,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     registerCompany,
     logout,
     updateUserProfile,
+    requestPasswordReset, // Added this
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

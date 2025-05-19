@@ -21,15 +21,17 @@ import { useRouter } from 'next/navigation';
 import { LogIn } from 'lucide-react';
 import { ROUTES } from '@/constants';
 import type { LoginFormData } from '@/types/auth';
+import { useToast } from '@/hooks/use-toast';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Inserisci un indirizzo email valido.' }),
-  password: z.string().min(1, { message: 'La password è richiesta.' }), // Firebase handles min length, but basic presence check
+  password: z.string().min(1, { message: 'La password è richiesta.' }),
 });
 
 export default function LoginPage() {
-  const { login, loading: authLoading } = useAuth();
+  const { login, loading: authLoading, requestPasswordReset } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -42,36 +44,65 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     try {
       await login(data);
-      router.push(ROUTES.DASHBOARD); // Redirect to a general dashboard or role-specific one
+      router.push(ROUTES.DASHBOARD); 
     } catch (error) {
-      // Error is handled by useAuth and displayed via toast
       console.error('Login failed on page:', error);
     }
   };
 
+  const handlePasswordReset = async () => {
+    const email = form.getValues("email"); // Get email from the form if filled
+    let userEmail = email;
+
+    if (!userEmail) {
+      userEmail = window.prompt("Inserisci la tua email per reimpostare la password:");
+    } else {
+      const confirmReset = window.confirm(`Vuoi inviare un'email di reset password a ${userEmail}?`);
+      if (!confirmReset) {
+        return;
+      }
+    }
+    
+    if (userEmail) {
+      try {
+        await requestPasswordReset(userEmail);
+        // Success toast is handled within requestPasswordReset
+      } catch (error) {
+        // Error toast is handled within requestPasswordReset
+        console.error("Password reset request failed:", error);
+      }
+    } else if (email === "" && userEmail === null) { // Prompt cancelled and form email was empty
+      toast({
+        title: "Operazione Annullata",
+        description: "Nessuna email fornita per il reset della password.",
+        variant: "default",
+      });
+    }
+  };
+
   return (
-    <div className="flex justify-center items-center py-12 w-full"> {/* Removed min-h class, added w-full for clarity if needed */}
+    <div className="flex justify-center items-center py-6 w-full"> 
       <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="text-center">
-          <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-4">
-            <LogIn className="h-8 w-8 text-primary" />
+        <CardHeader className="text-center p-4">
+          <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-3">
+            <LogIn className="h-6 w-6 text-primary" />
           </div>
-          <CardTitle className="text-3xl font-bold">Accedi a BIMatch</CardTitle>
-          <CardDescription>Bentornato! Inserisci le tue credenziali.</CardDescription>
+          <CardTitle className="text-xl font-bold">Accedi a BIMatch</CardTitle>
+          <CardDescription className="text-xs">Bentornato! Inserisci le tue credenziali.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel className="text-xs">Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="iltuonome@esempio.com" {...field} />
+                      <Input placeholder="iltuonome@esempio.com" {...field} className="h-9" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-xs" />
                   </FormItem>
                 )}
               />
@@ -80,20 +111,30 @@ export default function LoginPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel className="text-xs">Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="********" {...field} />
+                      <Input type="password" placeholder="********" {...field} className="h-9" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-xs" />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={authLoading}>
+              <div className="text-right">
+                <Button
+                  type="button"
+                  variant="link"
+                  className="px-0 text-xs h-auto py-0 text-primary hover:underline"
+                  onClick={handlePasswordReset}
+                >
+                  Password dimenticata?
+                </Button>
+              </div>
+              <Button type="submit" className="w-full" size="sm" disabled={authLoading}>
                 {authLoading ? 'Accesso in corso...' : 'Accedi'}
               </Button>
             </form>
           </Form>
-          <p className="mt-6 text-center text-sm text-muted-foreground">
+          <p className="mt-4 text-center text-xs text-muted-foreground">
             Non hai un account?{' '}
             <Link href={ROUTES.REGISTER_PROFESSIONAL} className="font-medium text-primary hover:underline">
               Registrati come Professionista
