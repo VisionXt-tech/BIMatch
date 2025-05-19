@@ -50,6 +50,7 @@ export default function LoginPage() {
       router.push(ROUTES.DASHBOARD); 
     } catch (error) {
       console.error('Login failed on page:', error);
+      // Toast is handled by useAuth
     }
   };
 
@@ -76,6 +77,7 @@ export default function LoginPage() {
         await requestPasswordReset(userEmailToReset);
       } catch (error) {
         console.error("Password reset request failed on page:", error);
+        // Toast is handled by useAuth
       }
     } else if (emailFromForm === "" && userEmailToReset === null) { 
       toast({
@@ -92,25 +94,25 @@ export default function LoginPage() {
   return (
     <div className="relative flex flex-grow items-center justify-center w-full px-4">
       <Image
-        src="https://images.unsplash.com/photo-1522071820081-009f0129c7da?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxvZmZpY2V8ZW58MHx8fHwxNzE1MzUwNzU3fDA&ixlib=rb-4.0.3&q=80&w=1920"
-        alt="Modern office background"
+        src="https://images.unsplash.com/photo-1504297050568-910d24c426d3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzdHVkaW8lMjBhcmNoaXRlY3R1cmV8ZW58MHx8fHwxNzQ3Njc1MTY1fDA&ixlib=rb-4.1.0&q=80&w=1080"
+        alt="Architecture studio background"
         layout="fill"
         objectFit="cover"
         className="-z-10"
         priority
-        data-ai-hint="modern office"
+        data-ai-hint="architecture studio"
       />
       <div className="absolute inset-0 bg-black/60 -z-10 backdrop-blur-sm"></div>
 
       <Card className="w-full max-w-md shadow-xl bg-card/70 dark:bg-neutral-900/80 backdrop-blur-md border border-white/10">
-        <CardHeader className="text-center p-4">
+        <CardHeader className="text-center p-6">
           <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-3">
             <LogIn className="h-6 w-6 text-primary" />
           </div>
-          <CardTitle className="text-xl font-bold text-white">Accedi a BIMatch</CardTitle>
-          <CardDescription className="text-xs text-neutral-200">Bentornato! Inserisci le tue credenziali.</CardDescription>
+          <CardTitle className="text-2xl font-bold text-white">Accedi a BIMatch</CardTitle>
+          <CardDescription className="text-sm text-neutral-200">Bentornato! Inserisci le tue credenziali.</CardDescription>
         </CardHeader>
-        <CardContent className="p-4">
+        <CardContent className="p-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
@@ -171,7 +173,7 @@ export default function LoginPage() {
               </Button>
             </form>
           </Form>
-          <p className="mt-4 text-center text-xs text-neutral-300">
+          <p className="mt-6 text-center text-sm text-muted-foreground">
             Non hai un account?{' '}
             <Link href={ROUTES.REGISTER_PROFESSIONAL} className="font-medium text-white hover:underline">
               Registrati come Professionista
