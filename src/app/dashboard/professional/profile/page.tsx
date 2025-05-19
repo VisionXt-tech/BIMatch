@@ -195,6 +195,8 @@ export default function ProfessionalProfilePage() {
           );
         });
       } catch (uploadError) {
+          setIsUploading(false); // Ensure this is reset on error too
+          setUploadProgress(null);
           return; 
       }
     }
@@ -214,6 +216,9 @@ export default function ProfessionalProfilePage() {
       setProfileImageFile(null); 
     } catch (error) {
       // Profile update error is handled by updateUserProfile in AuthContext
+    } finally {
+      setIsUploading(false); // Ensure this is reset after submission attempt
+      setUploadProgress(null);
     }
   };
 
@@ -281,9 +286,10 @@ export default function ProfessionalProfilePage() {
               </FormItem>
 
               <Tabs defaultValue="info-personali" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-4">
-                  <TabsTrigger value="info-personali">Info Personali e Bio</TabsTrigger>
-                  <TabsTrigger value="competenze-link">Competenze e Link</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-3 mb-4">
+                  <TabsTrigger value="info-personali">Info Personali</TabsTrigger>
+                  <TabsTrigger value="bio-competenze">Bio e Competenze</TabsTrigger>
+                  <TabsTrigger value="dettagli-link">Economia e Link</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="info-personali" className="space-y-4">
@@ -314,10 +320,10 @@ export default function ProfessionalProfilePage() {
                       placeholder="Seleziona la tua disponibilità"
                     />
                   </div>
-                  <FormTextarea control={form.control} name="bio" label="Breve Bio Professionale" placeholder="Descrivi la tua esperienza, specializzazioni e obiettivi..." rows={5} />
                 </TabsContent>
-
-                <TabsContent value="competenze-link" className="space-y-4">
+                
+                <TabsContent value="bio-competenze" className="space-y-4">
+                  <FormTextarea control={form.control} name="bio" label="Breve Bio Professionale" placeholder="Descrivi la tua esperienza, specializzazioni e obiettivi..." rows={5} />
                   <FormMultiSelect
                     control={form.control}
                     name="bimSkills"
@@ -332,6 +338,9 @@ export default function ProfessionalProfilePage() {
                     options={SOFTWARE_PROFICIENCY_OPTIONS}
                     placeholder="Indica i software che conosci"
                   />
+                </TabsContent>
+
+                <TabsContent value="dettagli-link" className="space-y-4">
                    <FormItem>
                     <FormLabel className="text-xs">Tariffa Oraria Indicativa (€) (Opzionale)</FormLabel>
                     <FormControl>
@@ -342,11 +351,11 @@ export default function ProfessionalProfilePage() {
                         className="h-9"
                         {...form.register("hourlyRate", {
                             setValueAs: (value) => {
-                              if (value === "" || value === null || value === undefined) return null; // Return null for optional empty
+                              if (value === "" || value === null || value === undefined) return null; 
                               const strVal = String(value).trim();
-                              if (strVal === "") return null; // Return null for optional empty
+                              if (strVal === "") return null; 
                               const num = parseFloat(strVal);
-                              return isNaN(num) ? undefined : num; // Keep undefined for Zod to catch invalid_type_error
+                              return isNaN(num) ? undefined : num; 
                             }
                         })}
                       />
@@ -371,6 +380,3 @@ export default function ProfessionalProfilePage() {
     </div>
   );
 }
-
-
-    
