@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -62,7 +63,7 @@ export default function ProfessionalRegistrationPage() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-[calc(100vh-200px)] py-12">
+    <div className="flex justify-center items-center py-12 w-full">
       <Card className="w-full max-w-lg shadow-xl">
         <CardHeader className="text-center">
           <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-4">
@@ -73,7 +74,7 @@ export default function ProfessionalRegistrationPage() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}

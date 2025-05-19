@@ -43,7 +43,7 @@ export default function CompanyRegistrationPage() {
   const router = useRouter();
 
   const form = useForm<CompanyRegistrationPageFormData>({
-    resolver: zodResolver(companyRegistrationSchema), // Removed .omit() as schema already excludes companyWebsite
+    resolver: zodResolver(companyRegistrationSchema),
     defaultValues: {
       companyName: '',
       companyVat: '',
@@ -66,7 +66,7 @@ export default function CompanyRegistrationPage() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-[calc(100vh-200px)] py-12">
+    <div className="flex justify-center items-center py-12 w-full">
       <Card className="w-full max-w-lg shadow-xl">
         <CardHeader className="text-center p-6">
           <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-4">
