@@ -36,7 +36,7 @@ const professionalProfileSchema = z.object({
   portfolioUrl: z.string().url({ message: 'Inserisci un URL valido per il portfolio.' }).optional().or(z.literal('')),
   cvUrl: z.string().url({ message: 'Inserisci un URL valido per il CV (es. link a Google Drive, Dropbox).' }).optional().or(z.literal('')),
   linkedInProfile: z.string().url({message: 'Inserisci un URL valido per LinkedIn.'}).optional().or(z.literal('')),
-  hourlyRate: z.preprocess(
+  monthlyRate: z.preprocess(
     (val) => {
       if (val === "" || val === null || val === undefined) return undefined;
       const strVal = String(val).trim();
@@ -44,8 +44,8 @@ const professionalProfileSchema = z.object({
       const num = Number(strVal);
       return isNaN(num) ? undefined : num; 
     },
-    z.number({invalid_type_error: 'La tariffa oraria deve essere un numero.'})
-      .positive({ message: 'La tariffa oraria deve essere un numero positivo.' })
+    z.number({invalid_type_error: 'La retribuzione mensile deve essere un numero.'})
+      .positive({ message: 'La retribuzione mensile deve essere un numero positivo.' })
       .optional()
       .nullable()
   ),
@@ -80,7 +80,7 @@ export default function ProfessionalProfilePage() {
       portfolioUrl: '',
       cvUrl: '',
       linkedInProfile: '',
-      hourlyRate: undefined,
+      monthlyRate: undefined,
     },
   });
 
@@ -100,7 +100,7 @@ export default function ProfessionalProfilePage() {
         portfolioUrl: currentProfile.portfolioUrl || '',
         cvUrl: currentProfile.cvUrl || '',
         linkedInProfile: currentProfile.linkedInProfile || '',
-        hourlyRate: currentProfile.hourlyRate === undefined || currentProfile.hourlyRate === null ? undefined : Number(currentProfile.hourlyRate),
+        monthlyRate: currentProfile.monthlyRate === undefined || currentProfile.monthlyRate === null ? undefined : Number(currentProfile.monthlyRate),
       });
       if (currentProfile.photoURL) {
         setImagePreview(currentProfile.photoURL);
@@ -208,7 +208,7 @@ export default function ProfessionalProfilePage() {
       ...data,
       displayName: updatedDisplayName || userProfile.displayName,
       photoURL: photoURLToUpdate,
-      hourlyRate: data.hourlyRate === undefined || data.hourlyRate === null || String(data.hourlyRate).trim() === '' ? null : Number(data.hourlyRate),
+      monthlyRate: data.monthlyRate === undefined || data.monthlyRate === null || String(data.monthlyRate).trim() === '' ? null : Number(data.monthlyRate),
     };
 
     try {
@@ -342,14 +342,14 @@ export default function ProfessionalProfilePage() {
 
                 <TabsContent value="dettagli-link" className="space-y-4">
                    <FormItem>
-                    <FormLabel className="text-xs">Tariffa Oraria Indicativa (€) (Opzionale)</FormLabel>
+                    <FormLabel className="text-xs">Retribuzione Mensile Lorda (€) (Opzionale)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
-                        placeholder="Es. 50"
-                        step="0.01"
+                        placeholder="Es. 2500"
+                        step="1"
                         className="h-9"
-                        {...form.register("hourlyRate", {
+                        {...form.register("monthlyRate", {
                             setValueAs: (value) => {
                               if (value === "" || value === null || value === undefined) return null; 
                               const strVal = String(value).trim();

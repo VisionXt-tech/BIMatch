@@ -192,12 +192,12 @@ export default function ProfessionalProfileViewPage() {
                             </div>
                         </div>
                     )}
-                    {professional.hourlyRate != null && String(professional.hourlyRate).trim() !== '' && !isNaN(Number(professional.hourlyRate)) && (
+                    {professional.monthlyRate != null && String(professional.monthlyRate).trim() !== '' && !isNaN(Number(professional.monthlyRate)) && (
                         <div className="flex items-start">
                             <DollarSign className="h-5 w-5 mr-3 mt-0.5 text-primary flex-shrink-0"/>
                             <div>
-                                <p className="text-xs text-muted-foreground">Tariffa Oraria (Indicativa)</p>
-                                <p className="font-medium text-foreground/90">€ {Number(professional.hourlyRate).toFixed(2)}</p>
+                                <p className="text-xs text-muted-foreground">Retribuzione Mensile Lorda (Indicativa)</p>
+                                <p className="font-medium text-foreground/90">€ {Number(professional.monthlyRate).toFixed(2)}</p>
                             </div>
                         </div>
                     )}

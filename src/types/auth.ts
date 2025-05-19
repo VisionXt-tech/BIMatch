@@ -1,3 +1,4 @@
+
 import type { Timestamp } from 'firebase/firestore';
 
 export interface LoginFormData {
@@ -45,7 +46,7 @@ export interface ProfessionalProfile extends BaseUserProfile {
   certifications?: string[];
   portfolioUrl?: string;
   cvUrl?: string; // Link to CV/Resume PDF in Firebase Storage
-  hourlyRate?: number | ''; // Optional, allow empty string for form handling
+  monthlyRate?: number | null; // Changed from hourlyRate, allow null for Firestore
   linkedInProfile?: string;
   preferredProjectTypes?: string[];
 }
