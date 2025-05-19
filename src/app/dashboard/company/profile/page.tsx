@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -20,6 +21,7 @@ import Image from 'next/image';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 const companyProfileSchema = z.object({
@@ -96,19 +98,19 @@ export default function CompanyProfilePage() {
       const file = event.target.files[0];
       if (!file.type.startsWith('image/')) {
           toast({ title: "Formato File Non Valido", description: "Seleziona un file immagine (es. JPG, PNG, WEBP).", variant: "destructive"});
-          event.target.value = '';
+          event.target.value = ''; // Reset the input
           setLogoFile(null);
           return;
       }
       if (file.size > 2 * 1024 * 1024) { // 2MB limit
           toast({ title: "File Troppo Grande", description: "Il logo non deve superare i 2MB.", variant: "destructive"});
-          event.target.value = '';
+          event.target.value = ''; // Reset the input
           setLogoFile(null);
           return;
       }
       if (file.size === 0) {
         toast({ title: "File Vuoto", description: "Il file selezionato è vuoto e non può essere caricato.", variant: "destructive" });
-        event.target.value = '';
+        event.target.value = ''; // Reset the input
         setLogoFile(null);
         return;
       }
@@ -197,7 +199,10 @@ export default function CompanyProfilePage() {
 
     try {
       await updateUserProfile(user.uid, dataToUpdate);
-      setLogoFile(null);
+      setLogoFile(null); // Clear the file input after successful update
+      if (logoInputRef.current) { // Reset the hidden file input as well
+        logoInputRef.current.value = "";
+      }
     } catch (error) {
       // updateUserProfile in AuthContext should handle its own toasts
     } finally {
@@ -227,8 +232,8 @@ export default function CompanyProfilePage() {
           <div className="flex items-center space-x-3">
             <Building className="h-6 w-6 text-primary" />
             <div>
-              <CardTitle className="text-xl font-bold">Profilo Aziendale</CardTitle>
-              <CardDescription className="text-sm">Gestisci le informazioni della tua azienda per attrarre i migliori talenti BIM.</CardDescription>
+              <CardTitle className="text-lg font-bold">Profilo Aziendale</CardTitle>
+              <CardDescription className="text-xs">Gestisci le informazioni della tua azienda per attrarre i migliori talenti BIM.</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -249,7 +254,7 @@ export default function CompanyProfilePage() {
                       variant="outline"
                       size="sm"
                       onClick={handleLogoPickerClick}
-                      className="bg-accent text-accent-foreground hover:bg-accent/90 w-fit"
+                      className="bg-accent text-accent-foreground hover:bg-accent/90 w-fit file:border-0 file:bg-accent file:text-accent-foreground file:hover:bg-accent/90 file:rounded-sm file:px-3 file:py-1.5 file:mr-4 file:text-xs file:font-medium"
                     >
                       <Upload className="mr-2 h-3 w-3" />
                       Scegli Logo
@@ -264,7 +269,7 @@ export default function CompanyProfilePage() {
                           type="file"
                           accept="image/jpeg, image/png, image/webp"
                           onChange={handleFileChange}
-                          className="hidden" // Hide the original input
+                          className="hidden"
                           ref={logoInputRef}
                            />
                     </FormControl>
@@ -280,53 +285,60 @@ export default function CompanyProfilePage() {
                    <p className="text-xs text-green-600 mt-0.5">Nuovo logo selezionato. Salva per applicare.</p>
                  )}
                 <FormDescription className="text-xs mt-0.5">Carica il logo (max 2MB, es. JPG, PNG, WEBP).</FormDescription>
-                 <FormMessage />
+                 <FormMessage className="text-xs"/>
               </FormItem>
 
+              <Tabs defaultValue="info-azienda" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsTrigger value="info-azienda">Info Azienda</TabsTrigger>
+                  <TabsTrigger value="info-contatto">Info di Contatto</TabsTrigger>
+                </TabsList>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormInput control={form.control} name="companyName" label="Nome Azienda" placeholder="La Mia Azienda S.r.l." />
-                <FormInput control={form.control} name="companyVat" label="Partita IVA" placeholder="12345678901" />
-              </div>
+                <TabsContent value="info-azienda" className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormInput control={form.control} name="companyName" label="Nome Azienda" placeholder="La Mia Azienda S.r.l." />
+                    <FormInput control={form.control} name="companyVat" label="Partita IVA" placeholder="12345678901" />
+                  </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <FormSingleSelect
-                  control={form.control}
-                  name="companyLocation"
-                  label="Sede Azienda (Regione)"
-                  options={ITALIAN_REGIONS.map(r => ({ value: r, label: r }))}
-                  placeholder="Seleziona la regione della sede"
-                />
-                <FormInput control={form.control} name="companyWebsite" label="Sito Web (Opzionale)" placeholder="https://www.lamiaazienda.it" />
-              </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormSingleSelect
+                      control={form.control}
+                      name="companyLocation"
+                      label="Sede Azienda (Regione)"
+                      options={ITALIAN_REGIONS.map(r => ({ value: r, label: r }))}
+                      placeholder="Seleziona la regione della sede"
+                    />
+                    <FormInput control={form.control} name="companyWebsite" label="Sito Web (Opzionale)" placeholder="https://www.lamiaazienda.it" />
+                  </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormSingleSelect
-                  control={form.control}
-                  name="companySize"
-                  label="Dimensioni Azienda (Opzionale)"
-                  options={COMPANY_SIZE_OPTIONS}
-                  placeholder="Seleziona dimensioni"
-                />
-                <FormSingleSelect
-                  control={form.control}
-                  name="industry"
-                  label="Settore di Attività (Opzionale)"
-                  options={INDUSTRY_SECTORS}
-                  placeholder="Seleziona settore"
-                />
-              </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormSingleSelect
+                      control={form.control}
+                      name="companySize"
+                      label="Dimensioni Azienda (Opzionale)"
+                      options={COMPANY_SIZE_OPTIONS}
+                      placeholder="Seleziona dimensioni"
+                    />
+                    <FormSingleSelect
+                      control={form.control}
+                      name="industry"
+                      label="Settore di Attività (Opzionale)"
+                      options={INDUSTRY_SECTORS}
+                      placeholder="Seleziona settore"
+                    />
+                  </div>
+                  <FormTextarea control={form.control} name="companyDescription" label="Descrizione Azienda (Opzionale)" placeholder="Descrivi la tua azienda, la mission, i valori e i tipi di progetti..." rows={4} />
+                </TabsContent>
 
-              <FormTextarea control={form.control} name="companyDescription" label="Descrizione Azienda (Opzionale)" placeholder="Descrivi la tua azienda, la mission, i valori e i tipi di progetti..." rows={4} />
+                <TabsContent value="info-contatto" className="space-y-4">
+                  <FormInput control={form.control} name="contactPerson" label="Persona di Riferimento (Opzionale)" placeholder="Mario Rossi" />
+                  <FormInput control={form.control} name="contactEmail" label="Email di Contatto (Opzionale)" placeholder="info@lamiaazienda.it" type="email"/>
+                  <FormInput control={form.control} name="contactPhone" label="Telefono di Contatto (Opzionale)" placeholder="+39 02 1234567" type="tel"/>
+                </TabsContent>
+              </Tabs>
 
-              <CardTitle className="text-lg font-semibold pt-3 border-t mt-3">Informazioni di Contatto</CardTitle>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FormInput control={form.control} name="contactPerson" label="Persona di Riferimento (Opzionale)" placeholder="Mario Rossi" />
-                <FormInput control={form.control} name="contactEmail" label="Email di Contatto (Opzionale)" placeholder="info@lamiaazienda.it" type="email"/>
-                <FormInput control={form.control} name="contactPhone" label="Telefono di Contatto (Opzionale)" placeholder="+39 02 1234567" type="tel"/>
-              </div>
 
-              <Button type="submit" className="w-full md:w-auto" disabled={authLoading || form.formState.isSubmitting || isUploading}>
+              <Button type="submit" className="w-full md:w-auto mt-6" size="sm" disabled={authLoading || form.formState.isSubmitting || isUploading}>
                 <Save className="mr-2 h-4 w-4" />
                  {isUploading ? `Caricamento... ${uploadProgress !== null ? Math.round(uploadProgress) + '%' : ''}` : (form.formState.isSubmitting ? 'Salvataggio in corso...' : 'Salva Modifiche')}
               </Button>
@@ -337,3 +349,4 @@ export default function CompanyProfilePage() {
     </div>
   );
 }
+
