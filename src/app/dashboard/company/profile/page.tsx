@@ -32,9 +32,9 @@ const companyProfileSchema = z.object({
   companySize: z.string().optional().or(z.literal('')),
   industry: z.string().optional().or(z.literal('')),
   companyDescription: z.string().max(2000, "La descrizione non può superare i 2000 caratteri.").optional().or(z.literal('')),
-  contactPerson: z.string().min(2, "Il nome del contatto è richiesto.").optional().or(z.literal('')),
-  contactEmail: z.string().email("Inserisci un'email di contatto valida.").optional().or(z.literal('')),
-  contactPhone: z.string().regex(/^\+?[0-9\s-()]{7,20}$/, "Inserisci un numero di telefono valido.").optional().or(z.literal('')),
+  contactPerson: z.string().min(2, "Il nome della persona di riferimento è richiesto."),
+  contactEmail: z.string().email("L'email di contatto è richiesta e deve essere valida."),
+  contactPhone: z.string().regex(/^\+?[0-9\s-()]{7,20}$/, "Il numero di telefono di contatto è richiesto e deve essere valido."),
 });
 
 type CompanyProfileFormData = z.infer<typeof companyProfileSchema>;
@@ -331,9 +331,9 @@ export default function CompanyProfilePage() {
                 </TabsContent>
 
                 <TabsContent value="info-contatto" className="space-y-4">
-                  <FormInput control={form.control} name="contactPerson" label="Persona di Riferimento (Opzionale)" placeholder="Mario Rossi" />
-                  <FormInput control={form.control} name="contactEmail" label="Email di Contatto (Opzionale)" placeholder="info@lamiaazienda.it" type="email"/>
-                  <FormInput control={form.control} name="contactPhone" label="Telefono di Contatto (Opzionale)" placeholder="+39 02 1234567" type="tel"/>
+                  <FormInput control={form.control} name="contactPerson" label="Persona di Riferimento" placeholder="Mario Rossi" />
+                  <FormInput control={form.control} name="contactEmail" label="Email di Contatto" placeholder="info@lamiaazienda.it" type="email"/>
+                  <FormInput control={form.control} name="contactPhone" label="Telefono di Contatto" placeholder="+39 02 1234567" type="tel"/>
                 </TabsContent>
               </Tabs>
 
