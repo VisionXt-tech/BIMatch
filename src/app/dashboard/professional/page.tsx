@@ -6,96 +6,91 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ROUTES } from '@/constants';
-import { User, Search, Bell } from 'lucide-react';
-// Removed Briefcase and Image imports as the action card is removed
+import { User, Search, Edit2, ListChecks, Bell } from 'lucide-react';
 
 export default function ProfessionalDashboardPage() {
   const { userProfile } = useAuth();
 
   // Placeholder data - replace with actual data fetching
-  const projectMatchesCount = 5; // Example
-  const newNotificationsCount = 2; // Example
+  const projectMatchesCount = 5; 
+  const applicationsCount = 2; 
+  const newNotificationsCount = 3;
 
   if (!userProfile || userProfile.role !== 'professional') {
-    // This should ideally be handled by the layout, but as a fallback:
     return <div className="text-center py-10">Accesso non autorizzato o profilo non trovato.</div>;
   }
   
   const isProfileComplete = userProfile.bio && userProfile.bimSkills && userProfile.bimSkills.length > 0;
 
-
   return (
-    <div className="space-y-6">
-      <Card className="bg-gradient-to-r from-primary/10 via-background to-secondary/10 shadow-md">
-        <CardHeader className="pb-3 px-6 pt-6">
-          <CardTitle className="text-2xl font-bold text-primary">{userProfile.firstName ? `Ciao, ${userProfile.firstName}!` : `Ciao, ${userProfile.displayName}!`}</CardTitle>
-          <CardDescription className="text-md">Benvenuto nella tua dashboard BIMatch. Qui puoi gestire il tuo profilo e trovare nuove opportunità.</CardDescription>
+    <div className="space-y-6 w-full max-w-4xl mx-auto">
+      <Card className="shadow-lg">
+        <CardHeader className="p-6">
+          <CardTitle className="text-3xl font-bold text-primary">{userProfile.firstName ? `Ciao, ${userProfile.firstName}!` : `Ciao, ${userProfile.displayName}!`}</CardTitle>
+          <CardDescription className="text-lg text-muted-foreground">La tua dashboard per esplorare opportunità e gestire la tua carriera BIM.</CardDescription>
         </CardHeader>
         {!isProfileComplete && (
           <CardContent className="px-6 pt-0 pb-4"> 
-             <div className="bg-secondary border-l-4 border-primary text-secondary-foreground p-3 rounded-md" role="alert">
-                <p className="font-bold">Completa il tuo profilo!</p>
+             <div className="bg-secondary border-l-4 border-primary text-secondary-foreground p-4 rounded-md" role="alert">
+                <p className="font-bold text-md">Completa il tuo profilo!</p>
                 <p className="text-sm">Un profilo completo aumenta le tue possibilità di trovare il progetto giusto. <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROFILE} className="font-semibold underline hover:text-primary">Aggiorna ora</Link>.</p>
             </div>
           </CardContent>
         )}
       </Card>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-1">
-            <CardTitle className="text-md font-semibold">Progetti Compatibili</CardTitle>
-            <Search className="h-5 w-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="p-4 pt-0"> 
-            <div className="text-3xl font-bold">{projectMatchesCount}</div>
-            <p className="text-sm text-muted-foreground">
-              Progetti che corrispondono alle tue competenze.
-            </p>
+      <Card className="shadow-lg">
+        <CardHeader className="p-6">
+            <CardTitle className="text-2xl font-semibold">Le Tue Attività</CardTitle>
+            <CardDescription>Monitora le tue interazioni e scopri nuove possibilità.</CardDescription>
+        </CardHeader>
+        <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS} passHref legacyBehavior>
-              <Button variant="link" asChild className="px-0 pt-1 text-primary text-sm hover:underline">
-                <a>Visualizza Progetti</a>
-              </Button>
+                <Button asChild size="lg" className="w-full">
+                    <a className="flex flex-col items-center justify-center h-32 p-4 text-center">
+                        <Search className="h-8 w-8 mb-2 text-primary-foreground" />
+                        <span className="font-semibold">Cerca Nuovi Progetti</span>
+                        <span className="text-xs text-primary-foreground/80 mt-1">{projectMatchesCount} compatibili</span>
+                    </a>
+                </Button>
             </Link>
-          </CardContent>
-        </Card>
+            {/* Placeholder for Applications - implement when ready */}
+            <Button variant="secondary" size="lg" className="w-full opacity-50 cursor-not-allowed">
+                <div className="flex flex-col items-center justify-center h-32 p-4 text-center">
+                    <ListChecks className="h-8 w-8 mb-2 text-secondary-foreground" />
+                    <span className="font-semibold">Le Mie Candidature</span>
+                    <span className="text-xs text-secondary-foreground/80 mt-1">{applicationsCount} inviate (Prossimamente)</span>
+                </div>
+            </Button>
+            {/* Placeholder for Notifications - implement when ready */}
+            <Button variant="secondary" size="lg" className="w-full opacity-50 cursor-not-allowed">
+                <div className="flex flex-col items-center justify-center h-32 p-4 text-center">
+                    <Bell className="h-8 w-8 mb-2 text-secondary-foreground" />
+                    <span className="font-semibold">Notifiche</span>
+                    <span className="text-xs text-secondary-foreground/80 mt-1">{newNotificationsCount} non lette (Prossimamente)</span>
+                </div>
+            </Button>
+        </CardContent>
+      </Card>
 
-        <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-1">
-            <CardTitle className="text-md font-semibold">Il Mio Profilo</CardTitle>
-            <User className="h-5 w-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="p-4 pt-0"> 
-            <div className="text-3xl font-bold">{isProfileComplete ? "Completo" : "Incompleto"}</div>
-            <p className="text-sm text-muted-foreground">
-              Mantieni il tuo profilo aggiornato.
-            </p>
-            <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROFILE} passHref legacyBehavior>
-              <Button variant="link" asChild className="px-0 pt-1 text-primary text-sm hover:underline">
-                <a>Gestisci Profilo</a>
-              </Button>
+      <Card className="shadow-lg">
+        <CardHeader className="p-6">
+          <CardTitle className="text-2xl font-semibold">Il Tuo Profilo</CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+           <div>
+                <p className="text-md text-muted-foreground">Stato del profilo: <span className={isProfileComplete ? "font-semibold text-green-600" : "font-semibold text-yellow-600"}>{isProfileComplete ? "Completo" : "Incompleto"}</span></p>
+                <p className="text-sm text-muted-foreground mt-1">Un profilo curato è il tuo miglior biglietto da visita.</p>
+           </div>
+           <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROFILE} passHref legacyBehavior>
+            <Button asChild variant="outline" className="mt-4 sm:mt-0 self-start sm:self-center">
+                <a className="flex items-center">
+                <Edit2 className="mr-2 h-4 w-4" /> Aggiorna Profilo
+                </a>
+            </Button>
             </Link>
-          </CardContent>
-        </Card>
-        
-        <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-1">
-            <CardTitle className="text-md font-semibold">Notifiche</CardTitle>
-            <Bell className="h-5 w-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="p-4 pt-0">
-            <div className="text-3xl font-bold">{newNotificationsCount}</div>
-            <p className="text-sm text-muted-foreground">
-              Nuovi messaggi o aggiornamenti.
-            </p>
-            <Link href="#" passHref legacyBehavior> 
-              <Button variant="link" asChild className="px-0 pt-1 text-primary text-sm hover:underline">
-                 <a>Visualizza Notifiche</a>
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
