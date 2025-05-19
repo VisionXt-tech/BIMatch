@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -9,11 +8,11 @@ import { Form, FormControl, FormDescription, FormItem, FormLabel, FormMessage } 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Save, Building } from 'lucide-react';
+import { Save, Building, Upload } from 'lucide-react';
 import type { CompanyProfile } from '@/types/auth';
 import { FormInput, FormTextarea, FormSingleSelect } from '@/components/ProfileFormElements';
 import { COMPANY_SIZE_OPTIONS, INDUSTRY_SECTORS, ITALIAN_REGIONS } from '@/constants';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useFirebase } from '@/contexts/FirebaseContext';
@@ -48,6 +47,7 @@ export default function CompanyProfilePage() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
 
   const form = useForm<CompanyProfileFormData>({
@@ -87,26 +87,35 @@ export default function CompanyProfilePage() {
     }
   }, [userProfile, form]);
 
+  const handleLogoPickerClick = () => {
+    logoInputRef.current?.click();
+  };
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
       if (!file.type.startsWith('image/')) {
           toast({ title: "Formato File Non Valido", description: "Seleziona un file immagine (es. JPG, PNG, WEBP).", variant: "destructive"});
           event.target.value = '';
+          setLogoFile(null);
           return;
       }
       if (file.size > 2 * 1024 * 1024) { // 2MB limit
           toast({ title: "File Troppo Grande", description: "Il logo non deve superare i 2MB.", variant: "destructive"});
           event.target.value = '';
+          setLogoFile(null);
           return;
       }
       if (file.size === 0) {
         toast({ title: "File Vuoto", description: "Il file selezionato è vuoto e non può essere caricato.", variant: "destructive" });
-        event.target.value = ''; // Reset file input
+        event.target.value = '';
+        setLogoFile(null);
         return;
       }
       setLogoFile(file);
       setLogoPreview(URL.createObjectURL(file));
+      setUploadProgress(null);
+      setIsUploading(false);
     } else {
       setLogoFile(null);
       setLogoPreview((userProfile as CompanyProfile)?.logoUrl || null);
@@ -182,7 +191,7 @@ export default function CompanyProfilePage() {
 
     const dataToUpdate : Partial<CompanyProfile> = {
         ...data,
-        displayName: data.companyName || userProfile.companyName,
+        displayName: data.companyName || (userProfile as CompanyProfile).companyName,
         logoUrl: logoUrlToUpdate,
     };
 
@@ -212,14 +221,14 @@ export default function CompanyProfilePage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Card className="shadow-xl">
         <CardHeader className="p-4">
           <div className="flex items-center space-x-3">
             <Building className="h-6 w-6 text-primary" />
             <div>
-              <CardTitle className="text-2xl font-bold">Profilo Aziendale</CardTitle>
-              <CardDescription>Gestisci le informazioni della tua azienda per attrarre i migliori talenti BIM.</CardDescription>
+              <CardTitle className="text-xl font-bold">Profilo Aziendale</CardTitle>
+              <CardDescription className="text-sm">Gestisci le informazioni della tua azienda per attrarre i migliori talenti BIM.</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -231,17 +240,35 @@ export default function CompanyProfilePage() {
                 <FormLabel className="text-xs">Logo Aziendale</FormLabel>
                 <div className="flex items-center space-x-4 mt-1">
                   <Avatar className="h-20 w-20 rounded-md">
-                    <AvatarImage src={logoPreview || (userProfile as CompanyProfile).logoUrl || undefined} alt={userProfile.companyName || 'Logo Azienda'} data-ai-hint="company logo" className="object-contain"/>
-                    <AvatarFallback className="rounded-md text-xl">{getInitials(userProfile.companyName)}</AvatarFallback>
+                    <AvatarImage src={logoPreview || (userProfile as CompanyProfile).logoUrl || undefined} alt={(userProfile as CompanyProfile).companyName || 'Logo Azienda'} data-ai-hint="company logo" className="object-contain"/>
+                    <AvatarFallback className="rounded-md text-xl">{getInitials((userProfile as CompanyProfile).companyName)}</AvatarFallback>
                   </Avatar>
-                  <FormControl>
-                    <Input
-                        type="file"
-                        accept="image/jpeg, image/png, image/webp"
-                        onChange={handleFileChange}
-                        className="max-w-xs h-9 text-sm file:border-0 file:bg-accent file:text-accent-foreground file:hover:bg-accent/90 file:rounded-sm file:px-3 file:py-1.5 file:mr-4 file:text-xs file:font-medium"
-                         />
-                  </FormControl>
+                  <div className="flex flex-col space-y-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleLogoPickerClick}
+                      className="bg-accent text-accent-foreground hover:bg-accent/90 w-fit"
+                    >
+                      <Upload className="mr-2 h-3 w-3" />
+                      Scegli Logo
+                    </Button>
+                    {logoFile && (
+                      <span className="text-xs text-muted-foreground">
+                        File: {logoFile.name}
+                      </span>
+                    )}
+                    <FormControl>
+                      <Input
+                          type="file"
+                          accept="image/jpeg, image/png, image/webp"
+                          onChange={handleFileChange}
+                          className="hidden" // Hide the original input
+                          ref={logoInputRef}
+                           />
+                    </FormControl>
+                  </div>
                 </div>
                 {isUploading && uploadProgress !== null && (
                   <div className="mt-2">

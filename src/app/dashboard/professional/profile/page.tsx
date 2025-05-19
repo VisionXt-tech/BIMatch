@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -9,11 +8,11 @@ import { Form, FormControl, FormDescription, FormItem, FormLabel, FormMessage } 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Save, UserCircle2 } from 'lucide-react';
+import { Save, UserCircle2, Upload } from 'lucide-react';
 import type { ProfessionalProfile } from '@/types/auth';
 import { FormInput, FormTextarea, FormMultiSelect, FormSingleSelect } from '@/components/ProfileFormElements';
 import { BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, AVAILABILITY_OPTIONS, ITALIAN_REGIONS, EXPERIENCE_LEVEL_OPTIONS } from '@/constants';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useFirebase } from '@/contexts/FirebaseContext';
@@ -63,6 +62,7 @@ export default function ProfessionalProfilePage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const profileImageInputRef = useRef<HTMLInputElement>(null);
 
 
   const form = useForm<ProfessionalProfileFormData>({
@@ -108,6 +108,9 @@ export default function ProfessionalProfilePage() {
     }
   }, [userProfile, form]);
 
+  const handleImagePickerClick = () => {
+    profileImageInputRef.current?.click();
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -115,22 +118,25 @@ export default function ProfessionalProfilePage() {
       if (!file.type.startsWith('image/')) {
           toast({ title: "Formato File Non Valido", description: "Seleziona un file immagine (es. JPG, PNG, WEBP).", variant: "destructive"});
           event.target.value = '';
+          setProfileImageFile(null);
           return;
       }
       if (file.size > 2 * 1024 * 1024) {
           toast({ title: "File Troppo Grande", description: "L'immagine non deve superare i 2MB.", variant: "destructive"});
           event.target.value = '';
+          setProfileImageFile(null);
           return;
       }
       if (file.size === 0) {
         toast({ title: "File Vuoto", description: "Il file selezionato è vuoto e non può essere caricato.", variant: "destructive" });
         event.target.value = '';
+        setProfileImageFile(null);
         return;
       }
       setProfileImageFile(file);
       setImagePreview(URL.createObjectURL(file));
-      setUploadProgress(null); 
-      setIsUploading(false); 
+      setUploadProgress(null);
+      setIsUploading(false);
     } else {
       setProfileImageFile(null);
       setImagePreview(userProfile?.photoURL || null);
@@ -182,12 +188,12 @@ export default function ProfessionalProfilePage() {
             async () => {
               try {
                 photoURLToUpdate = await getDownloadURL(uploadTask.snapshot.ref);
-                resolve(); 
+                resolve();
               } catch (getUrlError: any) {
                  toast({ title: "Errore URL Immagine", description: `Impossibile ottenere l'URL dell'immagine: ${getUrlError.message}`, variant: "destructive" });
-                 setIsUploading(false); 
+                 setIsUploading(false);
                  setUploadProgress(null);
-                 reject(getUrlError); 
+                 reject(getUrlError);
               }
             }
           );
@@ -195,7 +201,7 @@ export default function ProfessionalProfilePage() {
       } catch (uploadError) {
         setIsUploading(false);
         setUploadProgress(null);
-        return; 
+        return;
       }
     }
 
@@ -210,11 +216,11 @@ export default function ProfessionalProfilePage() {
 
     try {
       await updateUserProfile(user.uid, dataToUpdate);
-      setProfileImageFile(null); 
+      setProfileImageFile(null);
     } catch (error) {
       // Error toast is handled within updateUserProfile
     } finally {
-      if (profileImageFile || isUploading) { // Reset if an upload was attempted or in progress
+      if (profileImageFile || isUploading) {
         setIsUploading(false);
         setUploadProgress(null);
       }
@@ -262,14 +268,32 @@ export default function ProfessionalProfilePage() {
                     <AvatarImage src={imagePreview || userProfile.photoURL || undefined} alt={userProfile.displayName || 'User'} data-ai-hint="profile person" />
                     <AvatarFallback className="text-2xl">{getInitials(userProfile.displayName)}</AvatarFallback>
                   </Avatar>
-                  <FormControl>
-                     <Input
-                        type="file"
-                        accept="image/jpeg, image/png, image/webp"
-                        onChange={handleFileChange}
-                        className="max-w-xs h-9 text-sm file:border-0 file:bg-accent file:text-accent-foreground file:hover:bg-accent/90 file:rounded-sm file:px-3 file:py-1.5 file:mr-4 file:text-xs file:font-medium"
-                      />
-                  </FormControl>
+                  <div className="flex flex-col space-y-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleImagePickerClick}
+                      className="bg-accent text-accent-foreground hover:bg-accent/90 w-fit"
+                    >
+                      <Upload className="mr-2 h-3 w-3" />
+                      Scegli Immagine
+                    </Button>
+                    {profileImageFile && (
+                      <span className="text-xs text-muted-foreground">
+                        File: {profileImageFile.name}
+                      </span>
+                    )}
+                    <FormControl>
+                       <Input
+                          type="file"
+                          accept="image/jpeg, image/png, image/webp"
+                          onChange={handleFileChange}
+                          className="hidden"
+                          ref={profileImageInputRef}
+                        />
+                    </FormControl>
+                  </div>
                 </div>
                 {isUploading && uploadProgress !== null && (
                   <div className="mt-2">
@@ -350,11 +374,11 @@ export default function ProfessionalProfilePage() {
                         className="h-9"
                         {...form.register("monthlyRate", {
                             setValueAs: (value) => {
-                              if (value === "" || value === null || value === undefined) return null; 
+                              if (value === "" || value === null || value === undefined) return null;
                               const strVal = String(value).trim();
-                              if (strVal === "") return null; 
+                              if (strVal === "") return null;
                               const num = parseFloat(strVal);
-                              return isNaN(num) ? undefined : num; 
+                              return isNaN(num) ? undefined : num;
                             }
                         })}
                       />
