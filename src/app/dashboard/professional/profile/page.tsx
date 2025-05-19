@@ -20,6 +20,7 @@ import { useFirebase } from '@/contexts/FirebaseContext';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 const professionalProfileSchema = z.object({
@@ -41,7 +42,7 @@ const professionalProfileSchema = z.object({
       const strVal = String(val).trim();
       if (strVal === "") return undefined;
       const num = Number(strVal);
-      return isNaN(num) ? undefined : num; // Return undefined if not a valid number to allow optional validation
+      return isNaN(num) ? undefined : num; 
     },
     z.number({invalid_type_error: 'La tariffa oraria deve essere un numero.'})
       .positive({ message: 'La tariffa oraria deve essere un numero positivo.' })
@@ -116,7 +117,7 @@ export default function ProfessionalProfilePage() {
           event.target.value = '';
           return;
       }
-      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+      if (file.size > 2 * 1024 * 1024) { 
           toast({ title: "File Troppo Grande", description: "L'immagine non deve superare i 2MB.", variant: "destructive"});
           event.target.value = '';
           return;
@@ -128,8 +129,8 @@ export default function ProfessionalProfilePage() {
       }
       setProfileImageFile(file);
       setImagePreview(URL.createObjectURL(file));
-      setUploadProgress(null); // Reset progress for new file
-      setIsUploading(false); // Ensure not in uploading state if a previous attempt failed
+      setUploadProgress(null); 
+      setIsUploading(false); 
     } else {
       setProfileImageFile(null);
       setImagePreview(userProfile?.photoURL || null);
@@ -174,30 +175,27 @@ export default function ProfessionalProfilePage() {
                    userFriendlyMessage = `Errore caricamento: ${error.message || 'Vedi console.'}`;
               }
               toast({ title: "Errore Caricamento Immagine", description: userFriendlyMessage, variant: "destructive" });
-              reject(error); // Reject the promise on error
+              setIsUploading(false);
+              setUploadProgress(null);
+              reject(error); 
             },
             async () => {
               try {
                 photoURLToUpdate = await getDownloadURL(uploadTask.snapshot.ref);
-                resolve(); // Resolve the promise on success
+                setIsUploading(false);
+                setUploadProgress(null);
+                resolve(); 
               } catch (getUrlError: any) {
                  toast({ title: "Errore URL Immagine", description: `Impossibile ottenere l'URL dell'immagine: ${getUrlError.message}`, variant: "destructive" });
-                 reject(getUrlError); // Reject if getDownloadURL fails
+                 setIsUploading(false);
+                 setUploadProgress(null);
+                 reject(getUrlError); 
               }
             }
           );
         });
       } catch (uploadError) {
-          // Error already toasted inside the promise
-          setIsUploading(false);
-          setUploadProgress(null);
-          return; // Stop submission if upload fails
-      }
-      // Upload finished, whether success or failure handled inside, now proceed only if successful
-      setIsUploading(false); // This will now be set after promise resolves or rejects
-      setUploadProgress(null);
-      if (!photoURLToUpdate && profileImageFile) { // If upload was attempted but URL not set (error)
-        return;
+          return; 
       }
     }
 
@@ -208,20 +206,14 @@ export default function ProfessionalProfilePage() {
       ...data,
       displayName: updatedDisplayName || userProfile.displayName,
       photoURL: photoURLToUpdate,
-      hourlyRate: data.hourlyRate === undefined || data.hourlyRate === null || String(data.hourlyRate).trim() === '' ? undefined : Number(data.hourlyRate),
+      hourlyRate: data.hourlyRate === undefined || data.hourlyRate === null || String(data.hourlyRate).trim() === '' ? null : Number(data.hourlyRate),
     };
 
     try {
       await updateUserProfile(user.uid, dataToUpdate);
-      setProfileImageFile(null); // Clear the selected file only after successful profile update
+      setProfileImageFile(null); 
     } catch (error) {
       // Profile update error is handled by updateUserProfile in AuthContext
-    } finally {
-       // Ensure these are reset regardless of updateUserProfile outcome, especially if photo upload happened
-      if (!profileImageFile) { // Only reset upload states if no file was involved in this submission
-         setIsUploading(false);
-         setUploadProgress(null);
-      }
     }
   };
 
@@ -288,11 +280,17 @@ export default function ProfessionalProfilePage() {
                 <FormMessage className="text-xs" />
               </FormItem>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                {/* Colonna Sinistra */}
-                <div className="space-y-4">
-                  <FormInput control={form.control} name="firstName" label="Nome" placeholder="Mario" />
-                  <FormInput control={form.control} name="lastName" label="Cognome" placeholder="Rossi" />
+              <Tabs defaultValue="info-personali" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsTrigger value="info-personali">Info Personali e Bio</TabsTrigger>
+                  <TabsTrigger value="competenze-link">Competenze e Link</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="info-personali" className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                     <FormInput control={form.control} name="firstName" label="Nome" placeholder="Mario" />
+                     <FormInput control={form.control} name="lastName" label="Cognome" placeholder="Rossi" />
+                  </div>
                   <FormSingleSelect
                     control={form.control}
                     name="location"
@@ -300,25 +298,26 @@ export default function ProfessionalProfilePage() {
                     options={ITALIAN_REGIONS.map(r => ({ value: r, label: r }))}
                     placeholder="Seleziona la tua regione principale"
                   />
-                  <FormSingleSelect
-                    control={form.control}
-                    name="experienceLevel"
-                    label="Livello di Esperienza"
-                    options={EXPERIENCE_LEVEL_OPTIONS}
-                    placeholder="Seleziona il tuo livello"
-                  />
-                   <FormSingleSelect
-                    control={form.control}
-                    name="availability"
-                    label="Disponibilità"
-                    options={AVAILABILITY_OPTIONS}
-                    placeholder="Seleziona la tua disponibilità"
-                  />
+                   <div className="grid md:grid-cols-2 gap-4">
+                    <FormSingleSelect
+                      control={form.control}
+                      name="experienceLevel"
+                      label="Livello di Esperienza"
+                      options={EXPERIENCE_LEVEL_OPTIONS}
+                      placeholder="Seleziona il tuo livello"
+                    />
+                    <FormSingleSelect
+                      control={form.control}
+                      name="availability"
+                      label="Disponibilità"
+                      options={AVAILABILITY_OPTIONS}
+                      placeholder="Seleziona la tua disponibilità"
+                    />
+                  </div>
                   <FormTextarea control={form.control} name="bio" label="Breve Bio Professionale" placeholder="Descrivi la tua esperienza, specializzazioni e obiettivi..." rows={5} />
-                </div>
+                </TabsContent>
 
-                {/* Colonna Destra */}
-                <div className="space-y-4">
+                <TabsContent value="competenze-link" className="space-y-4">
                   <FormMultiSelect
                     control={form.control}
                     name="bimSkills"
@@ -343,14 +342,13 @@ export default function ProfessionalProfilePage() {
                         className="h-9"
                         {...form.register("hourlyRate", {
                             setValueAs: (value) => {
-                              if (value === "" || value === null || value === undefined) return undefined;
+                              if (value === "" || value === null || value === undefined) return null; // Return null for optional empty
                               const strVal = String(value).trim();
-                              if (strVal === "") return undefined;
+                              if (strVal === "") return null; // Return null for optional empty
                               const num = parseFloat(strVal);
-                              return isNaN(num) ? undefined : num;
+                              return isNaN(num) ? undefined : num; // Keep undefined for Zod to catch invalid_type_error
                             }
                         })}
-                        defaultValue={form.getValues('hourlyRate') ?? ''}
                       />
                     </FormControl>
                     <FormMessage className="text-xs" />
@@ -358,8 +356,9 @@ export default function ProfessionalProfilePage() {
                   <FormInput control={form.control} name="portfolioUrl" label="Link al Portfolio (Opzionale)" placeholder="https://tuo.portfolio.com" />
                   <FormInput control={form.control} name="cvUrl" label="Link al CV (Opzionale)" placeholder="Link a Google Drive, Dropbox, etc." description="Assicurati che il link sia accessibile." />
                   <FormInput control={form.control} name="linkedInProfile" label="Profilo LinkedIn (Opzionale)" placeholder="https://linkedin.com/in/tuoprofilo" />
-                </div>
-              </div>
+                </TabsContent>
+              </Tabs>
+
 
               <Button type="submit" className="w-full md:w-auto mt-6" size="sm" disabled={authLoading || form.formState.isSubmitting || isUploading}>
                 <Save className="mr-2 h-4 w-4" />
@@ -372,3 +371,6 @@ export default function ProfessionalProfilePage() {
     </div>
   );
 }
+
+
+    
