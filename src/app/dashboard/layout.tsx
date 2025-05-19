@@ -102,7 +102,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
         <SidebarSeparator />
 
-        <SidebarFooter className="p-2">
+        <SidebarFooter className="flex flex-col gap-2 p-2">
            <div className="flex items-center p-2 space-x-3 group-data-[state=collapsed]:justify-center group-data-[state=collapsed]:p-0 group-data-[state=collapsed]:space-x-0">
               <Avatar className="h-9 w-9 group-data-[state=collapsed]:h-8 group-data-[state=collapsed]:w-8">
                 <AvatarImage src={userProfile.photoURL || user.photoURL || undefined} alt={userProfile.displayName || 'User'} />
@@ -113,20 +113,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 <p className="text-xs text-sidebar-foreground/70 truncate">{userProfile.email}</p>
               </div>
             </div>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton onClick={handleLogout} tooltip={{children: "Logout", side: 'right', align: 'center'}}>
-                <LogOut className="h-5 w-5" />
-                <span className="group-data-[state=collapsed]:hidden">Logout</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
+          <SidebarMenuButton onClick={handleLogout} tooltip={{children: "Logout", side: 'right', align: 'center'}} className="w-full">
+            <LogOut className="h-5 w-5" />
+            <span className="group-data-[state=collapsed]:hidden">Logout</span>
+          </SidebarMenuButton>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset
         style={{ marginTop: `var(--main-content-area-margin-top, ${NAVBAR_HEIGHT_CSS_VAR_VALUE})` }}
       >
-        <div className="px-4 md:px-6 lg:px-8 pt-0 pb-0"> {/* Changed pb-2 to pb-0 */}
+        <div className="px-4 md:px-6 lg:px-8 pt-0 pb-0">
          {children}
         </div>
       </SidebarInset>
