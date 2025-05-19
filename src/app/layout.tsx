@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { Raleway } from 'next/font/google';
 import './globals.css';
@@ -29,7 +30,8 @@ export default function RootLayout({
         <FirebaseProvider>
           <AuthProvider>
             <Navbar />
-            <main className="flex-grow container mx-auto px-4 py-8 flex flex-col items-center justify-center">
+            {/* Main content area now allows children to define their own height and background */}
+            <main className="flex-grow relative flex flex-col">
               {children}
             </main>
             <Footer />
