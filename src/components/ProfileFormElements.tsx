@@ -39,17 +39,18 @@ export function FormInput<TFieldValues extends FieldValues>({
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>{label}</FormLabel>
+          <FormLabel className="text-xs">{label}</FormLabel>
           <FormControl>
             <Input 
               type={type} 
               placeholder={placeholder} 
               {...field} 
               value={field.value === null || field.value === undefined ? '' : field.value} 
+              className="h-9"
             />
           </FormControl>
-          {description && <FormDescription>{description}</FormDescription>}
-          <FormMessage />
+          {description && <FormDescription className="text-xs">{description}</FormDescription>}
+          <FormMessage className="text-xs" />
         </FormItem>
       )}
     />
@@ -79,7 +80,7 @@ export function FormTextarea<TFieldValues extends FieldValues>({
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>{label}</FormLabel>
+          <FormLabel className="text-xs">{label}</FormLabel>
           <FormControl>
             <Textarea 
               placeholder={placeholder} 
@@ -88,8 +89,8 @@ export function FormTextarea<TFieldValues extends FieldValues>({
               value={field.value === null || field.value === undefined ? '' : field.value} 
             />
           </FormControl>
-          {description && <FormDescription>{description}</FormDescription>}
-          <FormMessage />
+          {description && <FormDescription className="text-xs">{description}</FormDescription>}
+          <FormMessage className="text-xs" />
         </FormItem>
       )}
     />
@@ -119,7 +120,7 @@ export function FormMultiSelect<TFieldValues extends FieldValues>({
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>{label}</FormLabel>
+          <FormLabel className="text-xs">{label}</FormLabel>
           <FormControl>
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">{placeholder}</p>
@@ -131,7 +132,7 @@ export function FormMultiSelect<TFieldValues extends FieldValues>({
                       id={`${String(name)}-${option.value}`}
                       checked={field.value?.includes(option.value)}
                       onCheckedChange={(checked) => {
-                        const currentValue = field.value || [];
+                        const currentValue = Array.isArray(field.value) ? field.value : [];
                         if (checked) {
                           field.onChange([...currentValue, option.value]);
                         } else {
@@ -147,15 +148,15 @@ export function FormMultiSelect<TFieldValues extends FieldValues>({
                 </div>
               </ScrollArea>
                <div className="flex flex-wrap gap-1 mt-1">
-                {(field.value as string[] || []).map((val) => {
+                {(Array.isArray(field.value) ? field.value : []).map((val) => {
                   const currentOption = options.find(opt => opt.value === val);
                   return currentOption ? <Badge key={val} variant="secondary">{currentOption.label}</Badge> : null;
                 })}
               </div>
             </div>
           </FormControl>
-          {description && <FormDescription>{description}</FormDescription>}
-          <FormMessage />
+          {description && <FormDescription className="text-xs">{description}</FormDescription>}
+          <FormMessage className="text-xs" />
         </FormItem>
       )}
     />
@@ -186,10 +187,13 @@ export function FormSingleSelect<TFieldValues extends FieldValues>({
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>{label}</FormLabel>
-          <Select onValueChange={field.onChange} value={field.value || ''} defaultValue={field.value || ''}>
+          <FormLabel className="text-xs">{label}</FormLabel>
+          <Select
+            onValueChange={field.onChange}
+            value={field.value || ''} // Ensure value is controlled, fallback to empty string if null/undefined
+          >
             <FormControl>
-              <SelectTrigger>
+              <SelectTrigger className="h-9">
                 <SelectValue placeholder={placeholder} />
               </SelectTrigger>
             </FormControl>
@@ -201,8 +205,8 @@ export function FormSingleSelect<TFieldValues extends FieldValues>({
               ))}
             </SelectContent>
           </Select>
-          {description && <FormDescription>{description}</FormDescription>}
-          <FormMessage />
+          {description && <FormDescription className="text-xs">{description}</FormDescription>}
+          <FormMessage className="text-xs" />
         </FormItem>
       )}
     />
