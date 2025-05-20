@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -23,15 +24,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 const professionalProfileSchema = z.object({
-  firstName: z.string().min(2, { message: 'Il nome deve contenere almeno 2 caratteri.' }).optional(),
-  lastName: z.string().min(2, { message: 'Il cognome deve contenere almeno 2 caratteri.' }).optional(),
+  firstName: z.string().min(2, { message: 'Il nome deve contenere almeno 2 caratteri.' }),
+  lastName: z.string().min(2, { message: 'Il cognome deve contenere almeno 2 caratteri.' }),
   displayName: z.string().min(2, "Il nome visualizzato è richiesto.").optional(),
-  location: z.string().min(1, { message: 'La localizzazione è richiesta.' }).optional(),
-  bio: z.string().max(1000, "La bio non può superare i 1000 caratteri.").optional().or(z.literal('')),
-  bimSkills: z.array(z.string()).optional(),
-  softwareProficiency: z.array(z.string()).optional(),
-  availability: z.string().optional().or(z.literal('')),
-  experienceLevel: z.string().optional().or(z.literal('')),
+  location: z.string().min(1, { message: 'La localizzazione è richiesta.' }),
+  bio: z.string().max(1000, "La bio non può superare i 1000 caratteri.").min(1, "La bio è richiesta."),
+  bimSkills: z.array(z.string()).min(1, "Seleziona almeno una competenza BIM."),
+  softwareProficiency: z.array(z.string()).min(1, "Seleziona almeno un software."),
+  availability: z.string().min(1, "La disponibilità è richiesta."),
+  experienceLevel: z.string().min(1, "Il livello di esperienza è richiesto."),
   portfolioUrl: z.string().url({ message: 'Inserisci un URL valido per il portfolio.' }).optional().or(z.literal('')),
   cvUrl: z.string().url({ message: 'Inserisci un URL valido per il CV (es. link a Google Drive, Dropbox).' }).optional().or(z.literal('')),
   linkedInProfile: z.string().url({message: 'Inserisci un URL valido per LinkedIn.'}).optional().or(z.literal('')),
@@ -63,6 +64,7 @@ export default function ProfessionalProfilePage() {
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const profileImageInputRef = useRef<HTMLInputElement>(null);
+  const [profileDataLoaded, setProfileDataLoaded] = useState(false);
 
 
   const form = useForm<ProfessionalProfileFormData>({
@@ -85,7 +87,7 @@ export default function ProfessionalProfilePage() {
   });
 
   useEffect(() => {
-    if (userProfile && userProfile.role === 'professional') {
+    if (userProfile && userProfile.role === 'professional' && !profileDataLoaded) {
       const currentProfile = userProfile as ProfessionalProfile;
       form.reset({
         firstName: currentProfile.firstName || '',
@@ -105,8 +107,9 @@ export default function ProfessionalProfilePage() {
       if (currentProfile.photoURL) {
         setImagePreview(currentProfile.photoURL);
       }
+      setProfileDataLoaded(true); // Mark data as loaded into the form
     }
-  }, [userProfile, form]);
+  }, [userProfile, form, profileDataLoaded]);
 
   const handleImagePickerClick = () => {
     profileImageInputRef.current?.click();
@@ -117,29 +120,29 @@ export default function ProfessionalProfilePage() {
       const file = event.target.files[0];
       if (!file.type.startsWith('image/')) {
           toast({ title: "Formato File Non Valido", description: "Seleziona un file immagine (es. JPG, PNG, WEBP).", variant: "destructive"});
-          event.target.value = '';
+          if(event.target) event.target.value = '';
           setProfileImageFile(null);
           return;
       }
       if (file.size > 2 * 1024 * 1024) {
           toast({ title: "File Troppo Grande", description: "L'immagine non deve superare i 2MB.", variant: "destructive"});
-          event.target.value = '';
+          if(event.target) event.target.value = '';
           setProfileImageFile(null);
           return;
       }
       if (file.size === 0) {
         toast({ title: "File Vuoto", description: "Il file selezionato è vuoto e non può essere caricato.", variant: "destructive" });
-        event.target.value = '';
+        if(event.target) event.target.value = '';
         setProfileImageFile(null);
         return;
       }
       setProfileImageFile(file);
       setImagePreview(URL.createObjectURL(file));
-      setUploadProgress(null);
+      setUploadProgress(null); // Reset progress for new file
       setIsUploading(false);
     } else {
       setProfileImageFile(null);
-      setImagePreview(userProfile?.photoURL || null);
+      setImagePreview(userProfile?.photoURL || null); // Revert to current profile photo or null
     }
   };
 
@@ -199,9 +202,10 @@ export default function ProfessionalProfilePage() {
           );
         });
       } catch (uploadError) {
+        // Error is already toasted inside the promise, just stop here
         setIsUploading(false);
         setUploadProgress(null);
-        return;
+        return; 
       }
     }
 
@@ -216,10 +220,15 @@ export default function ProfessionalProfilePage() {
 
     try {
       await updateUserProfile(user.uid, dataToUpdate);
-      setProfileImageFile(null);
+      setProfileImageFile(null); // Clear the file after successful update
+      if (profileImageInputRef.current) { // Reset file input
+        profileImageInputRef.current.value = "";
+      }
+      setProfileDataLoaded(false); // Trigger profile data reload into form
     } catch (error) {
       // Error toast is handled within updateUserProfile
     } finally {
+      // Only reset uploading state if an upload actually happened or was attempted
       if (profileImageFile || isUploading) {
         setIsUploading(false);
         setUploadProgress(null);
@@ -274,7 +283,7 @@ export default function ProfessionalProfilePage() {
                       variant="outline"
                       size="sm"
                       onClick={handleImagePickerClick}
-                      className="bg-accent text-accent-foreground hover:bg-accent/90 w-fit"
+                      className="bg-accent text-accent-foreground hover:bg-accent/90 w-fit file:border-0 file:bg-accent file:text-accent-foreground file:hover:bg-accent/90 file:rounded-sm file:px-3 file:py-1.5 file:mr-4 file:text-xs file:font-medium"
                     >
                       <Upload className="mr-2 h-3 w-3" />
                       Scegli Immagine
@@ -403,3 +412,5 @@ export default function ProfessionalProfilePage() {
     </div>
   );
 }
+
+    

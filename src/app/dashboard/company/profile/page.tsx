@@ -50,6 +50,7 @@ export default function CompanyProfilePage() {
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const [profileDataLoaded, setProfileDataLoaded] = useState(false);
 
 
   const form = useForm<CompanyProfileFormData>({
@@ -69,7 +70,7 @@ export default function CompanyProfilePage() {
   });
 
   useEffect(() => {
-    if (userProfile && userProfile.role === 'company') {
+    if (userProfile && userProfile.role === 'company' && !profileDataLoaded) {
       const currentProfile = userProfile as CompanyProfile;
       form.reset({
         companyName: currentProfile.companyName || '',
@@ -86,8 +87,9 @@ export default function CompanyProfilePage() {
       if (currentProfile.logoUrl) {
         setLogoPreview(currentProfile.logoUrl);
       }
+      setProfileDataLoaded(true); // Mark data as loaded into the form
     }
-  }, [userProfile, form]);
+  }, [userProfile, form, profileDataLoaded]);
 
   const handleLogoPickerClick = () => {
     logoInputRef.current?.click();
@@ -98,19 +100,19 @@ export default function CompanyProfilePage() {
       const file = event.target.files[0];
       if (!file.type.startsWith('image/')) {
           toast({ title: "Formato File Non Valido", description: "Seleziona un file immagine (es. JPG, PNG, WEBP).", variant: "destructive"});
-          event.target.value = ''; 
+          if(event.target) event.target.value = ''; 
           setLogoFile(null);
           return;
       }
       if (file.size > 2 * 1024 * 1024) { // 2MB limit
           toast({ title: "File Troppo Grande", description: "Il logo non deve superare i 2MB.", variant: "destructive"});
-          event.target.value = ''; 
+          if(event.target) event.target.value = ''; 
           setLogoFile(null);
           return;
       }
       if (file.size === 0) {
         toast({ title: "File Vuoto", description: "Il file selezionato è vuoto e non può essere caricato.", variant: "destructive" });
-        event.target.value = ''; 
+        if(event.target) event.target.value = ''; 
         setLogoFile(null);
         return;
       }
@@ -203,6 +205,7 @@ export default function CompanyProfilePage() {
       if (logoInputRef.current) { 
         logoInputRef.current.value = "";
       }
+      setProfileDataLoaded(false); // Trigger profile data reload into form
     } catch (error) {
       // updateUserProfile in AuthContext should handle its own toasts
     } finally {
@@ -350,3 +353,5 @@ export default function CompanyProfilePage() {
   );
 }
 
+
+    
