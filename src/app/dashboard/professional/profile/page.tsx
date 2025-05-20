@@ -107,7 +107,7 @@ export default function ProfessionalProfilePage() {
       if (currentProfile.photoURL) {
         setImagePreview(currentProfile.photoURL);
       }
-      setProfileDataLoaded(true); // Mark data as loaded into the form
+      setProfileDataLoaded(true); 
     }
   }, [userProfile, form, profileDataLoaded]);
 
@@ -138,11 +138,11 @@ export default function ProfessionalProfilePage() {
       }
       setProfileImageFile(file);
       setImagePreview(URL.createObjectURL(file));
-      setUploadProgress(null); // Reset progress for new file
+      setUploadProgress(null); 
       setIsUploading(false);
     } else {
       setProfileImageFile(null);
-      setImagePreview(userProfile?.photoURL || null); // Revert to current profile photo or null
+      setImagePreview(userProfile?.photoURL || null); 
     }
   };
 
@@ -202,7 +202,6 @@ export default function ProfessionalProfilePage() {
           );
         });
       } catch (uploadError) {
-        // Error is already toasted inside the promise, just stop here
         setIsUploading(false);
         setUploadProgress(null);
         return; 
@@ -220,15 +219,14 @@ export default function ProfessionalProfilePage() {
 
     try {
       await updateUserProfile(user.uid, dataToUpdate);
-      setProfileImageFile(null); // Clear the file after successful update
-      if (profileImageInputRef.current) { // Reset file input
+      setProfileDataLoaded(false); // Crucial: Trigger profile data reload into form
+      setProfileImageFile(null); 
+      if (profileImageInputRef.current) { 
         profileImageInputRef.current.value = "";
       }
-      setProfileDataLoaded(false); // Trigger profile data reload into form
     } catch (error) {
       // Error toast is handled within updateUserProfile
     } finally {
-      // Only reset uploading state if an upload actually happened or was attempted
       if (profileImageFile || isUploading) {
         setIsUploading(false);
         setUploadProgress(null);
@@ -278,12 +276,12 @@ export default function ProfessionalProfilePage() {
                     <AvatarFallback className="text-2xl">{getInitials(userProfile.displayName)}</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col space-y-1">
-                    <Button
+                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
                       onClick={handleImagePickerClick}
-                      className="bg-accent text-accent-foreground hover:bg-accent/90 w-fit file:border-0 file:bg-accent file:text-accent-foreground file:hover:bg-accent/90 file:rounded-sm file:px-3 file:py-1.5 file:mr-4 file:text-xs file:font-medium"
+                      className="bg-accent text-accent-foreground hover:bg-accent/90 w-fit"
                     >
                       <Upload className="mr-2 h-3 w-3" />
                       Scegli Immagine
@@ -293,15 +291,13 @@ export default function ProfessionalProfilePage() {
                         File: {profileImageFile.name}
                       </span>
                     )}
-                    <FormControl>
-                       <Input
-                          type="file"
-                          accept="image/jpeg, image/png, image/webp"
-                          onChange={handleFileChange}
-                          className="hidden"
-                          ref={profileImageInputRef}
-                        />
-                    </FormControl>
+                    <Input
+                        type="file"
+                        accept="image/jpeg, image/png, image/webp"
+                        onChange={handleFileChange}
+                        className="hidden"
+                        ref={profileImageInputRef}
+                      />
                   </div>
                 </div>
                 {isUploading && uploadProgress !== null && (
@@ -412,5 +408,3 @@ export default function ProfessionalProfilePage() {
     </div>
   );
 }
-
-    

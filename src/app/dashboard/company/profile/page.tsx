@@ -87,7 +87,7 @@ export default function CompanyProfilePage() {
       if (currentProfile.logoUrl) {
         setLogoPreview(currentProfile.logoUrl);
       }
-      setProfileDataLoaded(true); // Mark data as loaded into the form
+      setProfileDataLoaded(true); 
     }
   }, [userProfile, form, profileDataLoaded]);
 
@@ -201,11 +201,11 @@ export default function CompanyProfilePage() {
 
     try {
       await updateUserProfile(user.uid, dataToUpdate);
+      setProfileDataLoaded(false); // Crucial: Trigger profile data reload into form
       setLogoFile(null); 
       if (logoInputRef.current) { 
         logoInputRef.current.value = "";
       }
-      setProfileDataLoaded(false); // Trigger profile data reload into form
     } catch (error) {
       // updateUserProfile in AuthContext should handle its own toasts
     } finally {
@@ -257,7 +257,7 @@ export default function CompanyProfilePage() {
                       variant="outline"
                       size="sm"
                       onClick={handleLogoPickerClick}
-                      className="bg-accent text-accent-foreground hover:bg-accent/90 w-fit file:border-0 file:bg-accent file:text-accent-foreground file:hover:bg-accent/90 file:rounded-sm file:px-3 file:py-1.5 file:mr-4 file:text-xs file:font-medium"
+                      className="bg-accent text-accent-foreground hover:bg-accent/90 w-fit"
                     >
                       <Upload className="mr-2 h-3 w-3" />
                       Scegli Logo
@@ -267,15 +267,13 @@ export default function CompanyProfilePage() {
                         File: {logoFile.name}
                       </span>
                     )}
-                    <FormControl>
-                      <Input
-                          type="file"
-                          accept="image/jpeg, image/png, image/webp"
-                          onChange={handleFileChange}
-                          className="hidden"
-                          ref={logoInputRef}
-                           />
-                    </FormControl>
+                    <Input
+                        type="file"
+                        accept="image/jpeg, image/png, image/webp"
+                        onChange={handleFileChange}
+                        className="hidden"
+                        ref={logoInputRef}
+                         />
                   </div>
                 </div>
                 {isUploading && uploadProgress !== null && (
@@ -352,6 +350,3 @@ export default function CompanyProfilePage() {
     </div>
   );
 }
-
-
-    
