@@ -1,3 +1,4 @@
+
 'use client';
 import type { Control, FieldPath, FieldValues } from 'react-hook-form';
 import {
@@ -190,7 +191,7 @@ export function FormSingleSelect<TFieldValues extends FieldValues>({
           <FormLabel className="text-xs">{label}</FormLabel>
           <Select
             onValueChange={field.onChange}
-            value={field.value || ''} // Ensure value is controlled, fallback to empty string if null/undefined
+            value={field.value === '' ? undefined : field.value} // Key change here!
           >
             <FormControl>
               <SelectTrigger className="h-9">
