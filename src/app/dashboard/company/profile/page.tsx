@@ -50,7 +50,6 @@ export default function CompanyProfilePage() {
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
-  const [profileDataLoaded, setProfileDataLoaded] = useState(false);
 
 
   const form = useForm<CompanyProfileFormData>({
@@ -70,9 +69,9 @@ export default function CompanyProfilePage() {
   });
 
   useEffect(() => {
-    if (userProfile && userProfile.role === 'company' && !profileDataLoaded) {
+    if (userProfile && userProfile.role === 'company') {
       const currentProfile = userProfile as CompanyProfile;
-      form.reset({
+      const defaultValuesForForm = {
         companyName: currentProfile.companyName || '',
         companyVat: currentProfile.companyVat || '',
         companyLocation: currentProfile.companyLocation || '',
@@ -83,13 +82,13 @@ export default function CompanyProfilePage() {
         contactPerson: currentProfile.contactPerson || '',
         contactEmail: currentProfile.contactEmail || '',
         contactPhone: currentProfile.contactPhone || '',
-      });
+      };
+      form.reset(defaultValuesForForm);
       if (currentProfile.logoUrl) {
         setLogoPreview(currentProfile.logoUrl);
       }
-      setProfileDataLoaded(true); 
     }
-  }, [userProfile, form, profileDataLoaded]);
+  }, [userProfile, form.reset]);
 
   const handleLogoPickerClick = () => {
     logoInputRef.current?.click();
@@ -201,7 +200,7 @@ export default function CompanyProfilePage() {
 
     try {
       await updateUserProfile(user.uid, dataToUpdate);
-      setProfileDataLoaded(false); // Crucial: Trigger profile data reload into form
+      // No need to setProfileDataLoaded(false) here with the simplified useEffect
       setLogoFile(null); 
       if (logoInputRef.current) { 
         logoInputRef.current.value = "";
@@ -295,13 +294,13 @@ export default function CompanyProfilePage() {
                   <TabsTrigger value="info-contatto">Info di Contatto</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="info-azienda" className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <TabsContent value="info-azienda" className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <FormInput control={form.control} name="companyName" label="Nome Azienda" placeholder="La Mia Azienda S.r.l." />
                     <FormInput control={form.control} name="companyVat" label="Partita IVA" placeholder="12345678901" />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <FormSingleSelect
                       control={form.control}
                       name="companyLocation"
@@ -312,7 +311,7 @@ export default function CompanyProfilePage() {
                     <FormInput control={form.control} name="companyWebsite" label="Sito Web" placeholder="https://www.lamiaazienda.it" />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <FormSingleSelect
                       control={form.control}
                       name="companySize"
@@ -331,7 +330,7 @@ export default function CompanyProfilePage() {
                   <FormTextarea control={form.control} name="companyDescription" label="Descrizione Azienda" placeholder="Descrivi la tua azienda, la mission, i valori e i tipi di progetti..." rows={4} />
                 </TabsContent>
 
-                <TabsContent value="info-contatto" className="space-y-4">
+                <TabsContent value="info-contatto" className="space-y-3">
                   <FormInput control={form.control} name="contactPerson" label="Persona di Riferimento" placeholder="Mario Rossi" />
                   <FormInput control={form.control} name="contactEmail" label="Email di Contatto" placeholder="info@lamiaazienda.it" type="email"/>
                   <FormInput control={form.control} name="contactPhone" label="Telefono di Contatto" placeholder="+39 02 1234567" type="tel"/>
@@ -350,3 +349,4 @@ export default function CompanyProfilePage() {
     </div>
   );
 }
+    

@@ -64,8 +64,6 @@ export default function ProfessionalProfilePage() {
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const profileImageInputRef = useRef<HTMLInputElement>(null);
-  const [profileDataLoaded, setProfileDataLoaded] = useState(false);
-
 
   const form = useForm<ProfessionalProfileFormData>({
     resolver: zodResolver(professionalProfileSchema),
@@ -87,9 +85,9 @@ export default function ProfessionalProfilePage() {
   });
 
   useEffect(() => {
-    if (userProfile && userProfile.role === 'professional' && !profileDataLoaded) {
+    if (userProfile && userProfile.role === 'professional') {
       const currentProfile = userProfile as ProfessionalProfile;
-      form.reset({
+      const defaultValuesForForm = {
         firstName: currentProfile.firstName || '',
         lastName: currentProfile.lastName || '',
         displayName: currentProfile.displayName || `${currentProfile.firstName || ''} ${currentProfile.lastName || ''}`.trim(),
@@ -102,14 +100,14 @@ export default function ProfessionalProfilePage() {
         portfolioUrl: currentProfile.portfolioUrl || '',
         cvUrl: currentProfile.cvUrl || '',
         linkedInProfile: currentProfile.linkedInProfile || '',
-        monthlyRate: currentProfile.monthlyRate === undefined || currentProfile.monthlyRate === null ? undefined : Number(currentProfile.monthlyRate),
-      });
+        monthlyRate: currentProfile.monthlyRate === undefined || currentProfile.monthlyRate === null || String(currentProfile.monthlyRate).trim() === '' ? undefined : Number(currentProfile.monthlyRate),
+      };
+      form.reset(defaultValuesForForm);
       if (currentProfile.photoURL) {
         setImagePreview(currentProfile.photoURL);
       }
-      setProfileDataLoaded(true); 
     }
-  }, [userProfile, form, profileDataLoaded]);
+  }, [userProfile, form.reset]);
 
   const handleImagePickerClick = () => {
     profileImageInputRef.current?.click();
@@ -219,7 +217,7 @@ export default function ProfessionalProfilePage() {
 
     try {
       await updateUserProfile(user.uid, dataToUpdate);
-      setProfileDataLoaded(false); // Crucial: Trigger profile data reload into form
+      // No need to setProfileDataLoaded(false) here with the simplified useEffect
       setProfileImageFile(null); 
       if (profileImageInputRef.current) { 
         profileImageInputRef.current.value = "";
@@ -320,8 +318,8 @@ export default function ProfessionalProfilePage() {
                   <TabsTrigger value="dettagli-link">Economia e Link</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="info-personali" className="space-y-4">
-                  <div className="grid md:grid-cols-2 gap-4">
+                <TabsContent value="info-personali" className="space-y-3">
+                  <div className="grid md:grid-cols-2 gap-3">
                      <FormInput control={form.control} name="firstName" label="Nome" placeholder="Mario" />
                      <FormInput control={form.control} name="lastName" label="Cognome" placeholder="Rossi" />
                   </div>
@@ -332,7 +330,7 @@ export default function ProfessionalProfilePage() {
                     options={ITALIAN_REGIONS.map(r => ({ value: r, label: r }))}
                     placeholder="Seleziona la tua regione principale"
                   />
-                   <div className="grid md:grid-cols-2 gap-4">
+                   <div className="grid md:grid-cols-2 gap-3">
                     <FormSingleSelect
                       control={form.control}
                       name="experienceLevel"
@@ -351,7 +349,7 @@ export default function ProfessionalProfilePage() {
                    <FormTextarea control={form.control} name="bio" label="Breve Bio Professionale" placeholder="Descrivi la tua esperienza, specializzazioni e obiettivi..." rows={5} />
                 </TabsContent>
 
-                <TabsContent value="competenze" className="space-y-4">
+                <TabsContent value="competenze" className="space-y-3">
                   <FormMultiSelect
                     control={form.control}
                     name="bimSkills"
@@ -368,7 +366,7 @@ export default function ProfessionalProfilePage() {
                   />
                 </TabsContent>
 
-                <TabsContent value="dettagli-link" className="space-y-4">
+                <TabsContent value="dettagli-link" className="space-y-3">
                    <FormItem>
                     <FormLabel className="text-xs">Retribuzione Mensile Lorda (€) (Opzionale)</FormLabel>
                     <FormControl>
@@ -376,7 +374,7 @@ export default function ProfessionalProfilePage() {
                         type="number"
                         placeholder="Es. 2500"
                         step="1"
-                        className="h-9"
+                        className="h-9 text-xs"
                         {...form.register("monthlyRate", {
                             setValueAs: (value) => {
                               if (value === "" || value === null || value === undefined) return null;
@@ -408,3 +406,5 @@ export default function ProfessionalProfilePage() {
     </div>
   );
 }
+
+    
