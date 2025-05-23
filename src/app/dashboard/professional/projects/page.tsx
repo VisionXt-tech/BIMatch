@@ -70,12 +70,10 @@ export default function AvailableProjectsPage() {
     fetchProjects();
   }, [db]);
 
-  // Placeholder per la logica di filtraggio - attualmente non applicata
   const filteredProjects = projects.filter(project => {
     const skillMatch = filters.skill === ALL_ITEMS_FILTER_VALUE || (project.requiredSkills && project.requiredSkills.includes(filters.skill));
     const softwareMatch = filters.software === ALL_ITEMS_FILTER_VALUE || (project.requiredSoftware && project.requiredSoftware.includes(filters.software));
     const locationMatch = filters.location === ALL_ITEMS_FILTER_VALUE || project.location === filters.location;
-    // TODO: Add search term filtering when input is added
     return skillMatch && softwareMatch && locationMatch;
   });
 
@@ -96,11 +94,11 @@ export default function AvailableProjectsPage() {
               <AccordionItem value="filters" className="border-b-0">
                 <AccordionTrigger className="text-lg font-semibold hover:no-underline py-4">
                   <div className="flex items-center">
-                    <Filter className="mr-2 h-5 w-5 text-primary"/> Filtri Avanzati (TODO: Attivare filtri)
+                    <Filter className="mr-2 h-5 w-5 text-primary"/> Filtri Avanzati
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pb-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
                       <Select onValueChange={(value) => setFilters(prev => ({...prev, skill: value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value}))} value={filters.skill}>
                           <SelectTrigger><SelectValue placeholder="Competenza BIM" /></SelectTrigger>
                           <SelectContent>
@@ -122,7 +120,6 @@ export default function AvailableProjectsPage() {
                               {ITALIAN_REGIONS.map(region => <SelectItem key={region} value={region}>{region}</SelectItem>)}
                           </SelectContent>
                       </Select>
-                      <Button className="w-full" disabled><Search className="mr-2 h-4 w-4" /> Applica Filtri (TODO)</Button>
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -215,3 +212,4 @@ export default function AvailableProjectsPage() {
     </div>
   );
 }
+
