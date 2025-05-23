@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import type { Project } from '@/types/project';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { collection, getDocs, query, where, Timestamp, orderBy, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, Timestamp, orderBy, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -28,9 +28,9 @@ import {
 
 const getStatusBadgeVariant = (status: Project['status']) => {
   switch (status) {
-    case 'attivo': return 'default'; 
-    case 'in_revisione': return 'secondary'; 
-    case 'completato': return 'outline'; 
+    case 'attivo': return 'default';
+    case 'in_revisione': return 'secondary';
+    case 'completato': return 'outline';
     case 'chiuso': return 'destructive';
     case 'bozza': return 'secondary';
     default: return 'default';
@@ -55,11 +55,9 @@ export default function CompanyProjectsPage() {
   const [companyProjects, setCompanyProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [projectToClose, setProjectToClose] = useState<Project | null>(null);
-
 
   useEffect(() => {
-    if (authLoading) return; // Aspetta che l'autenticazione sia completa
+    if (authLoading) return;
 
     if (!user || !userProfile || userProfile.role !== 'company') {
       setError("Devi essere un'azienda autenticata per visualizzare i progetti.");
@@ -84,9 +82,20 @@ export default function CompanyProjectsPage() {
           fetchedProjects.push({ id: doc.id, ...doc.data() } as Project);
         });
         setCompanyProjects(fetchedProjects);
-      } catch (e: any) {
+      } catch (e: any)
+      {
         console.error("Error fetching company projects:", e);
-        setError(e.message.includes('offline') ? "Connessione persa." : "Errore nel caricamento dei progetti.");
+        let specificError = "Errore nel caricamento dei progetti.";
+        if (typeof e.message === 'string') {
+            if (e.message.includes('offline') || e.message.includes('Failed to get document because the client is offline')) {
+                specificError = "Connessione persa. Controlla la tua rete.";
+            } else if (e.message.includes('permission-denied') || e.message.includes('PERMISSION_DENIED')) {
+                specificError = "Permessi insufficienti per caricare i progetti. Controlla le regole di Firestore.";
+            } else if (e.message.includes('indexes?create_composite=')) {
+                specificError = "Indice Firestore mancante. Controlla la console per il link per crearlo.";
+            }
+        }
+        setError(specificError);
       } finally {
         setLoading(false);
       }
@@ -95,22 +104,20 @@ export default function CompanyProjectsPage() {
     fetchCompanyProjects();
   }, [db, user, userProfile, authLoading]);
 
-  const handleConfirmCloseProject = async () => {
+  const handleConfirmCloseProject = async (projectToClose: Project) => {
     if (!projectToClose || !db) return;
     try {
       const projectRef = doc(db, 'projects', projectToClose.id!);
-      await updateDoc(projectRef, { status: 'chiuso', updatedAt: new Timestamp(Date.now() / 1000, 0) });
+      await updateDoc(projectRef, { status: 'chiuso', updatedAt: serverTimestamp() });
       toast({ title: "Progetto Chiuso", description: `Il progetto "${projectToClose.title}" è stato chiuso.` });
-      setCompanyProjects(prev => prev.map(p => p.id === projectToClose.id ? {...p, status: 'chiuso'} : p));
-      setProjectToClose(null);
+      setCompanyProjects(prev => prev.map(p => p.id === projectToClose.id ? {...p, status: 'chiuso', updatedAt: Timestamp.now()} : p));
     } catch (error: any) {
       toast({ title: "Errore", description: `Impossibile chiudere il progetto: ${error.message}`, variant: "destructive"});
     }
   };
 
-
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <Card className="shadow-lg">
         <CardHeader className="px-4 pt-3 pb-1">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -167,25 +174,38 @@ export default function CompanyProjectsPage() {
                         </Link>
                       </Button>
                        <Button size="sm" variant="outline" asChild disabled={project.status === 'chiuso' || project.status === 'completato'}>
-                        <Link href={`${ROUTES.DASHBOARD_COMPANY_PROJECTS}/${project.id}/edit`}> 
+                        <Link href={`${ROUTES.DASHBOARD_COMPANY_PROJECTS}/${project.id}/edit`}>
                           <Edit3 className="mr-2 h-4 w-4" /> Modifica
                         </Link>
                       </Button>
                       <Button size="sm" variant="outline" asChild>
-                        <Link href={`${ROUTES.DASHBOARD_COMPANY_CANDIDATES}?projectId=${project.id}`}> 
+                        <Link href={`${ROUTES.DASHBOARD_COMPANY_CANDIDATES}?projectId=${project.id}`}>
                           <Users className="mr-2 h-4 w-4" /> Vedi Candidati ({project.applicationsCount || 0})
                         </Link>
                       </Button>
-                       <AlertDialogTrigger asChild>
-                          <Button 
-                            size="sm" 
-                            variant="destructive" 
+                       <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="destructive"
                             disabled={project.status === 'completato' || project.status === 'chiuso'}
-                            onClick={() => setProjectToClose(project)}
                           >
                             <Trash2 className="mr-2 h-4 w-4" /> Chiudi Progetto
                           </Button>
                         </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Conferma Chiusura Progetto</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Sei sicuro di voler chiudere il progetto "{project.title}"? Questa azione non può essere annullata e il progetto non riceverà più candidature.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Annulla</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleConfirmCloseProject(project)}>Conferma Chiusura</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </CardContent>
                 </Card>
@@ -203,20 +223,6 @@ export default function CompanyProjectsPage() {
           )}
         </CardContent>
       </Card>
-      <AlertDialog open={!!projectToClose} onOpenChange={(open) => !open && setProjectToClose(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Conferma Chiusura Progetto</AlertDialogTitle>
-            <AlertDialogDescription>
-              Sei sicuro di voler chiudere il progetto "{projectToClose?.title}"? Questa azione non può essere annullata e il progetto non riceverà più candidature.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setProjectToClose(null)}>Annulla</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmCloseProject}>Conferma Chiusura</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
