@@ -10,7 +10,7 @@ import { Briefcase, MapPin, Percent, Search, Filter, Construction, Code2, WifiOf
 import Link from 'next/link';
 import Image from 'next/image';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import type { Project } from '@/types/project'; 
+import type { Project } from '@/types/project';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { collection, getDocs, query, Timestamp, orderBy } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,17 +18,18 @@ import { Skeleton } from '@/components/ui/skeleton';
 const getSkillLabel = (value: string) => BIM_SKILLS_OPTIONS.find(s => s.value === value)?.label || value;
 const getSoftwareLabel = (value: string) => SOFTWARE_PROFICIENCY_OPTIONS.find(s => s.value === value)?.label || value;
 
+const ALL_ITEMS_FILTER_VALUE = "__ALL_ITEMS__"; // Constant for "all" option
+
 export default function AvailableProjectsPage() {
   const { db } = useFirebase();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // TODO: Implementare la logica di filtraggio effettiva
   const [filters, setFilters] = useState({
-    skill: '',
-    software: '',
-    location: '',
+    skill: ALL_ITEMS_FILTER_VALUE,
+    software: ALL_ITEMS_FILTER_VALUE,
+    location: ALL_ITEMS_FILTER_VALUE,
   });
 
   useEffect(() => {
@@ -42,7 +43,6 @@ export default function AvailableProjectsPage() {
       setError(null);
       try {
         const projectsCollectionRef = collection(db, 'projects');
-        // Ordina per data di pubblicazione, i più recenti prima
         const q = query(projectsCollectionRef, orderBy('postedAt', 'desc'));
         const querySnapshot = await getDocs(q);
         const fetchedProjects: Project[] = [];
@@ -52,7 +52,17 @@ export default function AvailableProjectsPage() {
         setProjects(fetchedProjects);
       } catch (e: any) {
         console.error("Error fetching projects:", e);
-        setError(e.message.includes('offline') ? "Connessione persa. Controlla la tua rete." : "Errore nel caricamento dei progetti.");
+        let specificError = "Errore nel caricamento dei progetti.";
+        if (typeof e.message === 'string') {
+            if (e.message.includes('offline') || e.message.includes('Failed to get document because the client is offline')) {
+                specificError = "Connessione persa. Controlla la tua rete.";
+            } else if (e.message.includes('permission-denied') || e.message.includes('PERMISSION_DENIED')) {
+                specificError = "Permessi insufficienti per caricare i progetti. Controlla le regole di Firestore.";
+            } else if (e.message.includes('indexes?create_composite=')) {
+                specificError = "Indice Firestore mancante per i progetti. Controlla la console per il link per crearlo.";
+            }
+        }
+        setError(specificError);
       } finally {
         setLoading(false);
       }
@@ -61,7 +71,14 @@ export default function AvailableProjectsPage() {
   }, [db]);
 
   // Placeholder per la logica di filtraggio - attualmente non applicata
-  const filteredProjects = projects; // Sostituire con la logica di filtraggio effettiva
+  const filteredProjects = projects.filter(project => {
+    const skillMatch = filters.skill === ALL_ITEMS_FILTER_VALUE || (project.requiredSkills && project.requiredSkills.includes(filters.skill));
+    const softwareMatch = filters.software === ALL_ITEMS_FILTER_VALUE || (project.requiredSoftware && project.requiredSoftware.includes(filters.software));
+    const locationMatch = filters.location === ALL_ITEMS_FILTER_VALUE || project.location === filters.location;
+    // TODO: Add search term filtering when input is added
+    return skillMatch && softwareMatch && locationMatch;
+  });
+
 
   return (
     <div className="space-y-6">
@@ -79,29 +96,29 @@ export default function AvailableProjectsPage() {
               <AccordionItem value="filters" className="border-b-0">
                 <AccordionTrigger className="text-lg font-semibold hover:no-underline py-4">
                   <div className="flex items-center">
-                    <Filter className="mr-2 h-5 w-5 text-primary"/> Filtri Avanzati (Non Attivi)
+                    <Filter className="mr-2 h-5 w-5 text-primary"/> Filtri Avanzati (TODO: Attivare filtri)
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pb-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-                      <Select onValueChange={(value) => setFilters(prev => ({...prev, skill: value}))} value={filters.skill}>
+                      <Select onValueChange={(value) => setFilters(prev => ({...prev, skill: value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value}))} value={filters.skill}>
                           <SelectTrigger><SelectValue placeholder="Competenza BIM" /></SelectTrigger>
                           <SelectContent>
-                              <SelectItem value="">Tutte le competenze</SelectItem>
+                              <SelectItem value={ALL_ITEMS_FILTER_VALUE}>Tutte le competenze</SelectItem>
                               {BIM_SKILLS_OPTIONS.map(skill => <SelectItem key={skill.value} value={skill.value}>{skill.label}</SelectItem>)}
                           </SelectContent>
                       </Select>
-                      <Select onValueChange={(value) => setFilters(prev => ({...prev, software: value}))} value={filters.software}>
+                      <Select onValueChange={(value) => setFilters(prev => ({...prev, software: value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value}))} value={filters.software}>
                           <SelectTrigger><SelectValue placeholder="Software" /></SelectTrigger>
                           <SelectContent>
-                              <SelectItem value="">Tutti i software</SelectItem>
+                              <SelectItem value={ALL_ITEMS_FILTER_VALUE}>Tutti i software</SelectItem>
                               {SOFTWARE_PROFICIENCY_OPTIONS.map(sw => <SelectItem key={sw.value} value={sw.value}>{sw.label}</SelectItem>)}
                           </SelectContent>
                       </Select>
-                      <Select onValueChange={(value) => setFilters(prev => ({...prev, location: value}))} value={filters.location}>
+                      <Select onValueChange={(value) => setFilters(prev => ({...prev, location: value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value}))} value={filters.location}>
                           <SelectTrigger><SelectValue placeholder="Localizzazione" /></SelectTrigger>
                           <SelectContent>
-                               <SelectItem value="">Tutte le regioni</SelectItem>
+                               <SelectItem value={ALL_ITEMS_FILTER_VALUE}>Tutte le regioni</SelectItem>
                               {ITALIAN_REGIONS.map(region => <SelectItem key={region} value={region}>{region}</SelectItem>)}
                           </SelectContent>
                       </Select>
@@ -138,9 +155,9 @@ export default function AvailableProjectsPage() {
                                 <Link href={ROUTES.PROJECT_DETAILS(project.id!)}>{project.title}</Link>
                             </CardTitle>
                             <div className="flex items-center text-sm text-muted-foreground mt-1.5">
-                                {project.companyLogo ? 
+                                {project.companyLogo ?
                                     <Image data-ai-hint="company logo" src={project.companyLogo} alt={`${project.companyName} logo`} width={20} height={20} className="mr-2 rounded-sm border" />
-                                    : <Briefcase className="h-4 w-4 mr-2 flex-shrink-0"/> 
+                                    : <Briefcase className="h-4 w-4 mr-2 flex-shrink-0"/>
                                 }
                                 <span>{project.companyName}</span>
                                 <span className="mx-2">·</span>
@@ -148,13 +165,6 @@ export default function AvailableProjectsPage() {
                                 <span>{project.location}</span>
                             </div>
                         </div>
-                        {/* Placeholder for compatibility score if implemented
-                        {project.compatibility && (
-                             <div className="flex items-center text-xs font-semibold text-green-700 bg-green-100 px-2.5 py-1 rounded-full whitespace-nowrap mt-1 sm:mt-0">
-                                <Percent className="h-3.5 w-3.5 mr-1" /> {project.compatibility}% Compatibile
-                            </div>
-                        )}
-                        */}
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -192,7 +202,6 @@ export default function AvailableProjectsPage() {
                   </CardContent>
                 </Card>
               ))}
-              {/* TODO: Pagination */}
             </div>
           ) : (
             <div className="text-center py-16 border-2 border-dashed border-border rounded-lg">
@@ -206,4 +215,3 @@ export default function AvailableProjectsPage() {
     </div>
   );
 }
-
