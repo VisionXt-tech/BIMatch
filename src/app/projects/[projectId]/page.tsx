@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { doc, getDoc, addDoc, collection, query, where, getDocs, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, addDoc, collection, query, where, getDocs, serverTimestamp, Timestamp, deleteDoc } from 'firebase/firestore';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Project, ProjectApplication } from '@/types/project';
@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, MapPin, Briefcase, Settings, Code2, CalendarDays, Wallet, FileText, Send, CheckCircle2, XCircle, UserCircle2, Building, Info } from 'lucide-react';
+import { ArrowLeft, MapPin, Briefcase, Settings, Code2, CalendarDays, Wallet, FileText, Send, CheckCircle2, XCircle, UserCircle2, Building, Info, Trash2 } from 'lucide-react';
 import { ROUTES, BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS } from '@/constants';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -44,7 +44,9 @@ export default function ProjectDetailPage() {
   const [errorProject, setErrorProject] = useState<string | null>(null);
   
   const [isApplying, setIsApplying] = useState(false);
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
+  const [applicationId, setApplicationId] = useState<string | null>(null);
   const [checkingApplication, setCheckingApplication] = useState(true);
 
   const projectId = typeof params?.projectId === 'string' ? params.projectId : null;
@@ -87,14 +89,20 @@ export default function ProjectDetailPage() {
         where('professionalId', '==', user.uid)
       );
       const querySnapshot = await getDocs(q);
-      setHasApplied(!querySnapshot.empty);
+      if (!querySnapshot.empty) {
+        setHasApplied(true);
+        setApplicationId(querySnapshot.docs[0].id); // Store the application ID
+      } else {
+        setHasApplied(false);
+        setApplicationId(null);
+      }
     } catch (error) {
       console.error("Error checking existing application:", error);
-      // Potresti voler mostrare un toast o un messaggio di errore
+      toast({ title: "Errore", description: "Impossibile verificare lo stato della candidatura.", variant: "destructive" });
     } finally {
       setCheckingApplication(false);
     }
-  }, [projectId, user, userProfile, db]);
+  }, [projectId, user, userProfile, db, toast]);
 
   useEffect(() => {
     fetchProjectData();
@@ -128,9 +136,10 @@ export default function ProjectDetailPage() {
         applicationDate: serverTimestamp(),
         status: 'inviata',
       };
-      await addDoc(collection(db, 'projectApplications'), applicationData);
+      const docRef = await addDoc(collection(db, 'projectApplications'), applicationData);
       toast({ title: "Candidatura Inviata!", description: `La tua candidatura per "${project.title}" è stata inviata con successo.` });
       setHasApplied(true);
+      setApplicationId(docRef.id); // Store new application ID
     } catch (error: any) {
       console.error("Error applying to project:", error);
       toast({ title: "Errore Candidatura", description: error.message || "Impossibile inviare la candidatura.", variant: "destructive" });
@@ -138,6 +147,27 @@ export default function ProjectDetailPage() {
       setIsApplying(false);
     }
   };
+
+  const handleWithdrawApplication = async () => {
+    if (!user || !userProfile || userProfile.role !== 'professional' || !project || !applicationId || !db) {
+      toast({ title: "Azione non permessa", description: "Impossibile ritirare la candidatura.", variant: "destructive" });
+      return;
+    }
+    setIsWithdrawing(true);
+    try {
+      const appDocRef = doc(db, 'projectApplications', applicationId);
+      await deleteDoc(appDocRef);
+      toast({ title: "Candidatura Ritirata", description: `La tua candidatura per "${project.title}" è stata ritirata.` });
+      setHasApplied(false);
+      setApplicationId(null);
+    } catch (error: any) {
+      console.error("Error withdrawing application:", error);
+      toast({ title: "Errore Ritiro Candidatura", description: error.message || "Impossibile ritirare la candidatura.", variant: "destructive" });
+    } finally {
+      setIsWithdrawing(false);
+    }
+  };
+
 
   if (loadingProject) {
     return (
@@ -184,8 +214,8 @@ export default function ProjectDetailPage() {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
         <Info className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-        <p className="text-xl text-muted-foreground">Progetto non trovato.</p>
-        <Button onClick={() => router.back()} className="mt-6">
+        <p className="text-xl text-muted-foreground">Progetto non disponibile.</p>
+         <Button onClick={() => router.back()} className="mt-6">
           <ArrowLeft className="mr-2 h-4 w-4" /> Torna Indietro
         </Button>
       </div>
@@ -197,6 +227,7 @@ export default function ProjectDetailPage() {
     : null;
   
   const isDeadlinePassed = deadlineDate ? deadlineDate < new Date() : false;
+  const canInteractWithApplication = user && userProfile?.role === 'professional' && !isDeadlinePassed;
 
 
   return (
@@ -275,7 +306,7 @@ export default function ProjectDetailPage() {
                 </CardContent>
             </Card>
             
-            {!authLoading && user && userProfile?.role === 'professional' && (
+            {!authLoading && canInteractWithApplication && (
               <div className="mt-6">
                 {checkingApplication ? (
                   <Button className="w-full" disabled>
@@ -286,14 +317,18 @@ export default function ProjectDetailPage() {
                     Verifica candidatura...
                   </Button>
                 ) : hasApplied ? (
-                  <Button className="w-full" disabled variant="secondary">
-                    <CheckCircle2 className="mr-2 h-5 w-5" /> Candidatura Inviata
+                  <Button className="w-full" onClick={handleWithdrawApplication} disabled={isWithdrawing} variant="outline">
+                    {isWithdrawing ? (
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      <Trash2 className="mr-2 h-5 w-5" />
+                    )}
+                    {isWithdrawing ? 'Ritiro in corso...' : 'Ritira Candidatura'}
                   </Button>
-                ) : isDeadlinePassed ? (
-                    <Button className="w-full" disabled variant="destructive">
-                        <XCircle className="mr-2 h-5 w-5" /> Scaduto
-                    </Button>
-                ): (
+                ) : (
                   <Button className="w-full" onClick={handleApply} disabled={isApplying}>
                     {isApplying ? (
                       <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -308,6 +343,11 @@ export default function ProjectDetailPage() {
                 )}
               </div>
             )}
+             {!authLoading && user && userProfile?.role === 'professional' && isDeadlinePassed && (
+                 <Button className="w-full" disabled variant="destructive">
+                    <XCircle className="mr-2 h-5 w-5" /> Termine Candidature Scaduto
+                </Button>
+             )}
              {!user && !authLoading && (
                  <Card className="bg-accent/10 border-accent/30 text-center p-4">
                      <p className="text-sm text-accent-foreground/90 mb-2">Per candidarti, accedi come professionista.</p>
@@ -326,11 +366,3 @@ export default function ProjectDetailPage() {
   );
 }
 
-// Helper to initialize Firebase outside the component if not already done
-// This is simplified; a robust solution uses a Firebase context or a dedicated init file.
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { firebaseConfig } from '@/lib/firebase/config';
-
-if (!getApps().length) {
-  initializeApp(firebaseConfig);
-}
