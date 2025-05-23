@@ -99,7 +99,7 @@ export default function CompanyProjectsPage() {
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                         <div>
                             <CardTitle className="text-lg hover:text-primary transition-colors"> {/* Reduced font size */}
-                                <Link href={`/projects/${project.id}`}>{project.title}</Link>
+                                <Link href={ROUTES.PROJECT_DETAILS(project.id)}>{project.title}</Link>
                             </CardTitle>
                             <div className="text-xs text-muted-foreground mt-1"> {/* Reduced font size */}
                                 Pubblicato: {project.postedDate} - Località: {project.location}

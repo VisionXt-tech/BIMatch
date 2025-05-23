@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, ITALIAN_REGIONS } from '@/constants';
+import { BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, ITALIAN_REGIONS, ROUTES } from '@/constants';
 import { Briefcase, MapPin, Percent, Search, Filter, Construction, Code2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -122,7 +122,7 @@ export default function AvailableProjectsPage() {
                     <div className="flex items-start justify-between gap-2">
                         <div>
                             <CardTitle className="text-xl hover:text-primary transition-colors">
-                                <Link href={`/projects/${project.id}`}>{project.title}</Link>
+                                <Link href={ROUTES.PROJECT_DETAILS(project.id)}>{project.title}</Link>
                             </CardTitle>
                             <div className="flex items-center text-sm text-muted-foreground mt-1.5">
                                 {project.companyLogo && <Image data-ai-hint="company logo" src={project.companyLogo} alt={`${project.companyName} logo`} width={20} height={20} className="mr-2 rounded-full border" />}
@@ -164,7 +164,7 @@ export default function AvailableProjectsPage() {
                     <div className="flex justify-between items-center pt-3 border-t border-border">
                         <p className="text-xs text-muted-foreground">Pubblicato: {project.postedDate}</p>
                         <Button size="sm" asChild>
-                            <Link href={`/projects/${project.id}`}>Dettagli e Candidatura</Link>
+                            <Link href={ROUTES.PROJECT_DETAILS(project.id)}>Dettagli e Candidatura</Link>
                         </Button>
                     </div>
                   </CardContent>
