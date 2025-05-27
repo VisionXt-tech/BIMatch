@@ -15,7 +15,7 @@ import { FormInput, FormTextarea, FormSingleSelect } from '@/components/ProfileF
 import { COMPANY_SIZE_OPTIONS, INDUSTRY_SECTORS, ITALIAN_REGIONS } from '@/constants';
 import { useEffect, useState, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, type FirebaseStorageError } from 'firebase/storage';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import Image from 'next/image';
 import { Progress } from '@/components/ui/progress';
@@ -39,18 +39,23 @@ const companyProfileSchema = z.object({
 
 type CompanyProfileFormData = z.infer<typeof companyProfileSchema>;
 
-const mapProfileToFormData = (profile: CompanyProfile): CompanyProfileFormData => ({
-  companyName: profile.companyName || '',
-  companyVat: profile.companyVat || '',
-  companyLocation: profile.companyLocation || '',
-  companyWebsite: profile.companyWebsite || '',
-  companySize: profile.companySize || '',
-  industry: profile.industry || '',
-  companyDescription: profile.companyDescription || '',
-  contactPerson: profile.contactPerson || '',
-  contactEmail: profile.contactEmail || '',
-  contactPhone: profile.contactPhone || '',
-});
+// Function to map userProfile data to form data, ensuring all fields have a default
+const mapProfileToFormData = (profile?: CompanyProfile | null): CompanyProfileFormData => {
+  const p = profile || {}; // Use an empty object if profile is null/undefined
+  return {
+    companyName: p.companyName || '',
+    companyVat: p.companyVat || '',
+    companyLocation: p.companyLocation || '',
+    companyWebsite: p.companyWebsite || '',
+    companySize: p.companySize || '',
+    industry: p.industry || '',
+    companyDescription: p.companyDescription || '',
+    contactPerson: p.contactPerson || '',
+    contactEmail: p.contactEmail || '',
+    contactPhone: p.contactPhone || '',
+  };
+};
+
 
 export default function CompanyProfilePage() {
   const { user, userProfile, updateUserProfile, loading: authLoading } = useAuth();
@@ -67,18 +72,7 @@ export default function CompanyProfilePage() {
 
   const form = useForm<CompanyProfileFormData>({
     resolver: zodResolver(companyProfileSchema),
-    defaultValues: {
-      companyName: '',
-      companyVat: '',
-      companyLocation: '',
-      companyWebsite: '',
-      companySize: '',
-      industry: '',
-      companyDescription: '',
-      contactPerson: '',
-      contactEmail: '',
-      contactPhone: '',
-    },
+    defaultValues: mapProfileToFormData(), // Initialize with defaults
   });
 
   useEffect(() => {
@@ -87,9 +81,14 @@ export default function CompanyProfilePage() {
       form.reset(defaultValuesForForm);
       if (userProfile.logoUrl) {
         setLogoPreview(userProfile.logoUrl);
+      } else {
+        setLogoPreview(null);
       }
+    } else if (!authLoading && !userProfile) {
+      form.reset(mapProfileToFormData());
+      setLogoPreview(null);
     }
-  }, [userProfile, form]); // form.reset is stable
+  }, [userProfile, form, authLoading]);
 
   const handleLogoPickerClick = () => {
     logoInputRef.current?.click();
@@ -123,6 +122,9 @@ export default function CompanyProfilePage() {
     } else {
       setLogoFile(null);
       setLogoPreview((userProfile as CompanyProfile)?.logoUrl || null);
+      if (logoInputRef.current) {
+        logoInputRef.current.value = "";
+      }
     }
   };
 
@@ -133,12 +135,11 @@ export default function CompanyProfilePage() {
       return;
     }
 
-    setIsUploading(true);
-    setUploadProgress(0);
-
     let logoUrlToUpdate = (userProfile as CompanyProfile)?.logoUrl || '';
 
     if (logoFile && storage) {
+      setIsUploading(true);
+      setUploadProgress(0);
       const filePath = `companyLogos/${user.uid}/${Date.now()}_${logoFile.name}`;
       const fileRef = storageRef(storage, filePath);
       const uploadTask = uploadBytesResumable(fileRef, logoFile);
@@ -153,7 +154,8 @@ export default function CompanyProfilePage() {
                 : 0;
               setUploadProgress(progressPercentage);
             },
-            (error: any) => {
+            (error: FirebaseStorageError) => {
+              console.error("Errore Caricamento Logo su Firebase Storage:", error.code, error.message, error.serverResponse);
               let userFriendlyMessage = "Errore durante il caricamento del logo.";
               switch (error.code) {
                 case 'storage/unauthorized':
@@ -162,11 +164,17 @@ export default function CompanyProfilePage() {
                 case 'storage/canceled':
                   userFriendlyMessage = "Caricamento annullato.";
                   break;
-                case 'storage/unknown':
-                  userFriendlyMessage = "Errore sconosciuto durante il caricamento. Riprova o controlla la console per dettagli.";
-                  break;
+                case 'storage/object-not-found':
+                  userFriendlyMessage = "File non trovato durante il caricamento. Strano, riprova.";
+                   break;
+                case 'storage/retry-limit-exceeded':
+                  userFriendlyMessage = "Limite tentativi superato. Controlla la connessione.";
+                   break;
+                case 'storage/quota-exceeded':
+                    userFriendlyMessage = "Quota di archiviazione Firebase superata.";
+                    break;
                 default:
-                   userFriendlyMessage = `Errore caricamento logo: ${error.message || 'Vedi console per dettagli.'}`;
+                   userFriendlyMessage = `Errore caricamento logo: ${error.message || 'Vedi console del browser per dettagli.'}`;
               }
               toast({ title: "Errore Caricamento Logo", description: userFriendlyMessage, variant: "destructive" });
               setIsUploading(false);
@@ -178,6 +186,7 @@ export default function CompanyProfilePage() {
                 logoUrlToUpdate = await getDownloadURL(uploadTask.snapshot.ref);
                 resolve();
               } catch (getUrlError: any) {
+                console.error("Errore getDownloadURL:", getUrlError);
                 toast({ title: "Errore URL Logo", description: `Impossibile ottenere l'URL del logo: ${(getUrlError as Error).message}`, variant: "destructive" });
                 setIsUploading(false);
                 setUploadProgress(null);
@@ -189,30 +198,30 @@ export default function CompanyProfilePage() {
       } catch (uploadError) {
         setIsUploading(false);
         setUploadProgress(null);
-        return;
+        return; // Stop further execution if upload failed
       }
     }
 
     const dataToUpdate : Partial<CompanyProfile> = {
         ...data,
-        displayName: data.companyName || (userProfile as CompanyProfile).companyName,
+        displayName: data.companyName || (userProfile as CompanyProfile).companyName || userProfile.displayName,
         logoUrl: logoUrlToUpdate,
     };
 
     try {
       const updatedProfile = await updateUserProfile(user.uid, dataToUpdate);
        if (updatedProfile) {
-        form.reset(mapProfileToFormData(updatedProfile as CompanyProfile));
-        if(updatedProfile.logoUrl) setLogoPreview(updatedProfile.logoUrl);
+        // form.reset is handled by useEffect
+        toast({ title: "Profilo Aggiornato", description: "Le modifiche sono state salvate con successo." });
       }
-      setLogoFile(null);
+      setLogoFile(null); // Clear the selected file
       if (logoInputRef.current) {
-        logoInputRef.current.value = "";
+        logoInputRef.current.value = ""; // Reset the hidden file input
       }
     } catch (error) {
-      // updateUserProfile in AuthContext should handle its own toasts
+      // Error toast for updateUserProfile is handled within AuthContext
     } finally {
-       if (logoFile || isUploading) {
+       if (logoFile || isUploading) { // Check if an upload was attempted
         setIsUploading(false);
         setUploadProgress(null);
       }
@@ -245,15 +254,15 @@ export default function CompanyProfilePage() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-3 pt-0">
+        <CardContent className="p-4 pt-0">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 
               <FormItem>
                 <FormLabel className="text-xs">Logo Aziendale</FormLabel>
                 <div className="flex items-center space-x-4 mt-1">
                   <Avatar className="h-20 w-20 rounded-md">
-                    <AvatarImage src={logoPreview || (userProfile as CompanyProfile).logoUrl || undefined} alt={(userProfile as CompanyProfile).companyName || 'Logo Azienda'} data-ai-hint="company logo" className="object-contain"/>
+                    <AvatarImage src={logoPreview || undefined} alt={(userProfile as CompanyProfile).companyName || 'Logo Azienda'} data-ai-hint="company logo" className="object-contain"/>
                     <AvatarFallback className="rounded-md text-xl">{getInitials((userProfile as CompanyProfile).companyName)}</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col space-y-1">
@@ -358,5 +367,3 @@ export default function CompanyProfilePage() {
     </div>
   );
 }
-
-    

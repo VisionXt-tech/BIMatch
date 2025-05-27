@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormDescription, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -15,7 +15,7 @@ import { FormInput, FormTextarea, FormMultiSelect, FormSingleSelect } from '@/co
 import { BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, AVAILABILITY_OPTIONS, ITALIAN_REGIONS, EXPERIENCE_LEVEL_OPTIONS } from '@/constants';
 import { useEffect, useState, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, type FirebaseStorageError } from 'firebase/storage';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -53,21 +53,25 @@ const professionalProfileSchema = z.object({
 
 type ProfessionalProfileFormData = z.infer<typeof professionalProfileSchema>;
 
-const mapProfileToFormData = (profile: ProfessionalProfile): Partial<ProfessionalProfileFormData> => ({
-  firstName: profile.firstName || '',
-  lastName: profile.lastName || '',
-  displayName: profile.displayName || `${profile.firstName || ''} ${profile.lastName || ''}`.trim(),
-  location: profile.location || '',
-  bio: profile.bio || '',
-  bimSkills: profile.bimSkills || [],
-  softwareProficiency: profile.softwareProficiency || [],
-  availability: profile.availability || '',
-  experienceLevel: profile.experienceLevel || '',
-  portfolioUrl: profile.portfolioUrl || '',
-  cvUrl: profile.cvUrl || '',
-  linkedInProfile: profile.linkedInProfile || '',
-  monthlyRate: profile.monthlyRate === undefined || profile.monthlyRate === null || String(profile.monthlyRate).trim() === '' ? undefined : Number(profile.monthlyRate),
-});
+// Function to map userProfile data to form data, ensuring all fields have a default
+const mapProfileToFormData = (profile?: ProfessionalProfile | null): ProfessionalProfileFormData => {
+  const p = profile || {}; // Use an empty object if profile is null/undefined
+  return {
+    firstName: p.firstName || '',
+    lastName: p.lastName || '',
+    displayName: p.displayName || `${p.firstName || ''} ${p.lastName || ''}`.trim(),
+    location: p.location || '',
+    bio: p.bio || '',
+    bimSkills: p.bimSkills || [],
+    softwareProficiency: p.softwareProficiency || [],
+    availability: p.availability || '',
+    experienceLevel: p.experienceLevel || '',
+    portfolioUrl: p.portfolioUrl || '',
+    cvUrl: p.cvUrl || '',
+    linkedInProfile: p.linkedInProfile || '',
+    monthlyRate: p.monthlyRate === undefined || p.monthlyRate === null || String(p.monthlyRate).trim() === '' ? undefined : Number(p.monthlyRate),
+  };
+};
 
 
 export default function ProfessionalProfilePage() {
@@ -84,21 +88,7 @@ export default function ProfessionalProfilePage() {
 
   const form = useForm<ProfessionalProfileFormData>({
     resolver: zodResolver(professionalProfileSchema),
-    defaultValues: {
-      firstName: '',
-      lastName: '',
-      displayName: '',
-      location: '',
-      bio: '',
-      bimSkills: [],
-      softwareProficiency: [],
-      availability: '',
-      experienceLevel: '',
-      portfolioUrl: '',
-      cvUrl: '',
-      linkedInProfile: '',
-      monthlyRate: undefined,
-    },
+    defaultValues: mapProfileToFormData(), // Initialize with defaults
   });
 
   useEffect(() => {
@@ -107,9 +97,15 @@ export default function ProfessionalProfilePage() {
       form.reset(defaultValuesForForm);
       if (userProfile.photoURL) {
         setImagePreview(userProfile.photoURL);
+      } else {
+        setImagePreview(null); // Ensure preview is cleared if no photoURL
       }
+    } else if (!authLoading && !userProfile) {
+      // If not loading and no profile, reset to empty defaults
+      form.reset(mapProfileToFormData());
+      setImagePreview(null);
     }
-  }, [userProfile, form]); // form.reset is stable, effect primarily depends on userProfile
+  }, [userProfile, form, authLoading]); 
 
   const handleImagePickerClick = () => {
     profileImageInputRef.current?.click();
@@ -120,19 +116,19 @@ export default function ProfessionalProfilePage() {
       const file = event.target.files[0];
       if (!file.type.startsWith('image/')) {
           toast({ title: "Formato File Non Valido", description: "Seleziona un file immagine (es. JPG, PNG, WEBP).", variant: "destructive"});
-          if(event.target) event.target.value = '';
+          if(event.target) event.target.value = ''; // Clear the input
           setProfileImageFile(null);
           return;
       }
-      if (file.size > 2 * 1024 * 1024) {
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
           toast({ title: "File Troppo Grande", description: "L'immagine non deve superare i 2MB.", variant: "destructive"});
-          if(event.target) event.target.value = '';
+          if(event.target) event.target.value = ''; // Clear the input
           setProfileImageFile(null);
           return;
       }
       if (file.size === 0) {
         toast({ title: "File Vuoto", description: "Il file selezionato è vuoto e non può essere caricato.", variant: "destructive" });
-        if(event.target) event.target.value = '';
+        if(event.target) event.target.value = ''; // Clear the input
         setProfileImageFile(null);
         return;
       }
@@ -140,9 +136,13 @@ export default function ProfessionalProfilePage() {
       setImagePreview(URL.createObjectURL(file));
       setUploadProgress(null);
       setIsUploading(false);
-    } else {
+    } else { // No file selected or selection cancelled
       setProfileImageFile(null);
+      // Revert to existing photoURL or null if none
       setImagePreview(userProfile?.photoURL || null);
+      if (profileImageInputRef.current) {
+        profileImageInputRef.current.value = ""; // Clear the input value
+      }
     }
   };
 
@@ -171,17 +171,27 @@ export default function ProfessionalProfilePage() {
                 : 0;
               setUploadProgress(progressPercentage);
             },
-            (error: any) => {
+            (error: FirebaseStorageError) => { // Use FirebaseStorageError type
+              console.error("Errore Caricamento Immagine su Firebase Storage:", error.code, error.message, error.serverResponse);
               let userFriendlyMessage = "Errore durante il caricamento dell'immagine.";
               switch (error.code) {
                 case 'storage/unauthorized':
-                  userFriendlyMessage = "Non hai i permessi per caricare questo file.";
+                  userFriendlyMessage = "Non hai i permessi per caricare questo file. Controlla le regole di Firebase Storage.";
                   break;
                 case 'storage/canceled':
                   userFriendlyMessage = "Caricamento annullato.";
                   break;
+                case 'storage/object-not-found':
+                  userFriendlyMessage = "File non trovato durante il caricamento. Strano, riprova.";
+                   break;
+                case 'storage/retry-limit-exceeded':
+                  userFriendlyMessage = "Limite tentativi superato. Controlla la connessione.";
+                   break;
+                case 'storage/quota-exceeded':
+                    userFriendlyMessage = "Quota di archiviazione Firebase superata.";
+                    break;
                 default:
-                   userFriendlyMessage = `Errore caricamento: ${error.message || 'Vedi console.'}`;
+                   userFriendlyMessage = `Errore caricamento: ${error.message || 'Vedi console del browser per dettagli.'}`;
               }
               toast({ title: "Errore Caricamento Immagine", description: userFriendlyMessage, variant: "destructive" });
               setIsUploading(false);
@@ -193,6 +203,7 @@ export default function ProfessionalProfilePage() {
                 photoURLToUpdate = await getDownloadURL(uploadTask.snapshot.ref);
                 resolve();
               } catch (getUrlError: any) {
+                 console.error("Errore getDownloadURL:", getUrlError);
                  toast({ title: "Errore URL Immagine", description: `Impossibile ottenere l'URL dell'immagine: ${getUrlError.message}`, variant: "destructive" });
                  setIsUploading(false);
                  setUploadProgress(null);
@@ -202,9 +213,11 @@ export default function ProfessionalProfilePage() {
           );
         });
       } catch (uploadError) {
+        // This catch block is for the new Promise error (already handled by toast inside)
+        // Ensure isUploading and uploadProgress are reset if the promise rejects
         setIsUploading(false);
         setUploadProgress(null);
-        return;
+        return; // Stop further execution if upload failed
       }
     }
 
@@ -220,23 +233,25 @@ export default function ProfessionalProfilePage() {
     try {
       const updatedProfile = await updateUserProfile(user.uid, dataToUpdate);
       if (updatedProfile) {
-        form.reset(mapProfileToFormData(updatedProfile as ProfessionalProfile));
-        if(updatedProfile.photoURL) setImagePreview(updatedProfile.photoURL);
+        // form.reset is handled by useEffect now, no need to call it here directly
+        // if(updatedProfile.photoURL) setImagePreview(updatedProfile.photoURL); // Also handled by useEffect
+        toast({ title: "Profilo Aggiornato", description: "Le modifiche sono state salvate con successo." });
       }
-      setProfileImageFile(null);
+      setProfileImageFile(null); // Clear the selected file
       if (profileImageInputRef.current) {
-        profileImageInputRef.current.value = "";
+        profileImageInputRef.current.value = ""; // Reset the hidden file input
       }
     } catch (error) {
-      // Error toast is handled within updateUserProfile
+      // Error toast for updateUserProfile is handled within AuthContext
+      // but we ensure UI state is reset.
     } finally {
+       // Only reset these if an upload was attempted
       if (profileImageFile || isUploading) {
         setIsUploading(false);
         setUploadProgress(null);
       }
     }
   };
-
 
   const getInitials = (name: string | null | undefined) => {
     if (!name) return 'P';
@@ -248,11 +263,13 @@ export default function ProfessionalProfilePage() {
   };
 
 
-  if (authLoading && !userProfile) {
+  if (authLoading && !userProfile) { // Show loading only if userProfile is not yet available
     return <div className="text-center py-10">Caricamento profilo...</div>;
   }
 
-  if (!userProfile || userProfile.role !== 'professional') {
+  // This check should ideally not be hit if redirects are working correctly,
+  // but it's a safeguard.
+  if (!user || !userProfile || userProfile.role !== 'professional') {
     return <div className="text-center py-10">Profilo non trovato o non autorizzato.</div>;
   }
 
@@ -268,14 +285,14 @@ export default function ProfessionalProfilePage() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-3 pt-0">
+        <CardContent className="p-4 pt-0">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
              <FormItem>
                 <FormLabel className="text-xs">Immagine del Profilo</FormLabel>
                 <div className="flex items-center space-x-4 mt-1">
                   <Avatar className="h-20 w-20">
-                    <AvatarImage src={imagePreview || userProfile.photoURL || undefined} alt={userProfile.displayName || 'User'} data-ai-hint="profile person" />
+                    <AvatarImage src={imagePreview || undefined} alt={userProfile.displayName || 'User'} data-ai-hint="profile person" />
                     <AvatarFallback className="text-2xl">{getInitials(userProfile.displayName)}</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col space-y-1">
@@ -298,7 +315,7 @@ export default function ProfessionalProfilePage() {
                         type="file"
                         accept="image/jpeg, image/png, image/webp"
                         onChange={handleFileChange}
-                        className="hidden"
+                        className="hidden" 
                         ref={profileImageInputRef}
                       />
                   </div>
@@ -320,7 +337,7 @@ export default function ProfessionalProfilePage() {
                 <TabsList className="grid w-full grid-cols-3 mb-4">
                   <TabsTrigger value="info-personali" className="text-xs h-8">Info Personali</TabsTrigger>
                   <TabsTrigger value="competenze" className="text-xs h-8">Competenze</TabsTrigger>
-                  <TabsTrigger value="dettagli-link" className="text-xs h-8">Economia e Link</TabsTrigger>
+                  <TabsTrigger value="dettagli-link" className="text-xs h-8">Dettagli e Link</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="info-personali" className="space-y-3">
@@ -402,7 +419,6 @@ export default function ProfessionalProfilePage() {
                 </TabsContent>
               </Tabs>
 
-
               <Button type="submit" className="w-full md:w-auto mt-4" size="sm" disabled={authLoading || form.formState.isSubmitting || isUploading}>
                 <Save className="mr-2 h-4 w-4" />
                 {isUploading ? `Caricamento... ${uploadProgress !== null ? Math.round(uploadProgress) + '%' : ''}` : (form.formState.isSubmitting ? 'Salvataggio in corso...' : 'Salva Modifiche')}
@@ -414,5 +430,3 @@ export default function ProfessionalProfilePage() {
     </div>
   );
 }
-
-    
