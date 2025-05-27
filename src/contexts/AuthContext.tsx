@@ -20,8 +20,8 @@ interface AuthContextType {
   registerProfessional: (data: ProfessionalRegistrationFormData) => Promise<void>;
   registerCompany: (data: CompanyRegistrationFormData) => Promise<void>;
   logout: () => Promise<void>;
-  updateUserProfile: (userId: string, data: Partial<UserProfile>) => Promise<void>;
-  requestPasswordReset: (email: string) => Promise<void>; // Added this
+  updateUserProfile: (userId: string, data: Partial<UserProfile>) => Promise<UserProfile | null>; // Changed return type
+  requestPasswordReset: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -100,9 +100,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         bimSkills: [],
         softwareProficiency: [],
         availability: '',
+        experienceLevel: '', // Added default
         cvUrl: '', 
         portfolioUrl: '',
         bio: '',
+        monthlyRate: null, // Added default
+        linkedInProfile: '', // Added default
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
@@ -136,6 +139,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         industry: '',
         companyDescription: '',
         logoUrl: '',
+        contactPerson: '', // Added default
+        contactEmail: '', // Added default
+        contactPhone: '', // Added default
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
@@ -161,7 +167,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
   
-  const updateUserProfile = async (userId: string, data: Partial<UserProfile>) => {
+  const updateUserProfile = async (userId: string, data: Partial<UserProfile>): Promise<UserProfile | null> => {
     const userDocRef = doc(db, 'users', userId);
     try {
       await updateDoc(userDocRef, {
@@ -170,13 +176,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
       const updatedDocSnap = await getDoc(userDocRef);
       if (updatedDocSnap.exists()) {
-        setUserProfile(updatedDocSnap.data() as UserProfile);
+        const updatedProfileData = updatedDocSnap.data() as UserProfile;
+        setUserProfile(updatedProfileData); // Update context state
+        toast({ title: "Profilo Aggiornato", description: "Le modifiche sono state salvate." });
+        return updatedProfileData; // Return the fresh data
       }
-      toast({ title: "Profilo Aggiornato", description: "Le modifiche sono state salvate." });
+      return null;
     } catch (error: any) {
       console.error("Error updating user profile:", error);
       toast({ title: "Errore Aggiornamento Profilo", description: error.message, variant: "destructive" });
-      throw error;
+      throw error; // Rethrow to be caught by calling function
     }
   };
 
@@ -200,7 +209,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         description: errorMessage,
         variant: "destructive",
       });
-      throw error; // Rethrow error for the calling component if needed
+      throw error; 
     }
   };
 
@@ -214,7 +223,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     registerCompany,
     logout,
     updateUserProfile,
-    requestPasswordReset, // Added this
+    requestPasswordReset,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

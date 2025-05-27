@@ -28,7 +28,7 @@ const companyProfileSchema = z.object({
   companyName: z.string().min(2, { message: 'Il nome azienda deve contenere almeno 2 caratteri.' }),
   companyVat: z.string().regex(/^[0-9]{11}$/, { message: 'La Partita IVA deve essere di 11 cifre.' }),
   companyLocation: z.string().min(1, { message: 'La sede è richiesta.' }),
-  companyWebsite: z.string().url({ message: 'Inserisci un URL valido per il sito web.' }),
+  companyWebsite: z.string().url({ message: 'Inserisci un URL valido per il sito web.' }).min(1, {message: "Il sito web è richiesto."}),
   companySize: z.string().min(1, { message: 'Le dimensioni azienda sono richieste.' }),
   industry: z.string().min(1, { message: 'Il settore di attività è richiesto.' }),
   companyDescription: z.string().min(1, "La descrizione azienda è richiesta.").max(2000, "La descrizione non può superare i 2000 caratteri."),
@@ -38,6 +38,19 @@ const companyProfileSchema = z.object({
 });
 
 type CompanyProfileFormData = z.infer<typeof companyProfileSchema>;
+
+const mapProfileToFormData = (profile: CompanyProfile): CompanyProfileFormData => ({
+  companyName: profile.companyName || '',
+  companyVat: profile.companyVat || '',
+  companyLocation: profile.companyLocation || '',
+  companyWebsite: profile.companyWebsite || '',
+  companySize: profile.companySize || '',
+  industry: profile.industry || '',
+  companyDescription: profile.companyDescription || '',
+  contactPerson: profile.contactPerson || '',
+  contactEmail: profile.contactEmail || '',
+  contactPhone: profile.contactPhone || '',
+});
 
 export default function CompanyProfilePage() {
   const { user, userProfile, updateUserProfile, loading: authLoading } = useAuth();
@@ -70,22 +83,10 @@ export default function CompanyProfilePage() {
 
   useEffect(() => {
     if (userProfile && userProfile.role === 'company') {
-      const currentProfile = userProfile as CompanyProfile;
-      const defaultValuesForForm = {
-        companyName: currentProfile.companyName || '',
-        companyVat: currentProfile.companyVat || '',
-        companyLocation: currentProfile.companyLocation || '',
-        companyWebsite: currentProfile.companyWebsite || '',
-        companySize: currentProfile.companySize || '',
-        industry: currentProfile.industry || '',
-        companyDescription: currentProfile.companyDescription || '',
-        contactPerson: currentProfile.contactPerson || '',
-        contactEmail: currentProfile.contactEmail || '',
-        contactPhone: currentProfile.contactPhone || '',
-      };
+      const defaultValuesForForm = mapProfileToFormData(userProfile as CompanyProfile);
       form.reset(defaultValuesForForm);
-      if (currentProfile.logoUrl) {
-        setLogoPreview(currentProfile.logoUrl);
+      if (userProfile.logoUrl) {
+        setLogoPreview(userProfile.logoUrl);
       }
     }
   }, [userProfile, form.reset]);
@@ -199,7 +200,12 @@ export default function CompanyProfilePage() {
     };
 
     try {
-      await updateUserProfile(user.uid, dataToUpdate);
+      const updatedProfile = await updateUserProfile(user.uid, dataToUpdate);
+       if (updatedProfile) {
+        // Explicitly reset the form with the fresh data from the update
+        form.reset(mapProfileToFormData(updatedProfile as CompanyProfile));
+        if(updatedProfile.logoUrl) setLogoPreview(updatedProfile.logoUrl);
+      }
       setLogoFile(null); 
       if (logoInputRef.current) { 
         logoInputRef.current.value = "";
@@ -207,7 +213,7 @@ export default function CompanyProfilePage() {
     } catch (error) {
       // updateUserProfile in AuthContext should handle its own toasts
     } finally {
-       if (logoFile || isUploading) { // Ensure reset if logoFile was involved or if uploading started
+       if (logoFile || isUploading) { 
         setIsUploading(false);
         setUploadProgress(null);
       }
@@ -220,7 +226,7 @@ export default function CompanyProfilePage() {
   };
 
 
-  if (authLoading) {
+  if (authLoading && !userProfile) {
     return <div className="text-center py-10">Caricamento profilo aziendale...</div>;
   }
 
@@ -229,7 +235,7 @@ export default function CompanyProfilePage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <Card className="shadow-xl">
         <CardHeader className="p-4">
           <div className="flex items-center space-x-3">
@@ -240,9 +246,9 @@ export default function CompanyProfilePage() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-4 pt-0">
+        <CardContent className="p-3 pt-0">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
 
               <FormItem>
                 <FormLabel className="text-xs">Logo Aziendale</FormLabel>
@@ -257,7 +263,7 @@ export default function CompanyProfilePage() {
                       variant="outline"
                       size="sm"
                       onClick={handleLogoPickerClick}
-                      className="bg-accent text-accent-foreground hover:bg-accent/90 w-fit"
+                      className="bg-accent text-accent-foreground hover:bg-accent/90 w-fit text-xs"
                     >
                       <Upload className="mr-2 h-3 w-3" />
                       Scegli Logo
@@ -291,8 +297,8 @@ export default function CompanyProfilePage() {
 
               <Tabs defaultValue="info-azienda" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-4">
-                  <TabsTrigger value="info-azienda">Info Azienda</TabsTrigger>
-                  <TabsTrigger value="info-contatto">Info di Contatto</TabsTrigger>
+                  <TabsTrigger value="info-azienda" className="text-xs h-8">Info Azienda</TabsTrigger>
+                  <TabsTrigger value="info-contatto" className="text-xs h-8">Info di Contatto</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="info-azienda" className="space-y-3">
@@ -339,7 +345,7 @@ export default function CompanyProfilePage() {
               </Tabs>
 
 
-              <Button type="submit" className="w-full md:w-auto mt-6" size="sm" disabled={authLoading || form.formState.isSubmitting || isUploading}>
+              <Button type="submit" className="w-full md:w-auto mt-4" size="sm" disabled={authLoading || form.formState.isSubmitting || isUploading}>
                 <Save className="mr-2 h-4 w-4" />
                  {isUploading ? `Caricamento... ${uploadProgress !== null ? Math.round(uploadProgress) + '%' : ''}` : (form.formState.isSubmitting ? 'Salvataggio in corso...' : 'Salva Modifiche')}
               </Button>
@@ -350,4 +356,3 @@ export default function CompanyProfilePage() {
     </div>
   );
 }
-    

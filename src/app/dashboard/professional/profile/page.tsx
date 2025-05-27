@@ -38,20 +38,37 @@ const professionalProfileSchema = z.object({
   linkedInProfile: z.string().url({message: 'Inserisci un URL valido per LinkedIn.'}).optional().or(z.literal('')),
   monthlyRate: z.preprocess(
     (val) => {
-      if (val === "" || val === null || val === undefined) return undefined;
+      if (val === "" || val === null || val === undefined) return undefined; // Allow empty string to become undefined
       const strVal = String(val).trim();
       if (strVal === "") return undefined;
       const num = Number(strVal);
-      return isNaN(num) ? undefined : num;
+      return isNaN(num) ? undefined : num; // Let Zod handle type error if it's not a number after this
     },
     z.number({invalid_type_error: 'La retribuzione mensile deve essere un numero.'})
       .positive({ message: 'La retribuzione mensile deve essere un numero positivo.' })
       .optional()
-      .nullable()
+      .nullable() // Allow null from Firestore
   ),
 });
 
 type ProfessionalProfileFormData = z.infer<typeof professionalProfileSchema>;
+
+const mapProfileToFormData = (profile: ProfessionalProfile): Partial<ProfessionalProfileFormData> => ({
+  firstName: profile.firstName || '',
+  lastName: profile.lastName || '',
+  displayName: profile.displayName || `${profile.firstName || ''} ${profile.lastName || ''}`.trim(),
+  location: profile.location || '',
+  bio: profile.bio || '',
+  bimSkills: profile.bimSkills || [],
+  softwareProficiency: profile.softwareProficiency || [],
+  availability: profile.availability || '',
+  experienceLevel: profile.experienceLevel || '',
+  portfolioUrl: profile.portfolioUrl || '',
+  cvUrl: profile.cvUrl || '',
+  linkedInProfile: profile.linkedInProfile || '',
+  monthlyRate: profile.monthlyRate === undefined || profile.monthlyRate === null || String(profile.monthlyRate).trim() === '' ? undefined : Number(profile.monthlyRate),
+});
+
 
 export default function ProfessionalProfilePage() {
   const { user, userProfile, updateUserProfile, loading: authLoading } = useAuth();
@@ -86,25 +103,10 @@ export default function ProfessionalProfilePage() {
 
   useEffect(() => {
     if (userProfile && userProfile.role === 'professional') {
-      const currentProfile = userProfile as ProfessionalProfile;
-      const defaultValuesForForm = {
-        firstName: currentProfile.firstName || '',
-        lastName: currentProfile.lastName || '',
-        displayName: currentProfile.displayName || `${currentProfile.firstName || ''} ${currentProfile.lastName || ''}`.trim(),
-        location: currentProfile.location || '',
-        bio: currentProfile.bio || '',
-        bimSkills: currentProfile.bimSkills || [],
-        softwareProficiency: currentProfile.softwareProficiency || [],
-        availability: currentProfile.availability || '',
-        experienceLevel: currentProfile.experienceLevel || '',
-        portfolioUrl: currentProfile.portfolioUrl || '',
-        cvUrl: currentProfile.cvUrl || '',
-        linkedInProfile: currentProfile.linkedInProfile || '',
-        monthlyRate: currentProfile.monthlyRate === undefined || currentProfile.monthlyRate === null || String(currentProfile.monthlyRate).trim() === '' ? undefined : Number(currentProfile.monthlyRate),
-      };
+      const defaultValuesForForm = mapProfileToFormData(userProfile as ProfessionalProfile);
       form.reset(defaultValuesForForm);
-      if (currentProfile.photoURL) {
-        setImagePreview(currentProfile.photoURL);
+      if (userProfile.photoURL) {
+        setImagePreview(userProfile.photoURL);
       }
     }
   }, [userProfile, form.reset]);
@@ -216,7 +218,12 @@ export default function ProfessionalProfilePage() {
     };
 
     try {
-      await updateUserProfile(user.uid, dataToUpdate);
+      const updatedProfile = await updateUserProfile(user.uid, dataToUpdate);
+      if (updatedProfile) {
+        // Explicitly reset the form with the fresh data from the update
+        form.reset(mapProfileToFormData(updatedProfile as ProfessionalProfile));
+        if(updatedProfile.photoURL) setImagePreview(updatedProfile.photoURL);
+      }
       setProfileImageFile(null); 
       if (profileImageInputRef.current) { 
         profileImageInputRef.current.value = "";
@@ -224,7 +231,7 @@ export default function ProfessionalProfilePage() {
     } catch (error) {
       // Error toast is handled within updateUserProfile
     } finally {
-      if (profileImageFile || isUploading) { // ensure these are reset even if only profileImageFile was involved
+      if (profileImageFile || isUploading) { 
         setIsUploading(false);
         setUploadProgress(null);
       }
@@ -242,7 +249,7 @@ export default function ProfessionalProfilePage() {
   };
 
 
-  if (authLoading) {
+  if (authLoading && !userProfile) { // Show loading only if userProfile isn't available yet
     return <div className="text-center py-10">Caricamento profilo...</div>;
   }
 
@@ -251,7 +258,7 @@ export default function ProfessionalProfilePage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <Card className="shadow-xl">
         <CardHeader className="p-4">
           <div className="flex items-center space-x-3">
@@ -262,9 +269,9 @@ export default function ProfessionalProfilePage() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-4 pt-0">
+        <CardContent className="p-3 pt-0">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
              <FormItem>
                 <FormLabel className="text-xs">Immagine del Profilo</FormLabel>
                 <div className="flex items-center space-x-4 mt-1">
@@ -273,12 +280,12 @@ export default function ProfessionalProfilePage() {
                     <AvatarFallback className="text-2xl">{getInitials(userProfile.displayName)}</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col space-y-1">
-                     <Button
+                    <Button
                       type="button"
                       variant="outline"
                       size="sm"
                       onClick={handleImagePickerClick}
-                      className="bg-accent text-accent-foreground hover:bg-accent/90 w-fit"
+                      className="bg-accent text-accent-foreground hover:bg-accent/90 w-fit text-xs"
                     >
                       <Upload className="mr-2 h-3 w-3" />
                       Scegli Immagine
@@ -312,9 +319,9 @@ export default function ProfessionalProfilePage() {
 
               <Tabs defaultValue="info-personali" className="w-full">
                 <TabsList className="grid w-full grid-cols-3 mb-4">
-                  <TabsTrigger value="info-personali">Info Personali</TabsTrigger>
-                  <TabsTrigger value="competenze">Competenze</TabsTrigger>
-                  <TabsTrigger value="dettagli-link">Economia e Link</TabsTrigger>
+                  <TabsTrigger value="info-personali" className="text-xs h-8">Info Personali</TabsTrigger>
+                  <TabsTrigger value="competenze" className="text-xs h-8">Competenze</TabsTrigger>
+                  <TabsTrigger value="dettagli-link" className="text-xs h-8">Economia e Link</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="info-personali" className="space-y-3">
@@ -345,7 +352,7 @@ export default function ProfessionalProfilePage() {
                       placeholder="Seleziona la tua disponibilità"
                     />
                   </div>
-                   <FormTextarea control={form.control} name="bio" label="Breve Bio Professionale" placeholder="Descrivi la tua esperienza, specializzazioni e obiettivi..." rows={5} />
+                   <FormTextarea control={form.control} name="bio" label="Breve Bio Professionale" placeholder="Descrivi la tua esperienza, specializzazioni e obiettivi..." rows={4} />
                 </TabsContent>
 
                 <TabsContent value="competenze" className="space-y-3">
@@ -378,9 +385,9 @@ export default function ProfessionalProfilePage() {
                             setValueAs: (value) => {
                               if (value === "" || value === null || value === undefined) return null;
                               const strVal = String(value).trim();
-                              if (strVal === "") return null;
+                              if (strVal === "") return null; // Important to return null for empty string
                               const num = parseFloat(strVal);
-                              return isNaN(num) ? undefined : num;
+                              return isNaN(num) ? undefined : num; // Return undefined if not a number for Zod to catch
                             }
                         })}
                       />
@@ -394,7 +401,7 @@ export default function ProfessionalProfilePage() {
               </Tabs>
 
 
-              <Button type="submit" className="w-full md:w-auto mt-6" size="sm" disabled={authLoading || form.formState.isSubmitting || isUploading}>
+              <Button type="submit" className="w-full md:w-auto mt-4" size="sm" disabled={authLoading || form.formState.isSubmitting || isUploading}>
                 <Save className="mr-2 h-4 w-4" />
                 {isUploading ? `Caricamento... ${uploadProgress !== null ? Math.round(uploadProgress) + '%' : ''}` : (form.formState.isSubmitting ? 'Salvataggio in corso...' : 'Salva Modifiche')}
               </Button>
@@ -405,4 +412,3 @@ export default function ProfessionalProfilePage() {
     </div>
   );
 }
-    
