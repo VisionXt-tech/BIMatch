@@ -200,7 +200,6 @@ export default function CompanyProfilePage() {
 
     try {
       await updateUserProfile(user.uid, dataToUpdate);
-      // No need to setProfileDataLoaded(false) here with the simplified useEffect
       setLogoFile(null); 
       if (logoInputRef.current) { 
         logoInputRef.current.value = "";
@@ -208,8 +207,10 @@ export default function CompanyProfilePage() {
     } catch (error) {
       // updateUserProfile in AuthContext should handle its own toasts
     } finally {
-      setIsUploading(false);
-      setUploadProgress(null);
+       if (logoFile || isUploading) { // Ensure reset if logoFile was involved or if uploading started
+        setIsUploading(false);
+        setUploadProgress(null);
+      }
     }
   };
 

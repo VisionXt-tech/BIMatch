@@ -217,7 +217,6 @@ export default function ProfessionalProfilePage() {
 
     try {
       await updateUserProfile(user.uid, dataToUpdate);
-      // No need to setProfileDataLoaded(false) here with the simplified useEffect
       setProfileImageFile(null); 
       if (profileImageInputRef.current) { 
         profileImageInputRef.current.value = "";
@@ -225,7 +224,7 @@ export default function ProfessionalProfilePage() {
     } catch (error) {
       // Error toast is handled within updateUserProfile
     } finally {
-      if (profileImageFile || isUploading) {
+      if (profileImageFile || isUploading) { // ensure these are reset even if only profileImageFile was involved
         setIsUploading(false);
         setUploadProgress(null);
       }
@@ -266,7 +265,7 @@ export default function ProfessionalProfilePage() {
         <CardContent className="p-4 pt-0">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormItem>
+             <FormItem>
                 <FormLabel className="text-xs">Immagine del Profilo</FormLabel>
                 <div className="flex items-center space-x-4 mt-1">
                   <Avatar className="h-20 w-20">
@@ -406,5 +405,4 @@ export default function ProfessionalProfilePage() {
     </div>
   );
 }
-
     
