@@ -89,7 +89,7 @@ export default function CompanyProfilePage() {
         setLogoPreview(userProfile.logoUrl);
       }
     }
-  }, [userProfile, form.reset]);
+  }, [userProfile, form]); // form.reset is stable
 
   const handleLogoPickerClick = () => {
     logoInputRef.current?.click();
@@ -100,19 +100,19 @@ export default function CompanyProfilePage() {
       const file = event.target.files[0];
       if (!file.type.startsWith('image/')) {
           toast({ title: "Formato File Non Valido", description: "Seleziona un file immagine (es. JPG, PNG, WEBP).", variant: "destructive"});
-          if(event.target) event.target.value = ''; 
+          if(event.target) event.target.value = '';
           setLogoFile(null);
           return;
       }
       if (file.size > 2 * 1024 * 1024) { // 2MB limit
           toast({ title: "File Troppo Grande", description: "Il logo non deve superare i 2MB.", variant: "destructive"});
-          if(event.target) event.target.value = ''; 
+          if(event.target) event.target.value = '';
           setLogoFile(null);
           return;
       }
       if (file.size === 0) {
         toast({ title: "File Vuoto", description: "Il file selezionato è vuoto e non può essere caricato.", variant: "destructive" });
-        if(event.target) event.target.value = ''; 
+        if(event.target) event.target.value = '';
         setLogoFile(null);
         return;
       }
@@ -202,18 +202,17 @@ export default function CompanyProfilePage() {
     try {
       const updatedProfile = await updateUserProfile(user.uid, dataToUpdate);
        if (updatedProfile) {
-        // Explicitly reset the form with the fresh data from the update
         form.reset(mapProfileToFormData(updatedProfile as CompanyProfile));
         if(updatedProfile.logoUrl) setLogoPreview(updatedProfile.logoUrl);
       }
-      setLogoFile(null); 
-      if (logoInputRef.current) { 
+      setLogoFile(null);
+      if (logoInputRef.current) {
         logoInputRef.current.value = "";
       }
     } catch (error) {
       // updateUserProfile in AuthContext should handle its own toasts
     } finally {
-       if (logoFile || isUploading) { 
+       if (logoFile || isUploading) {
         setIsUploading(false);
         setUploadProgress(null);
       }
@@ -258,20 +257,20 @@ export default function CompanyProfilePage() {
                     <AvatarFallback className="rounded-md text-xl">{getInitials((userProfile as CompanyProfile).companyName)}</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col space-y-1">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleLogoPickerClick}
-                      className="bg-accent text-accent-foreground hover:bg-accent/90 w-fit text-xs"
-                    >
-                      <Upload className="mr-2 h-3 w-3" />
-                      Scegli Logo
+                     <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleLogoPickerClick}
+                        className="bg-accent text-accent-foreground hover:bg-accent/90 w-fit text-xs"
+                        >
+                        <Upload className="mr-2 h-3 w-3" />
+                        Scegli Logo
                     </Button>
                     {logoFile && (
-                      <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-muted-foreground">
                         File: {logoFile.name}
-                      </span>
+                        </span>
                     )}
                     <Input
                         type="file"
@@ -309,6 +308,7 @@ export default function CompanyProfilePage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <FormSingleSelect
+                      key={`companyLocation-${form.watch('companyLocation') || 'default'}`}
                       control={form.control}
                       name="companyLocation"
                       label="Sede Azienda (Regione)"
@@ -320,6 +320,7 @@ export default function CompanyProfilePage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <FormSingleSelect
+                      key={`companySize-${form.watch('companySize') || 'default'}`}
                       control={form.control}
                       name="companySize"
                       label="Dimensioni Azienda"
@@ -327,6 +328,7 @@ export default function CompanyProfilePage() {
                       placeholder="Seleziona dimensioni"
                     />
                     <FormSingleSelect
+                      key={`industry-${form.watch('industry') || 'default'}`}
                       control={form.control}
                       name="industry"
                       label="Settore di Attività"
@@ -356,3 +358,5 @@ export default function CompanyProfilePage() {
     </div>
   );
 }
+
+    

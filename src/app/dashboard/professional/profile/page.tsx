@@ -38,16 +38,16 @@ const professionalProfileSchema = z.object({
   linkedInProfile: z.string().url({message: 'Inserisci un URL valido per LinkedIn.'}).optional().or(z.literal('')),
   monthlyRate: z.preprocess(
     (val) => {
-      if (val === "" || val === null || val === undefined) return undefined; // Allow empty string to become undefined
+      if (val === "" || val === null || val === undefined) return undefined;
       const strVal = String(val).trim();
       if (strVal === "") return undefined;
       const num = Number(strVal);
-      return isNaN(num) ? undefined : num; // Let Zod handle type error if it's not a number after this
+      return isNaN(num) ? undefined : num;
     },
     z.number({invalid_type_error: 'La retribuzione mensile deve essere un numero.'})
       .positive({ message: 'La retribuzione mensile deve essere un numero positivo.' })
       .optional()
-      .nullable() // Allow null from Firestore
+      .nullable()
   ),
 });
 
@@ -109,7 +109,7 @@ export default function ProfessionalProfilePage() {
         setImagePreview(userProfile.photoURL);
       }
     }
-  }, [userProfile, form.reset]);
+  }, [userProfile, form]); // form.reset is stable, effect primarily depends on userProfile
 
   const handleImagePickerClick = () => {
     profileImageInputRef.current?.click();
@@ -138,11 +138,11 @@ export default function ProfessionalProfilePage() {
       }
       setProfileImageFile(file);
       setImagePreview(URL.createObjectURL(file));
-      setUploadProgress(null); 
+      setUploadProgress(null);
       setIsUploading(false);
     } else {
       setProfileImageFile(null);
-      setImagePreview(userProfile?.photoURL || null); 
+      setImagePreview(userProfile?.photoURL || null);
     }
   };
 
@@ -204,7 +204,7 @@ export default function ProfessionalProfilePage() {
       } catch (uploadError) {
         setIsUploading(false);
         setUploadProgress(null);
-        return; 
+        return;
       }
     }
 
@@ -220,18 +220,17 @@ export default function ProfessionalProfilePage() {
     try {
       const updatedProfile = await updateUserProfile(user.uid, dataToUpdate);
       if (updatedProfile) {
-        // Explicitly reset the form with the fresh data from the update
         form.reset(mapProfileToFormData(updatedProfile as ProfessionalProfile));
         if(updatedProfile.photoURL) setImagePreview(updatedProfile.photoURL);
       }
-      setProfileImageFile(null); 
-      if (profileImageInputRef.current) { 
+      setProfileImageFile(null);
+      if (profileImageInputRef.current) {
         profileImageInputRef.current.value = "";
       }
     } catch (error) {
       // Error toast is handled within updateUserProfile
     } finally {
-      if (profileImageFile || isUploading) { 
+      if (profileImageFile || isUploading) {
         setIsUploading(false);
         setUploadProgress(null);
       }
@@ -249,7 +248,7 @@ export default function ProfessionalProfilePage() {
   };
 
 
-  if (authLoading && !userProfile) { // Show loading only if userProfile isn't available yet
+  if (authLoading && !userProfile) {
     return <div className="text-center py-10">Caricamento profilo...</div>;
   }
 
@@ -280,7 +279,7 @@ export default function ProfessionalProfilePage() {
                     <AvatarFallback className="text-2xl">{getInitials(userProfile.displayName)}</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col space-y-1">
-                    <Button
+                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
@@ -330,6 +329,7 @@ export default function ProfessionalProfilePage() {
                      <FormInput control={form.control} name="lastName" label="Cognome" placeholder="Rossi" />
                   </div>
                   <FormSingleSelect
+                    key={`location-${form.watch('location') || 'default'}`}
                     control={form.control}
                     name="location"
                     label="Localizzazione (Regione Principale)"
@@ -338,6 +338,7 @@ export default function ProfessionalProfilePage() {
                   />
                    <div className="grid md:grid-cols-2 gap-3">
                     <FormSingleSelect
+                      key={`experienceLevel-${form.watch('experienceLevel') || 'default'}`}
                       control={form.control}
                       name="experienceLevel"
                       label="Livello di Esperienza"
@@ -345,6 +346,7 @@ export default function ProfessionalProfilePage() {
                       placeholder="Seleziona il tuo livello"
                     />
                     <FormSingleSelect
+                      key={`availability-${form.watch('availability') || 'default'}`}
                       control={form.control}
                       name="availability"
                       label="Disponibilità"
@@ -385,9 +387,9 @@ export default function ProfessionalProfilePage() {
                             setValueAs: (value) => {
                               if (value === "" || value === null || value === undefined) return null;
                               const strVal = String(value).trim();
-                              if (strVal === "") return null; // Important to return null for empty string
+                              if (strVal === "") return null;
                               const num = parseFloat(strVal);
-                              return isNaN(num) ? undefined : num; // Return undefined if not a number for Zod to catch
+                              return isNaN(num) ? undefined : num;
                             }
                         })}
                       />
@@ -412,3 +414,5 @@ export default function ProfessionalProfilePage() {
     </div>
   );
 }
+
+    
