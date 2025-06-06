@@ -2,7 +2,7 @@
 import type { Metadata, ResolvingMetadata } from 'next';
 import type { ReactNode } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase/firebase'; // Assuming db is exported from a central firebase setup
+import { db } from '@/lib/firebase/firebase'; 
 import type { Project } from '@/types/project';
 
 type Props = {
@@ -18,17 +18,24 @@ export async function generateMetadata(
   let projectTitle = 'Dettagli Progetto';
   let projectDescription = 'Visualizza i dettagli del progetto e candidati se sei un professionista BIM.';
 
-  // Defensive check for db instance.
-  // Firestore instances have an INTERNAL property; this is a basic check.
-  // A more robust check might be `db && db.constructor && db.constructor.name === 'Firestore'`,
-  // but this simple check can help identify totally uninitialized db objects.
-  if (!db || !('INTERNAL' in db)) { 
-    console.error(`generateMetadata for project ${projectId}: Firestore 'db' instance appears to be invalid or not initialized. Using default metadata. Check Firebase configuration.`);
+  if (!db) { 
+    console.error(`generateMetadata for project ${projectId}: Firestore 'db' instance is null. This indicates an issue with Firebase app initialization in 'firebase.ts'. Check server logs for errors related to Firebase configuration or initialization.`);
     return {
-      title: `${projectTitle} (Errore Config) | BIMatch`,
+      title: `${projectTitle} (Errore Config DB) | BIMatch`,
       description: projectDescription,
     };
   }
+
+  // Additional check to ensure db is not just an empty object, though if app init fails, db should be null now.
+  // This is more of a safeguard if db somehow becomes {} instead of null.
+  if (typeof db !== 'object' || !db || !('INTERNAL' congregations_idx' in db)) {
+    console.error(`generateMetadata for project ${projectId}: Firestore 'db' instance is not a valid Firestore client (might be an empty object or improperly initialized). Check 'firebase.ts' and config. Double check .env.local. DB Object:`, JSON.stringify(db));
+     return {
+      title: `${projectTitle} (Errore Istanza DB) | BIMatch`,
+      description: projectDescription,
+    };
+  }
+
 
   if (projectId && typeof projectId === 'string') {
     try {

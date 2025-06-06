@@ -9,10 +9,10 @@ import { getFirestore, type Firestore } from 'firebase/firestore';
 import { getStorage, type FirebaseStorage } from 'firebase/storage';
 import { firebaseConfig } from './config';
 
-let app: FirebaseApp;
-let auth: Auth;
-let db: Firestore;
-let storage: FirebaseStorage;
+let app: FirebaseApp | null = null;
+let auth: Auth | null = null;
+let db: Firestore | null = null;
+let storage: FirebaseStorage | null = null;
 
 const configIsValid = 
   firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY" &&
@@ -20,23 +20,37 @@ const configIsValid =
   firebaseConfig.projectId && firebaseConfig.projectId !== "YOUR_PROJECT_ID" &&
   firebaseConfig.storageBucket && firebaseConfig.storageBucket !== "YOUR_PROJECT_ID.appspot.com";
 
-
 if (!getApps().length) {
   if (configIsValid) {
-    app = initializeApp(firebaseConfig);
+    try {
+      const initializedApp = initializeApp(firebaseConfig);
+      // Ensure the initialized app is valid (e.g., has a name)
+      if (initializedApp && initializedApp.name) {
+        app = initializedApp;
+      } else {
+        console.error("firebase.ts: Firebase initializeApp was called but returned an invalid app object (e.g., missing name). This can happen with incorrect config values. Current Config:", firebaseConfig);
+        // app remains null
+      }
+    } catch (e) {
+      console.error("firebase.ts: Error during Firebase initializeApp:", e, "Current Config:", firebaseConfig);
+      // app remains null
+    }
   } else {
-    // Log an error or throw if in a context where this is critical (e.g., server-side init)
-    // For client-side, the FirebaseProvider will show a more user-friendly error.
-    console.error("Firebase config is invalid or missing. App cannot be initialized here.");
-    // Assign dummy objects to prevent crashes if these are imported elsewhere before provider check
-    app = {} as FirebaseApp; 
+    console.error("firebase.ts: Firebase config is invalid (contains placeholders or missing values). App cannot be initialized.");
+    // app remains null
   }
 } else {
-  app = getApp();
+  const existingApp = getApp();
+  if (existingApp && existingApp.name) {
+    app = existingApp;
+  } else {
+    console.error("firebase.ts: Firebase getApp() returned an invalid app object (e.g., missing name). This is unexpected if an app was previously initialized.");
+    // app remains null
+  }
 }
 
 // Initialize services only if the app was successfully initialized
-if (app && app.name) {
+if (app) {
   auth = getAuth(app);
   db = getFirestore(app);
   storage = getStorage(app);
@@ -50,23 +64,27 @@ if (app && app.name) {
         const { connectFirestoreEmulator } = await import('firebase/firestore');
         const { connectStorageEmulator } = await import('firebase/storage');
 
-        // Check if emulators are already connected to avoid errors/warnings if possible
-        // For Auth, checking emulatorConfig is a common way.
-        if (!(auth as any).emulatorConfig) {
+        if (auth && !(auth as any).emulatorConfig) {
             connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
             console.log("firebase.ts: Auth Emulator connection attempted.");
-        } else {
-            console.log("firebase.ts: Auth Emulator likely already connected.");
+        } else if (auth) {
+            console.log("firebase.ts: Auth Emulator likely already connected or auth instance is invalid.");
         }
         
-        // For Firestore and Storage, connectEmulator typically doesn't error if called multiple times for the same endpoint.
-        // It might log an internal warning in the Firebase SDK, which is generally fine.
-        connectFirestoreEmulator(db, 'localhost', 8080);
-        console.log("firebase.ts: Firestore Emulator connection attempted.");
+        if (db) {
+          connectFirestoreEmulator(db, 'localhost', 8080);
+          console.log("firebase.ts: Firestore Emulator connection attempted.");
+        } else {
+          console.log("firebase.ts: Firestore instance is null, skipping emulator connection.");
+        }
         
-        connectStorageEmulator(storage, 'localhost', 9199);
-        console.log("firebase.ts: Storage Emulator connection attempted.");
-        console.log("firebase.ts: Emulator connections initiated.");
+        if (storage) {
+          connectStorageEmulator(storage, 'localhost', 9199);
+          console.log("firebase.ts: Storage Emulator connection attempted.");
+        } else {
+          console.log("firebase.ts: Storage instance is null, skipping emulator connection.");
+        }
+        console.log("firebase.ts: Emulator connections initiated (if services were valid).");
 
       } catch (e) {
         console.warn("firebase.ts: Emulator connection attempt failed (could be due to prior connection or other issues):", e);
@@ -74,10 +92,8 @@ if (app && app.name) {
     })();
   }
 } else {
-  // Assign dummy objects if app initialization failed
-  auth = {} as Auth;
-  db = {} as Firestore;
-  storage = {} as FirebaseStorage;
+  console.error("firebase.ts: Firebase app is not valid (app is null). Auth, Firestore, and Storage services will be null. Check Firebase configuration and previous logs.");
+  // auth, db, storage remain null by default
 }
 
 export { app, auth, db, storage };
