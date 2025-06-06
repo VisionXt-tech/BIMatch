@@ -1,3 +1,4 @@
+
 // This file can be used to export the initialized Firebase services (app, auth, db, storage)
 // for easier import in other parts of your application, especially server-side components or utilities
 // that might not be wrapped in the FirebaseProvider context.
@@ -42,32 +43,35 @@ if (app && app.name) {
 
   // Emulator connections if in development and configured to use them
   if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === 'true') {
-    const { connectAuthEmulator } = await import('firebase/auth');
-    const { connectFirestoreEmulator } = await import('firebase/firestore');
-    const { connectStorageEmulator } = await import('firebase/storage');
+    (async () => {
+      try {
+        console.log("firebase.ts: Attempting to connect to Firebase Emulators...");
+        const { connectAuthEmulator } = await import('firebase/auth');
+        const { connectFirestoreEmulator } = await import('firebase/firestore');
+        const { connectStorageEmulator } = await import('firebase/storage');
 
-    // Check if emulators are already connected to avoid errors
-    // Firebase Auth emulator
-    if (!(auth as any).emulatorConfig) {
-        try {
+        // Check if emulators are already connected to avoid errors/warnings if possible
+        // For Auth, checking emulatorConfig is a common way.
+        if (!(auth as any).emulatorConfig) {
             connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
-            console.log("Auth Emulator connected from firebase.ts");
-        } catch (e) { console.warn("Auth Emulator already connected or connection failed in firebase.ts", e); }
-    }
-    // Firestore emulator
-    // Note: Firestore's _settings property or a similar internal flag could be checked, 
-    // but direct checks are often not robust across SDK versions.
-    // A simpler approach is to attempt connection and catch if it's already connected.
-    try {
+            console.log("firebase.ts: Auth Emulator connection attempted.");
+        } else {
+            console.log("firebase.ts: Auth Emulator likely already connected.");
+        }
+        
+        // For Firestore and Storage, connectEmulator typically doesn't error if called multiple times for the same endpoint.
+        // It might log an internal warning in the Firebase SDK, which is generally fine.
         connectFirestoreEmulator(db, 'localhost', 8080);
-        console.log("Firestore Emulator connected from firebase.ts");
-    } catch (e) { console.warn("Firestore Emulator already connected or connection failed in firebase.ts", e); }
-    
-    // Storage emulator
-    try {
+        console.log("firebase.ts: Firestore Emulator connection attempted.");
+        
         connectStorageEmulator(storage, 'localhost', 9199);
-        console.log("Storage Emulator connected from firebase.ts");
-    } catch (e) { console.warn("Storage Emulator already connected or connection failed in firebase.ts", e); }
+        console.log("firebase.ts: Storage Emulator connection attempted.");
+        console.log("firebase.ts: Emulator connections initiated.");
+
+      } catch (e) {
+        console.warn("firebase.ts: Emulator connection attempt failed (could be due to prior connection or other issues):", e);
+      }
+    })();
   }
 } else {
   // Assign dummy objects if app initialization failed
