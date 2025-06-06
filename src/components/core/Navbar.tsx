@@ -72,7 +72,7 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     await logout();
-    router.push(ROUTES.HOME);
+    // router.push(ROUTES.HOME); // Removed: AuthContext.logout now handles this
   };
 
   const dashboardLink = userProfile?.role === ROLES.PROFESSIONAL ? ROUTES.DASHBOARD_PROFESSIONAL : ROUTES.DASHBOARD_COMPANY;
@@ -169,3 +169,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+

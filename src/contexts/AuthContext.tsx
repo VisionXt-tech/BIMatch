@@ -16,6 +16,7 @@ interface AuthContextType {
   user: User | null;
   userProfile: UserProfile | null;
   loading: boolean; // For initial auth state and profile fetching
+  isLoggingIn: boolean; // Specifically for the login process
   login: (data: LoginFormData) => Promise<void>;
   registerProfessional: (data: ProfessionalRegistrationFormData) => Promise<void>;
   registerCompany: (data: CompanyRegistrationFormData) => Promise<void>;
@@ -43,6 +44,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -72,14 +74,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [auth, fetchUserProfile]);
 
   const login = async (data: LoginFormData) => {
+    setIsLoggingIn(true);
     try {
       await signInWithEmailAndPassword(auth, data.email, data.password);
-      // Removed toast: toast({ title: "Accesso Effettuato", description: "Bentornato!" });
+      // No toast here, direct redirect
       router.push(ROUTES.DASHBOARD); 
     } catch (error: any) {
       console.error("Login error:", error);
       toast({ title: "Errore di Accesso", description: error.message || "Credenziali non valide.", variant: "destructive" });
       throw error;
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -161,6 +166,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await signOut(auth);
       setUser(null);
       setUserProfile(null);
+      router.push(ROUTES.HOME); // Redirect immediately
       toast({ title: "Logout Effettuato", description: "A presto!" });
     } catch (error: any) {
       console.error("Logout error:", error);
@@ -171,10 +177,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const updateUserProfile = async (userId: string, data: Partial<UserProfile>): Promise<UserProfile | null> => {
     const userDocRef = doc(db, 'users', userId);
     try {
-      await updateDoc(userDocRef, {
+      const dataToUpdate = {
         ...data,
         updatedAt: serverTimestamp(),
-      });
+      };
+      await updateDoc(userDocRef, dataToUpdate);
       const updatedDocSnap = await getDoc(userDocRef);
       if (updatedDocSnap.exists()) {
         const updatedProfileData = updatedDocSnap.data() as UserProfile;
@@ -182,7 +189,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return updatedProfileData; 
       }
       return null;
-    } catch (error: any) {
+    } catch (error: any)      {
       console.error("Error updating user profile:", error);
       toast({ title: "Errore Aggiornamento Profilo", description: error.message, variant: "destructive" });
       throw error; 
@@ -218,6 +225,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     userProfile,
     loading,
+    isLoggingIn,
     login,
     registerProfessional,
     registerCompany,
@@ -228,3 +236,4 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
+
