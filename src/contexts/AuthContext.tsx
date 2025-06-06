@@ -8,7 +8,7 @@ import { doc, getDoc, setDoc, serverTimestamp, updateDoc } from 'firebase/firest
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { useFirebase } from './FirebaseContext';
 import { useToast } from "@/hooks/use-toast";
-import type { LoginFormData, ProfessionalRegistrationFormData, CompanyRegistrationFormData, UserProfile } from '@/types/auth';
+import type { LoginFormData, ProfessionalRegistrationFormData, CompanyRegistrationFormData, UserProfile, ProfessionalProfile as FullProfessionalProfile, CompanyProfile as FullCompanyProfile } from '@/types/auth';
 import { ROLES, ROUTES } from '@/constants';
 import { useRouter } from 'next/navigation';
 
@@ -16,7 +16,6 @@ interface AuthContextType {
   user: User | null;
   userProfile: UserProfile | null;
   loading: boolean; // For initial auth state and profile fetching
-  isLoggingIn: boolean; // Specifically for the login process
   login: (data: LoginFormData) => Promise<void>;
   registerProfessional: (data: ProfessionalRegistrationFormData) => Promise<void>;
   registerCompany: (data: CompanyRegistrationFormData) => Promise<void>;
@@ -44,7 +43,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isLoggingIn, setIsLoggingIn] = useState(false); // New state for login process
   const { toast } = useToast();
   const router = useRouter();
 
@@ -74,22 +72,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [auth, fetchUserProfile]);
 
   const login = async (data: LoginFormData) => {
-    setIsLoggingIn(true);
     try {
       await signInWithEmailAndPassword(auth, data.email, data.password);
-      toast({ title: "Accesso Effettuato", description: "Bentornato!" });
+      // Removed toast: toast({ title: "Accesso Effettuato", description: "Bentornato!" });
       router.push(ROUTES.DASHBOARD); 
     } catch (error: any) {
       console.error("Login error:", error);
       toast({ title: "Errore di Accesso", description: error.message || "Credenziali non valide.", variant: "destructive" });
       throw error;
-    } finally {
-      setIsLoggingIn(false);
     }
   };
 
   const registerProfessional = async (data: ProfessionalRegistrationFormData) => {
-    // Consider setIsRegistering(true/false) here if a similar loader is needed for registration
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
       const newUser = userCredential.user;
@@ -127,7 +121,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const registerCompany = async (data: CompanyRegistrationFormData) => {
-    // Consider setIsRegistering(true/false) here
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
       const newUser = userCredential.user;
@@ -186,7 +179,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (updatedDocSnap.exists()) {
         const updatedProfileData = updatedDocSnap.data() as UserProfile;
         setUserProfile(updatedProfileData); 
-        // toast({ title: "Profilo Aggiornato", description: "Le modifiche sono state salvate." }); // Toast moved to page level for more specific feedback
         return updatedProfileData; 
       }
       return null;
@@ -226,7 +218,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     userProfile,
     loading,
-    isLoggingIn, // Expose new state
     login,
     registerProfessional,
     registerCompany,
