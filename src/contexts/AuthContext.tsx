@@ -15,12 +15,13 @@ import { useRouter } from 'next/navigation';
 interface AuthContextType {
   user: User | null;
   userProfile: UserProfile | null;
-  loading: boolean;
+  loading: boolean; // For initial auth state and profile fetching
+  isLoggingIn: boolean; // Specifically for the login process
   login: (data: LoginFormData) => Promise<void>;
   registerProfessional: (data: ProfessionalRegistrationFormData) => Promise<void>;
   registerCompany: (data: CompanyRegistrationFormData) => Promise<void>;
   logout: () => Promise<void>;
-  updateUserProfile: (userId: string, data: Partial<UserProfile>) => Promise<UserProfile | null>; // Changed return type
+  updateUserProfile: (userId: string, data: Partial<UserProfile>) => Promise<UserProfile | null>;
   requestPasswordReset: (email: string) => Promise<void>;
 }
 
@@ -43,6 +44,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isLoggingIn, setIsLoggingIn] = useState(false); // New state for login process
   const { toast } = useToast();
   const router = useRouter();
 
@@ -72,17 +74,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [auth, fetchUserProfile]);
 
   const login = async (data: LoginFormData) => {
+    setIsLoggingIn(true);
     try {
       await signInWithEmailAndPassword(auth, data.email, data.password);
       toast({ title: "Accesso Effettuato", description: "Bentornato!" });
+      router.push(ROUTES.DASHBOARD); 
     } catch (error: any) {
       console.error("Login error:", error);
       toast({ title: "Errore di Accesso", description: error.message || "Credenziali non valide.", variant: "destructive" });
       throw error;
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
   const registerProfessional = async (data: ProfessionalRegistrationFormData) => {
+    // Consider setIsRegistering(true/false) here if a similar loader is needed for registration
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
       const newUser = userCredential.user;
@@ -100,12 +107,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         bimSkills: [],
         softwareProficiency: [],
         availability: '',
-        experienceLevel: '', // Added default
+        experienceLevel: '', 
         cvUrl: '', 
         portfolioUrl: '',
         bio: '',
-        monthlyRate: null, // Added default
-        linkedInProfile: '', // Added default
+        monthlyRate: null, 
+        linkedInProfile: '', 
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
@@ -120,6 +127,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const registerCompany = async (data: CompanyRegistrationFormData) => {
+    // Consider setIsRegistering(true/false) here
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
       const newUser = userCredential.user;
@@ -139,9 +147,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         industry: '',
         companyDescription: '',
         logoUrl: '',
-        contactPerson: '', // Added default
-        contactEmail: '', // Added default
-        contactPhone: '', // Added default
+        contactPerson: '', 
+        contactEmail: '', 
+        contactPhone: '', 
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
@@ -177,15 +185,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const updatedDocSnap = await getDoc(userDocRef);
       if (updatedDocSnap.exists()) {
         const updatedProfileData = updatedDocSnap.data() as UserProfile;
-        setUserProfile(updatedProfileData); // Update context state
-        toast({ title: "Profilo Aggiornato", description: "Le modifiche sono state salvate." });
-        return updatedProfileData; // Return the fresh data
+        setUserProfile(updatedProfileData); 
+        // toast({ title: "Profilo Aggiornato", description: "Le modifiche sono state salvate." }); // Toast moved to page level for more specific feedback
+        return updatedProfileData; 
       }
       return null;
     } catch (error: any) {
       console.error("Error updating user profile:", error);
       toast({ title: "Errore Aggiornamento Profilo", description: error.message, variant: "destructive" });
-      throw error; // Rethrow to be caught by calling function
+      throw error; 
     }
   };
 
@@ -218,6 +226,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     userProfile,
     loading,
+    isLoggingIn, // Expose new state
     login,
     registerProfessional,
     registerCompany,
