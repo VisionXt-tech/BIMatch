@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { ArrowLeft, MapPin, Briefcase, Laptop, DollarSign, Linkedin, ExternalLink, FileText, Settings, CalendarDays, UserCircle2, WifiOff } from 'lucide-react';
 import { BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, AVAILABILITY_OPTIONS, EXPERIENCE_LEVEL_OPTIONS, ROUTES } from '@/constants';
 import Image from 'next/image'; // Keep Image import for AvatarImage
+import { cn } from '@/lib/utils';
 
 const getInitials = (name: string | null | undefined): string => {
   if (!name) return 'P';
@@ -113,6 +114,7 @@ export default function ProfessionalProfileViewPage() {
 
   const experienceLabel = getLabelForValue(EXPERIENCE_LEVEL_OPTIONS, professional.experienceLevel);
   const availabilityLabel = getLabelForValue(AVAILABILITY_OPTIONS, professional.availability);
+  const isImmediata = availabilityLabel === AVAILABILITY_OPTIONS.find(opt => opt.value === 'immediata')?.label;
 
   return (
     <div className="container mx-auto px-2 py-8 md:px-4">
@@ -188,7 +190,12 @@ export default function ProfessionalProfileViewPage() {
                             <CalendarDays className="h-5 w-5 mr-3 mt-0.5 text-primary flex-shrink-0"/>
                             <div>
                                 <p className="text-xs text-muted-foreground">Disponibilità</p>
-                                <p className="font-medium text-foreground/90">{availabilityLabel}</p>
+                                <p className={cn(
+                                    "font-medium text-foreground/90",
+                                    isImmediata && "text-green-600 font-semibold"
+                                )}>
+                                    {availabilityLabel}
+                                </p>
                             </div>
                         </div>
                     )}
@@ -248,3 +255,4 @@ export default function ProfessionalProfileViewPage() {
     </div>
   );
 }
+
