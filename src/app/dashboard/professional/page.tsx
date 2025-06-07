@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 export default function ProfessionalDashboardPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
@@ -131,26 +132,35 @@ export default function ProfessionalDashboardPage() {
             <CardDescription className="text-sm">Monitora le tue interazioni e scopri nuove possibilità.</CardDescription>
         </CardHeader>
         <CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {/* "Cerca Nuovi Progetti" button - uses default primary variant for black background */}
             <Button asChild size="lg" className="w-full">
                  <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS} passHref legacyBehavior>
                     <a className="flex flex-col items-center justify-center h-28 p-3 text-center">
                         <Search className="h-6 w-6 mb-1 text-primary-foreground" />
-                        <span className="text-sm font-semibold">Cerca Nuovi Progetti</span>
+                        <span className="text-sm font-semibold text-primary-foreground">Cerca Nuovi Progetti</span>
                         {loadingCounts ? <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-primary-foreground/80" /> :
                          <span className="text-xs text-primary-foreground/80 mt-0.5">{activeProjectsCount ?? 0} disponibili</span>}
                     </a>
                 </Link>
             </Button>
             
+            {/* "Le Mie Candidature" button - conditional background color */}
             <Button
                 asChild
                 size="lg"
-                className="w-full bg-green-600 hover:bg-green-700 text-primary-foreground" // Ensuring green classes are here and NO variant="secondary"
+                className={cn(
+                  "w-full text-primary-foreground", // Common classes
+                  !loadingCounts && userApplicationsCount && userApplicationsCount > 0 
+                    ? "bg-green-600 hover:bg-green-700" // Green if applications > 0
+                    : !loadingCounts 
+                      ? "bg-red-600 hover:bg-red-700" // Red if applications === 0 or null (after loading)
+                      : "bg-secondary hover:bg-secondary/80" // Default/loading background
+                )}
             >
                  <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS + "?filter=applied"} passHref legacyBehavior>
                     <a className="flex flex-col items-center justify-center h-28 p-3 text-center">
                         <ListChecks className="h-6 w-6 mb-1 text-primary-foreground" />
-                        <span className="text-sm font-semibold">Le Mie Candidature</span>
+                        <span className="text-sm font-semibold text-primary-foreground">Le Mie Candidature</span>
                          {loadingCounts ? <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-primary-foreground/80" /> :
                         <span className="text-xs text-primary-foreground/80 mt-0.5">{userApplicationsCount ?? 0} attive</span>}
                     </a>
@@ -189,3 +199,4 @@ export default function ProfessionalDashboardPage() {
     </div>
   );
 }
+
