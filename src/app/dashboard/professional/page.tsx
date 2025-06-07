@@ -142,13 +142,17 @@ export default function ProfessionalDashboardPage() {
                 </Button>
             </Link>
             
-            <Button asChild variant="secondary" size="lg" className="w-full">
+            <Button
+                asChild
+                size="lg"
+                className="w-full bg-green-600 hover:bg-green-700 text-primary-foreground"
+            >
                  <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS + "?filter=applied"} passHref legacyBehavior>
                     <a className="flex flex-col items-center justify-center h-28 p-3 text-center">
-                        <ListChecks className="h-6 w-6 mb-1 text-secondary-foreground" />
+                        <ListChecks className="h-6 w-6 mb-1 text-primary-foreground" />
                         <span className="text-sm font-semibold">Le Mie Candidature</span>
-                         {loadingCounts ? <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-secondary-foreground/80" /> :
-                        <span className="text-xs text-secondary-foreground/80 mt-0.5">{userApplicationsCount ?? 0} attive</span>}
+                         {loadingCounts ? <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-primary-foreground/80" /> :
+                        <span className="text-xs text-primary-foreground/80 mt-0.5">{userApplicationsCount ?? 0} attive</span>}
                     </a>
                  </Link>
             </Button>
@@ -185,6 +189,3 @@ export default function ProfessionalDashboardPage() {
     </div>
   );
 }
-
-
-    

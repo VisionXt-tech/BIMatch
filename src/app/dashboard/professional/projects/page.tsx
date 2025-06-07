@@ -16,6 +16,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { collection, getDocs, query, Timestamp, orderBy, where } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { useSearchParams } from 'next/navigation';
 
 const getSkillLabel = (value: string) => BIM_SKILLS_OPTIONS.find(s => s.value === value)?.label || value;
 const getSoftwareLabel = (value: string) => SOFTWARE_PROFICIENCY_OPTIONS.find(s => s.value === value)?.label || value;
@@ -33,6 +34,7 @@ const applicationStatusOptions = [
 export default function AvailableProjectsPage() {
   const { db } = useFirebase();
   const { user, userProfile, loading: authLoading } = useAuth();
+  const searchParams = useSearchParams();
   const [projects, setProjects] = useState<Project[]>([]);
   const [userApplications, setUserApplications] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,6 +47,17 @@ export default function AvailableProjectsPage() {
     location: ALL_ITEMS_FILTER_VALUE,
     applicationStatus: ALL_ITEMS_FILTER_VALUE,
   });
+
+  useEffect(() => {
+    const filterParam = searchParams.get('filter');
+    if (filterParam === 'applied' && userProfile?.role === 'professional') {
+      // We set the filter here, but the actual filtering logic in useMemo
+      // will depend on userApplications being loaded.
+      // This ensures that if a user lands here with ?filter=applied,
+      // the dropdown shows "Solo Candidati" pre-selected.
+      setFilters(prev => ({ ...prev, applicationStatus: APPLICATION_STATUS_APPLIED }));
+    }
+  }, [searchParams, userProfile, loadingApplications]); // Rerun if loadingApplications changes to ensure filter applies post-load
 
   useEffect(() => {
     const fetchProjectsAndApplications = async () => {
@@ -96,36 +109,43 @@ export default function AvailableProjectsPage() {
           setUserApplications(appliedProjectIds);
         } catch (e: any) {
           console.error("Error fetching user applications:", e);
+          // setError for applications could be set here if critical
         } finally {
           setLoadingApplications(false);
         }
       } else {
-        setLoadingApplications(false);
+        setLoadingApplications(false); // Not a professional or not logged in
       }
     };
-    if (!authLoading) {
+    if (!authLoading) { // Only fetch if auth state is resolved
         fetchProjectsAndApplications();
     }
   }, [db, user, userProfile, authLoading]);
 
   const filteredProjects = useMemo(() => {
+    // Wait for applications to load if the filter is application-status dependent
+    if (filters.applicationStatus !== ALL_ITEMS_FILTER_VALUE && loadingApplications && userProfile?.role === 'professional') {
+        return []; // Or return projects without application status filter yet, and let UI show loading for that part
+    }
+
     return projects.filter(project => {
       const skillMatch = filters.skill === ALL_ITEMS_FILTER_VALUE || (project.requiredSkills && project.requiredSkills.includes(filters.skill));
       const softwareMatch = filters.software === ALL_ITEMS_FILTER_VALUE || (project.requiredSoftware && project.requiredSoftware.includes(filters.software));
       const locationMatch = filters.location === ALL_ITEMS_FILTER_VALUE || project.location === filters.location;
-      const hasApplied = userApplications.includes(project.id!);
       
       let applicationStatusMatch = true;
       if (userProfile?.role === 'professional' && !loadingApplications) {
+        const hasApplied = userApplications.includes(project.id!);
         if (filters.applicationStatus === APPLICATION_STATUS_APPLIED) {
             applicationStatusMatch = hasApplied;
         } else if (filters.applicationStatus === APPLICATION_STATUS_NOT_APPLIED) {
             applicationStatusMatch = !hasApplied;
         }
-      } else if (filters.applicationStatus !== ALL_ITEMS_FILTER_VALUE) {
-        // If applications are still loading or user is not a pro, don't filter by application status yet unless it's "all"
-        applicationStatusMatch = loadingApplications; 
       }
+      // If user is not professional or applications are still loading for a specific filter, 
+      // and filter is not "ALL", we might decide to show all or none.
+      // Current logic: if filter is specific and apps loading, this project might be excluded if it doesn't match other criteria.
+      // This seems fine as the filter will re-evaluate once loadingApplications is false.
 
       return skillMatch && softwareMatch && locationMatch && applicationStatusMatch && project.status === 'attivo';
     });
@@ -178,7 +198,7 @@ export default function AvailableProjectsPage() {
                         <Select 
                             onValueChange={(value) => setFilters(prev => ({...prev, applicationStatus: value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value}))} 
                             value={filters.applicationStatus}
-                            disabled={loadingApplications}
+                            disabled={loadingApplications && authLoading} // Disable while initial auth or apps are loading
                         >
                             <SelectTrigger><SelectValue placeholder="Stato Candidatura" /></SelectTrigger>
                             <SelectContent>
@@ -191,7 +211,7 @@ export default function AvailableProjectsPage() {
               </AccordionItem>
             </Accordion>
 
-          {loading || (authLoading && loadingApplications) ? (
+          {loading || (authLoading && loadingApplications && userProfile?.role === 'professional') ? (
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[...Array(3)].map((_, i) => (
                   <Card key={i} className="shadow-lg relative">
@@ -288,5 +308,3 @@ export default function AvailableProjectsPage() {
     </div>
   );
 }
-
-    
