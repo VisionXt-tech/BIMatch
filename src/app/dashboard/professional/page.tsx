@@ -132,8 +132,7 @@ export default function ProfessionalDashboardPage() {
             <CardDescription className="text-sm">Monitora le tue interazioni e scopri nuove possibilità.</CardDescription>
         </CardHeader>
         <CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {/* "Cerca Nuovi Progetti" button - uses default primary variant for black background */}
-            <Button asChild size="lg" className="w-full">
+            <Button asChild size="lg" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
                  <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS} passHref legacyBehavior>
                     <a className="flex flex-col items-center justify-center h-28 p-3 text-center">
                         <Search className="h-6 w-6 mb-1 text-primary-foreground" />
@@ -144,17 +143,16 @@ export default function ProfessionalDashboardPage() {
                 </Link>
             </Button>
             
-            {/* "Le Mie Candidature" button - conditional background color */}
             <Button
                 asChild
                 size="lg"
                 className={cn(
-                  "w-full text-primary-foreground", // Common classes
+                  "w-full text-primary-foreground", 
                   !loadingCounts && userApplicationsCount && userApplicationsCount > 0 
-                    ? "bg-green-600 hover:bg-green-700" // Green if applications > 0
+                    ? "bg-green-600 hover:bg-green-700" 
                     : !loadingCounts 
-                      ? "bg-red-600 hover:bg-red-700" // Red if applications === 0 or null (after loading)
-                      : "bg-secondary hover:bg-secondary/80" // Default/loading background
+                      ? "bg-red-600 hover:bg-red-700" 
+                      : "bg-secondary hover:bg-secondary/80" 
                 )}
             >
                  <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS + "?filter=applied"} passHref legacyBehavior>
@@ -167,7 +165,6 @@ export default function ProfessionalDashboardPage() {
                  </Link>
             </Button>
 
-            {/* Placeholder for Notifications - implement when ready */}
             <Button variant="secondary" size="lg" className="w-full opacity-50 cursor-not-allowed">
                 <div className="flex flex-col items-center justify-center h-28 p-3 text-center">
                     <Bell className="h-6 w-6 mb-1 text-secondary-foreground" />
