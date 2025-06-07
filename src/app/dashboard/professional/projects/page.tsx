@@ -6,27 +6,35 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, ITALIAN_REGIONS, ROUTES } from '@/constants';
-import { Briefcase, MapPin, Percent, Search, Filter, Construction, Code2, WifiOff, Info, CheckCircle2 } from 'lucide-react';
+import { Briefcase, MapPin, Percent, Search, Filter, Construction, Code2, WifiOff, Info, CheckCircle2, ListFilter } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import type { Project, ProjectApplication } from '@/types/project'; // Added ProjectApplication
+import type { Project, ProjectApplication } from '@/types/project';
 import { useFirebase } from '@/contexts/FirebaseContext';
-import { useAuth } from '@/contexts/AuthContext'; // Added useAuth
-import { collection, getDocs, query, Timestamp, orderBy, where } from 'firebase/firestore'; // Added where
+import { useAuth } from '@/contexts/AuthContext';
+import { collection, getDocs, query, Timestamp, orderBy, where } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge'; // Added Badge
+import { Badge } from '@/components/ui/badge';
 
 const getSkillLabel = (value: string) => BIM_SKILLS_OPTIONS.find(s => s.value === value)?.label || value;
 const getSoftwareLabel = (value: string) => SOFTWARE_PROFICIENCY_OPTIONS.find(s => s.value === value)?.label || value;
 
 const ALL_ITEMS_FILTER_VALUE = "__ALL_ITEMS__";
+const APPLICATION_STATUS_APPLIED = "APPLIED";
+const APPLICATION_STATUS_NOT_APPLIED = "NOT_APPLIED";
+
+const applicationStatusOptions = [
+    { value: ALL_ITEMS_FILTER_VALUE, label: "Tutti gli stati candidatura" },
+    { value: APPLICATION_STATUS_APPLIED, label: "Solo Candidati" },
+    { value: APPLICATION_STATUS_NOT_APPLIED, label: "Solo Non Candidati" },
+];
 
 export default function AvailableProjectsPage() {
   const { db } = useFirebase();
-  const { user, userProfile, loading: authLoading } = useAuth(); // Get user info
+  const { user, userProfile, loading: authLoading } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
-  const [userApplications, setUserApplications] = useState<string[]>([]); // Store IDs of projects user applied to
+  const [userApplications, setUserApplications] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingApplications, setLoadingApplications] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +43,7 @@ export default function AvailableProjectsPage() {
     skill: ALL_ITEMS_FILTER_VALUE,
     software: ALL_ITEMS_FILTER_VALUE,
     location: ALL_ITEMS_FILTER_VALUE,
+    applicationStatus: ALL_ITEMS_FILTER_VALUE,
   });
 
   useEffect(() => {
@@ -49,10 +58,8 @@ export default function AvailableProjectsPage() {
       setLoadingApplications(true);
       setError(null);
 
-      // Fetch Projects
       try {
         const projectsCollectionRef = collection(db, 'projects');
-        // Filter only 'attivo' projects
         const qProjects = query(projectsCollectionRef, where('status', '==', 'attivo'), orderBy('postedAt', 'desc'));
         const querySnapshotProjects = await getDocs(qProjects);
         const fetchedProjects: Project[] = [];
@@ -77,7 +84,6 @@ export default function AvailableProjectsPage() {
         setLoading(false);
       }
 
-      // Fetch User Applications if user is a professional
       if (user && userProfile?.role === 'professional') {
         try {
           const appsCollectionRef = collection(db, 'projectApplications');
@@ -90,25 +96,40 @@ export default function AvailableProjectsPage() {
           setUserApplications(appliedProjectIds);
         } catch (e: any) {
           console.error("Error fetching user applications:", e);
-          // Not setting global error for this, just applications won't be marked
         } finally {
           setLoadingApplications(false);
         }
       } else {
-        setLoadingApplications(false); // Not a professional or not logged in
+        setLoadingApplications(false);
       }
     };
-    if (!authLoading) { // Ensure auth state is resolved before fetching
+    if (!authLoading) {
         fetchProjectsAndApplications();
     }
   }, [db, user, userProfile, authLoading]);
 
-  const filteredProjects = projects.filter(project => {
-    const skillMatch = filters.skill === ALL_ITEMS_FILTER_VALUE || (project.requiredSkills && project.requiredSkills.includes(filters.skill));
-    const softwareMatch = filters.software === ALL_ITEMS_FILTER_VALUE || (project.requiredSoftware && project.requiredSoftware.includes(filters.software));
-    const locationMatch = filters.location === ALL_ITEMS_FILTER_VALUE || project.location === filters.location;
-    return skillMatch && softwareMatch && locationMatch && project.status === 'attivo'; // Double ensure only active
-  });
+  const filteredProjects = useMemo(() => {
+    return projects.filter(project => {
+      const skillMatch = filters.skill === ALL_ITEMS_FILTER_VALUE || (project.requiredSkills && project.requiredSkills.includes(filters.skill));
+      const softwareMatch = filters.software === ALL_ITEMS_FILTER_VALUE || (project.requiredSoftware && project.requiredSoftware.includes(filters.software));
+      const locationMatch = filters.location === ALL_ITEMS_FILTER_VALUE || project.location === filters.location;
+      const hasApplied = userApplications.includes(project.id!);
+      
+      let applicationStatusMatch = true;
+      if (userProfile?.role === 'professional' && !loadingApplications) {
+        if (filters.applicationStatus === APPLICATION_STATUS_APPLIED) {
+            applicationStatusMatch = hasApplied;
+        } else if (filters.applicationStatus === APPLICATION_STATUS_NOT_APPLIED) {
+            applicationStatusMatch = !hasApplied;
+        }
+      } else if (filters.applicationStatus !== ALL_ITEMS_FILTER_VALUE) {
+        // If applications are still loading or user is not a pro, don't filter by application status yet unless it's "all"
+        applicationStatusMatch = loadingApplications; 
+      }
+
+      return skillMatch && softwareMatch && locationMatch && applicationStatusMatch && project.status === 'attivo';
+    });
+  }, [projects, filters, userApplications, userProfile, loadingApplications]);
 
 
   return (
@@ -127,11 +148,11 @@ export default function AvailableProjectsPage() {
               <AccordionItem value="filters" className="border-b-0">
                 <AccordionTrigger className="text-lg font-semibold hover:no-underline py-4">
                   <div className="flex items-center">
-                    <Filter className="mr-2 h-5 w-5 text-primary"/> Filtri Avanzati
+                    <ListFilter className="mr-2 h-5 w-5 text-primary"/> Filtri Avanzati
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pb-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                       <Select onValueChange={(value) => setFilters(prev => ({...prev, skill: value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value}))} value={filters.skill}>
                           <SelectTrigger><SelectValue placeholder="Competenza BIM" /></SelectTrigger>
                           <SelectContent>
@@ -153,6 +174,18 @@ export default function AvailableProjectsPage() {
                               {ITALIAN_REGIONS.map(region => <SelectItem key={region} value={region}>{region}</SelectItem>)}
                           </SelectContent>
                       </Select>
+                      {userProfile?.role === 'professional' && (
+                        <Select 
+                            onValueChange={(value) => setFilters(prev => ({...prev, applicationStatus: value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value}))} 
+                            value={filters.applicationStatus}
+                            disabled={loadingApplications}
+                        >
+                            <SelectTrigger><SelectValue placeholder="Stato Candidatura" /></SelectTrigger>
+                            <SelectContent>
+                                {applicationStatusOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                      )}
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -177,15 +210,15 @@ export default function AvailableProjectsPage() {
           ) : filteredProjects.length > 0 ? (
             <div className="space-y-6">
               {filteredProjects.map((project) => {
-                const hasApplied = userApplications.includes(project.id!);
+                const hasApplied = userProfile?.role === 'professional' && !loadingApplications && userApplications.includes(project.id!);
                 return (
                   <Card key={project.id} className="shadow-lg hover:shadow-xl transition-shadow duration-300 relative">
-                    {hasApplied && !loadingApplications && (
-                      <Badge variant="default" className="absolute top-3 right-3 text-xs px-2 py-1 z-10 flex items-center gap-1">
+                    {hasApplied && (
+                      <Badge variant="default" className="absolute top-3 right-3 text-xs px-2 py-1 z-10 flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white">
                         <CheckCircle2 className="h-3.5 w-3.5" /> Candidato
                       </Badge>
                     )}
-                    <CardHeader className="pr-16"> {/* Added padding-right to avoid overlap with badge */}
+                    <CardHeader className={hasApplied ? "pr-24" : "pr-3"}> {/* Adjust padding if badge is present */}
                       <div className="flex items-start justify-between gap-2">
                           <div>
                               <CardTitle className="text-xl hover:text-primary transition-colors">
