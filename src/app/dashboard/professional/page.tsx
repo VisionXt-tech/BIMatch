@@ -6,15 +6,91 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ROUTES } from '@/constants';
-import { User, Search, Edit2, ListChecks, Bell } from 'lucide-react';
+import { User, Search, Edit2, ListChecks, Bell, WifiOff, Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useFirebase } from '@/contexts/FirebaseContext';
+import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ProfessionalDashboardPage() {
-  const { userProfile } = useAuth();
+  const { user, userProfile, loading: authLoading } = useAuth();
+  const { db } = useFirebase();
 
-  // Placeholder data - replace with actual data fetching
-  const projectMatchesCount = 5; 
-  const applicationsCount = 2; 
+  const [activeProjectsCount, setActiveProjectsCount] = useState<number | null>(null);
+  const [userApplicationsCount, setUserApplicationsCount] = useState<number | null>(null);
+  const [loadingCounts, setLoadingCounts] = useState(true);
+  const [errorCounts, setErrorCounts] = useState<string | null>(null);
+
+  // Placeholder for new notifications count, kept as is for now
   const newNotificationsCount = 3;
+
+  useEffect(() => {
+    if (authLoading || !user || !db || userProfile?.role !== 'professional') {
+      if (!authLoading && (!user || userProfile?.role !== 'professional')) {
+         setLoadingCounts(false); // Not a professional or not logged in, no need to load counts.
+      }
+      return;
+    }
+
+    const fetchCounts = async () => {
+      setLoadingCounts(true);
+      setErrorCounts(null);
+      try {
+        // 1. Fetch active projects count
+        const projectsRef = collection(db, 'projects');
+        const now = new Date();
+        const qProjects = query(projectsRef, where('status', '==', 'attivo'));
+        const projectsSnapshot = await getDocs(qProjects);
+        let currentActiveProjects = 0;
+        projectsSnapshot.forEach(doc => {
+          const project = doc.data();
+          const deadline = project.applicationDeadline ? (project.applicationDeadline as Timestamp).toDate() : null;
+          if (!deadline || deadline > now) {
+            currentActiveProjects++;
+          }
+        });
+        setActiveProjectsCount(currentActiveProjects);
+
+        // 2. Fetch user's active applications count
+        const applicationsRef = collection(db, 'projectApplications');
+        const qApplications = query(
+          applicationsRef,
+          where('professionalId', '==', user.uid),
+          where('status', 'in', ['inviata', 'in_revisione', 'preselezionata'])
+        );
+        const applicationsSnapshot = await getDocs(qApplications);
+        setUserApplicationsCount(applicationsSnapshot.size);
+
+      } catch (e: any) {
+        console.error("Error fetching dashboard counts:", e);
+        let specificError = "Errore nel caricamento dei dati della dashboard.";
+        if (e.message?.includes('offline')) {
+            specificError = "Connessione persa. Controlla la tua rete.";
+        } else if (e.message?.includes('permission-denied') || e.message?.includes('PERMISSION_DENIED')) {
+            specificError = "Permessi insufficienti per caricare i dati.";
+        } else if (e.message?.includes('indexes?create_composite=')) {
+            specificError = "Indice Firestore mancante. Controlla la console per il link per crearlo.";
+        }
+        setErrorCounts(specificError);
+        setActiveProjectsCount(0); // Set to 0 on error to avoid misleading placeholders
+        setUserApplicationsCount(0);
+      } finally {
+        setLoadingCounts(false);
+      }
+    };
+
+    fetchCounts();
+  }, [user, db, authLoading, userProfile]);
+
+  if (authLoading) { // Initial loading for auth context
+    return (
+      <div className="space-y-4 w-full max-w-4xl mx-auto">
+        <Card className="shadow-lg"><CardHeader className="p-4"><Skeleton className="h-8 w-3/4" /><Skeleton className="h-6 w-1/2 mt-1" /></CardHeader></Card>
+        <Card className="shadow-lg"><CardHeader className="p-4"><Skeleton className="h-7 w-1/3" /></CardHeader><CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">{[...Array(3)].map((_,i) => <Skeleton key={i} className="h-28 w-full" />)}</CardContent></Card>
+        <Card className="shadow-lg"><CardHeader className="p-4"><Skeleton className="h-7 w-1/4" /></CardHeader><CardContent className="p-4"><Skeleton className="h-10 w-1/3" /></CardContent></Card>
+      </div>
+    );
+  }
 
   if (!userProfile || userProfile.role !== 'professional') {
     return <div className="text-center py-10">Accesso non autorizzato o profilo non trovato.</div>;
@@ -39,6 +115,16 @@ export default function ProfessionalDashboardPage() {
         )}
       </Card>
 
+      {errorCounts && (
+        <Card className="shadow-md bg-destructive/10 border-destructive">
+            <CardContent className="p-4 text-center text-destructive">
+                <WifiOff className="mx-auto h-8 w-8 mb-2" />
+                <p className="font-semibold">Errore nel caricamento delle attività</p>
+                <p className="text-sm">{errorCounts}</p>
+            </CardContent>
+        </Card>
+      )}
+
       <Card className="shadow-lg">
         <CardHeader className="p-4">
             <CardTitle className="text-xl font-semibold">Le Tue Attività</CardTitle>
@@ -50,18 +136,23 @@ export default function ProfessionalDashboardPage() {
                     <a className="flex flex-col items-center justify-center h-28 p-3 text-center">
                         <Search className="h-6 w-6 mb-1 text-primary-foreground" />
                         <span className="text-sm font-semibold">Cerca Nuovi Progetti</span>
-                        <span className="text-xs text-primary-foreground/80 mt-0.5">{projectMatchesCount} compatibili</span>
+                        {loadingCounts ? <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-primary-foreground/80" /> :
+                         <span className="text-xs text-primary-foreground/80 mt-0.5">{activeProjectsCount ?? 0} disponibili</span>}
                     </a>
                 </Button>
             </Link>
-            {/* Placeholder for Applications - implement when ready */}
-            <Button variant="secondary" size="lg" className="w-full opacity-50 cursor-not-allowed">
-                <div className="flex flex-col items-center justify-center h-28 p-3 text-center">
-                    <ListChecks className="h-6 w-6 mb-1 text-secondary-foreground" />
-                    <span className="text-sm font-semibold">Le Mie Candidature</span>
-                    <span className="text-xs text-secondary-foreground/80 mt-0.5">{applicationsCount} inviate (Prossimamente)</span>
-                </div>
+            
+            <Button asChild variant="secondary" size="lg" className="w-full">
+                 <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS + "?filter=applied"} passHref legacyBehavior>
+                    <a className="flex flex-col items-center justify-center h-28 p-3 text-center">
+                        <ListChecks className="h-6 w-6 mb-1 text-secondary-foreground" />
+                        <span className="text-sm font-semibold">Le Mie Candidature</span>
+                         {loadingCounts ? <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-secondary-foreground/80" /> :
+                        <span className="text-xs text-secondary-foreground/80 mt-0.5">{userApplicationsCount ?? 0} attive</span>}
+                    </a>
+                 </Link>
             </Button>
+
             {/* Placeholder for Notifications - implement when ready */}
             <Button variant="secondary" size="lg" className="w-full opacity-50 cursor-not-allowed">
                 <div className="flex flex-col items-center justify-center h-28 p-3 text-center">
@@ -94,3 +185,6 @@ export default function ProfessionalDashboardPage() {
     </div>
   );
 }
+
+
+    
