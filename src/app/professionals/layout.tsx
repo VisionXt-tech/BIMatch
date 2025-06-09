@@ -1,7 +1,7 @@
 
 import type { Metadata, ResolvingMetadata } from 'next';
 import type { ReactNode } from 'react';
-import { BIM_SKILLS_OPTIONS, ITALIAN_REGIONS } from '@/constants'; // Assuming these might be used for labels
+import { BIM_SKILLS_OPTIONS, ITALIAN_REGIONS, EXPERIENCE_LEVEL_OPTIONS } from '@/constants';
 
 // Helper to get label for a filter value
 const getLabel = (options: { value: string; label: string }[], value?: string): string | undefined => {
@@ -9,26 +9,34 @@ const getLabel = (options: { value: string; label: string }[], value?: string): 
   return options.find(opt => opt.value === value)?.label || value;
 };
 
-type Props = {
-  // params is part of the standard signature but might not be used for a top-level page like /professionals
-  searchParams: { [key: string]: string | string[] | undefined };
-  children: ReactNode;
+// Define a specific type for the props passed to generateMetadata
+type GenerateMetadataProps = {
+  params: { [key: string]: string }; // Standard, even if empty for this route
+  searchParams: { [key: string]: string | string[] | undefined }; // Standard
 };
 
 export async function generateMetadata(
-  { searchParams }: Omit<Props, 'children' | 'params'>, // Omit params if not used for this route
+  { params, searchParams }: GenerateMetadataProps,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
   let title = "Marketplace Professionisti BIM | BIMatch";
   let description = "Trova professionisti BIM qualificati, manager BIM, e specialisti in Italia su BIMatch. Filtra per competenze, località, e livello di esperienza.";
 
-  // Access properties directly: searchParams.skill, searchParams.location etc.
-  const skillFilterValue = typeof searchParams.skill === 'string' ? searchParams.skill : undefined;
-  const locationFilterValue = typeof searchParams.location === 'string' ? searchParams.location : undefined;
-  const experienceFilterValue = typeof searchParams.experience === 'string' ? searchParams.experience : undefined;
+  // Directly access specific searchParam values.
+  // Ensure searchParams itself is treated as an object.
+  const skillQuery = searchParams?.skill;
+  const locationQuery = searchParams?.location;
+  const experienceQuery = searchParams?.experience;
+
+  // Convert to string or undefined, ensuring only primitives are worked with.
+  const skillFilterValue = typeof skillQuery === 'string' ? skillQuery : undefined;
+  const locationFilterValue = typeof locationQuery === 'string' ? locationQuery : undefined;
+  const experienceFilterValue = typeof experienceQuery === 'string' ? experienceQuery : undefined;
 
   const skillLabel = getLabel(BIM_SKILLS_OPTIONS, skillFilterValue);
-  const locationLabel = locationFilterValue; // Italian regions are directly usable as labels
+  const locationLabel = locationFilterValue; // ITALIAN_REGIONS are strings, can be used directly if they are labels
+  const experienceDisplayValue = getLabel(EXPERIENCE_LEVEL_OPTIONS, experienceFilterValue);
+
 
   if (skillLabel && locationLabel) {
     title = `Professionisti BIM: ${skillLabel} in ${locationLabel} | BIMatch`;
@@ -39,15 +47,14 @@ export async function generateMetadata(
   } else if (locationLabel) {
     title = `Professionisti BIM in ${locationLabel} | BIMatch`;
     description = `Trova professionisti BIM locali in ${locationLabel}. Esplora profili e connettiti con esperti vicino a te su BIMatch.`;
-  } else if (experienceFilterValue) {
-     // You might want to fetch a label for experience level if it's more complex
-    title = `Professionisti BIM con esperienza ${experienceFilterValue} | BIMatch`;
-    description = `Cerca professionisti BIM con livello di esperienza ${experienceFilterValue} su BIMatch.`;
+  } else if (experienceDisplayValue) {
+    title = `Professionisti BIM con esperienza ${experienceDisplayValue} | BIMatch`;
+    description = `Cerca professionisti BIM con livello di esperienza ${experienceDisplayValue} su BIMatch.`;
   }
 
-  // IMPORTANT: Avoid logging the raw searchParams object directly.
-  // If logging is needed for debugging, log specific, extracted properties:
-  // console.log(`Generating metadata for professionals marketplace. Skill: ${skillFilterValue}, Location: ${locationFilterValue}`);
+  // Avoid logging the raw searchParams object or complex objects derived from it.
+  // Example of safe logging:
+  // console.log(`Generating metadata - Skill: ${skillFilterValue}, Location: ${locationFilterValue}`);
 
   return {
     title,
@@ -55,14 +62,11 @@ export async function generateMetadata(
     openGraph: {
       title,
       description,
-      // You could add a specific image for the professionals marketplace here
       // images: ['/og-professionals-marketplace.png'], 
     },
   };
 }
 
 export default function ProfessionalsMarketplaceLayout({ children }: { children: ReactNode }) {
-  // This layout simply passes through its children.
-  // Its primary purpose here is to host the generateMetadata function for the /professionals route.
   return <>{children}</>;
 }
