@@ -20,7 +20,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from '@/components/ui/form';
-import { FormTextarea, FormMultiSelect } from '@/components/ProfileFormElements'; // Assuming FormTextarea exists
+import { FormTextarea, FormMultiSelect } from '@/components/ProfileFormElements';
+import { Textarea } from '@/components/ui/textarea'; // Corrected import
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -470,3 +471,5 @@ export default function ProjectDetailPage() {
     </div>
   );
 }
+
+    
