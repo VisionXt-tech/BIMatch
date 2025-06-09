@@ -11,6 +11,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { collection, query, where, getDocs, Timestamp, type DocumentData } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 export default function CompanyDashboardPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
@@ -40,19 +41,11 @@ export default function CompanyDashboardPage() {
       setActiveProjectsCount(projectsSnapshot.size);
 
       // 2. Fetch new candidates count (applications with status 'inviata' for company's projects)
-      // This is a bit more complex as it might require fetching all company projects first,
-      // then querying applications for those project IDs.
-      // For simplicity, if project IDs are readily available on userProfile.projects or similar, use that.
-      // Otherwise, a more optimized query or denormalization might be needed for large scale.
-      // Current approach: fetch all company projects, then applications for those.
-
       const companyProjectIds: string[] = [];
       projectsSnapshot.forEach(doc => companyProjectIds.push(doc.id));
 
       let candidates = 0;
       if (companyProjectIds.length > 0) {
-        // Firestore 'in' query supports up to 30 elements in the array
-        // If a company has more than 30 projects, this needs chunking or a different strategy
         const MAX_PROJECTS_FOR_IN_QUERY = 30;
         const projectIdsChunks: string[][] = [];
         for (let i = 0; i < companyProjectIds.length; i += MAX_PROJECTS_FOR_IN_QUERY) {
@@ -66,7 +59,7 @@ export default function CompanyDashboardPage() {
                 const qApplications = query(
                     applicationsRef,
                     where('projectId', 'in', chunk),
-                    where('status', '==', 'inviata') // Consider 'inviata' as new
+                    where('status', '==', 'inviata') 
                 );
                 const applicationsSnapshot = await getDocs(qApplications);
                 totalNewCandidates += applicationsSnapshot.size;
@@ -153,28 +146,44 @@ export default function CompanyDashboardPage() {
             <CardDescription className="text-sm">Gestisci le attività principali della tua azienda.</CardDescription>
         </CardHeader>
         <CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            <Button asChild size="lg" className="w-full">
+            <Button asChild size="lg" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
                 <Link href={ROUTES.DASHBOARD_COMPANY_POST_PROJECT} className="flex flex-col items-center justify-center h-28 p-3 text-center">
                     <FolderPlus className="h-6 w-6 mb-1 text-primary-foreground" />
                     <span className="text-sm font-semibold">Pubblica Nuovo Progetto</span>
                     <span className="text-xs text-primary-foreground/80 mt-0.5">Crea e lancia nuove offerte</span>
                 </Link>
             </Button>
-             <Button asChild variant="secondary" size="lg" className="w-full">
-                 <Link href={ROUTES.DASHBOARD_COMPANY_PROJECTS} className="flex flex-col items-center justify-center h-28 p-3 text-center">
-                    <Briefcase className="h-6 w-6 mb-1 text-secondary-foreground" />
+             <Button 
+                asChild 
+                size="lg" 
+                className={cn(
+                    "w-full flex flex-col items-center justify-center h-28 p-3 text-center text-primary-foreground",
+                    loadingCounts ? "bg-secondary hover:bg-secondary/80" :
+                    activeProjectsCount && activeProjectsCount > 0 ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
+                )}
+            >
+                 <Link href={ROUTES.DASHBOARD_COMPANY_PROJECTS}>
+                    <Briefcase className="h-6 w-6 mb-1 text-primary-foreground" />
                     <span className="text-sm font-semibold">Gestisci Progetti</span>
-                    {loadingCounts ? <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-secondary-foreground/80" /> :
-                        <span className="text-xs text-secondary-foreground/80 mt-0.5">{activeProjectsCount ?? 0} attivi</span>
+                    {loadingCounts ? <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-primary-foreground/80" /> :
+                        <span className="text-xs text-primary-foreground/80 mt-0.5">{activeProjectsCount ?? 0} attivi</span>
                     }
                 </Link>
             </Button>
-             <Button asChild variant="secondary" size="lg" className="w-full">
-                <Link href={`${ROUTES.DASHBOARD_COMPANY_PROJECTS}?filter=candidates`} className="flex flex-col items-center justify-center h-28 p-3 text-center">
-                    <Users className="h-6 w-6 mb-1 text-secondary-foreground" />
+             <Button 
+                asChild 
+                size="lg" 
+                className={cn(
+                    "w-full flex flex-col items-center justify-center h-28 p-3 text-center text-primary-foreground",
+                    loadingCounts ? "bg-secondary hover:bg-secondary/80" :
+                    newCandidatesCount && newCandidatesCount > 0 ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
+                )}
+            >
+                <Link href={`${ROUTES.DASHBOARD_COMPANY_PROJECTS}?filter=candidates`}>
+                    <Users className="h-6 w-6 mb-1 text-primary-foreground" />
                     <span className="text-sm font-semibold">Visualizza Candidati</span>
-                     {loadingCounts ? <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-secondary-foreground/80" /> :
-                        <span className="text-xs text-secondary-foreground/80 mt-0.5">{newCandidatesCount ?? 0} nuove candidature</span>
+                     {loadingCounts ? <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-primary-foreground/80" /> :
+                        <span className="text-xs text-primary-foreground/80 mt-0.5">{newCandidatesCount ?? 0} nuove candidature</span>
                     }
                 </Link>
             </Button>
