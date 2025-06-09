@@ -148,7 +148,10 @@ export default function CompanyCandidatesPage() {
     try {
       // 1. Update application status
       const appDocRef = doc(db, 'projectApplications', application.id);
-      await updateDoc(appDocRef, { status: newStatus });
+      await updateDoc(appDocRef, { 
+        status: newStatus,
+        updatedAt: serverTimestamp() // Aggiunto per coerenza con le regole
+      });
 
       // 2. Create notification for professional
       const notificationData: Omit<UserNotification, 'id'> = {
@@ -170,7 +173,7 @@ export default function CompanyCandidatesPage() {
       // Update local state to reflect change immediately
       setApplications(prevApps => 
         prevApps.map(app => 
-          app.id === application.id ? { ...app, status: newStatus } : app
+          app.id === application.id ? { ...app, status: newStatus, updatedAt: Timestamp.now() } : app // Assumiamo che updatedAt sia un Timestamp client per l'UI
         )
       );
 
@@ -237,10 +240,10 @@ export default function CompanyCandidatesPage() {
   const getStatusBadgeVariant = (status: ProjectApplication['status']) => {
     switch (status) {
       case 'inviata': return 'secondary';
-      case 'in_revisione': return 'default'; // Blu/primario
-      case 'preselezionata': return 'default'; // Blu/Primario (o un verde se preferisci)
+      case 'in_revisione': return 'default'; 
+      case 'preselezionata': return 'default'; 
       case 'rifiutata': return 'destructive';
-      case 'accettata': return 'default'; // Verde (lo faremo verde con una classe custom o variante)
+      case 'accettata': return 'default'; 
       default: return 'outline';
     }
   };
@@ -248,6 +251,7 @@ export default function CompanyCandidatesPage() {
     switch (status) {
       case 'preselezionata': return 'bg-yellow-500 hover:bg-yellow-600 text-white';
       case 'accettata': return 'bg-green-600 hover:bg-green-700 text-white';
+      case 'in_revisione': return 'bg-blue-500 hover:bg-blue-600 text-white'; // Aggiunto per coerenza se 'default' è blu
       default: return '';
     }
   };
@@ -316,7 +320,7 @@ export default function CompanyCandidatesPage() {
                             variant={getStatusBadgeVariant(app.status)}
                             className={getStatusBadgeColorClass(app.status)}
                         >
-                            {app.status.replace('_', ' ')}
+                            {app.status.replace(/_/g, ' ')}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right space-x-1">
@@ -375,6 +379,23 @@ export default function CompanyCandidatesPage() {
                                 {updatingStatusForAppId === app.id ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <Check className="mr-1.5 h-3 w-3" />} Accetta
                             </Button>
                         )}
+                        {/* Aggiungi qui il pulsante per "In Revisione" se necessario */}
+                        {(app.status === 'inviata' || app.status === 'preselezionata') && app.status !== 'in_revisione' && (
+                           <Button 
+                                variant="default" // o un altro colore, es. blu
+                                size="sm" 
+                                className="text-xs h-7 px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white" // Esempio colore blu
+                                onClick={() => handleApplicationStatusChange(
+                                    app, 
+                                    'in_revisione', 
+                                    `La tua candidatura per "${app.projectTitle}" è in esame`, 
+                                    `L'azienda ${app.companyName} sta attualmente esaminando la tua candidatura per il progetto "${app.projectTitle}".`
+                                )}
+                                disabled={updatingStatusForAppId === app.id}
+                            >
+                                {updatingStatusForAppId === app.id ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <Briefcase className="mr-1.5 h-3 w-3" />} In Revisione
+                            </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -387,6 +408,3 @@ export default function CompanyCandidatesPage() {
     </div>
   );
 }
-
-
-    
