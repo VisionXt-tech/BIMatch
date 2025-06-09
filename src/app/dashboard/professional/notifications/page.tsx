@@ -57,7 +57,32 @@ export default function ProfessionalNotificationsPage() {
       setNotifications(fetchedNotifications);
     } catch (e: any) {
       console.error("Error fetching notifications:", e);
-      setError(e.message.includes('offline') ? "Connessione persa." : "Errore nel caricamento delle notifiche.");
+      let specificErrorMessage = "Si è verificato un errore imprevisto durante il caricamento delle notifiche. Controlla la console del browser per maggiori dettagli.";
+      if (e.code) { // Firebase errors often have a code
+        switch (e.code) {
+          case 'permission-denied':
+          case 'PERMISSION_DENIED': 
+            specificErrorMessage = "Accesso negato. Controlla i permessi di Firestore per la collezione 'notifications'.";
+            break;
+          case 'failed-precondition':
+            specificErrorMessage = "Indice Firestore mancante. Controlla la console del browser (o Firestore > Indici nella console Firebase) per creare l'indice richiesto per 'notifications' (probabilmente su 'userId' ASC, 'createdAt' DESC).";
+            break;
+          case 'unavailable':
+            specificErrorMessage = "Servizio momentaneamente non disponibile o connessione persa. Riprova più tardi.";
+            break;
+          default:
+            specificErrorMessage = `Errore Firestore: ${e.message || 'Errore sconosciuto'} (Codice: ${e.code})`;
+        }
+      } else if (e.message) {
+        if (e.message.includes('offline')) {
+            specificErrorMessage = "Connessione persa. Controlla la tua rete e riprova.";
+        } else if (e.message.includes('indexes?create_composite=')) { 
+            specificErrorMessage = `Indice Firestore mancante per le notifiche. Il messaggio di errore originale è: "${e.message}". Segui il link nella console del browser per crearlo, oppure vai alla console Firebase > Firestore Database > Indici (Collezione: notifications, Campi: userId ASC, createdAt DESC).`;
+        } else {
+            specificErrorMessage = `Errore: ${e.message}`;
+        }
+      }
+      setError(specificErrorMessage);
     } finally {
       setLoading(false);
     }
@@ -126,10 +151,10 @@ export default function ProfessionalNotificationsPage() {
 
   if (error) {
     return (
-      <div className="text-center py-10 border-2 border-dashed border-destructive/50 bg-destructive/5 rounded-lg">
+      <div className="text-center py-10 border-2 border-dashed border-destructive/50 bg-destructive/5 rounded-lg mx-auto max-w-2xl">
         <WifiOff className="mx-auto h-12 w-12 text-destructive mb-3" />
         <p className="text-lg font-semibold text-destructive mb-1">Errore di Caricamento</p>
-        <p className="text-muted-foreground text-sm">{error}</p>
+        <p className="text-muted-foreground text-sm px-4">{error}</p>
       </div>
     );
   }
