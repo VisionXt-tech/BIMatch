@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Briefcase, Users, Edit3, Trash2, Eye, PlusCircle, WifiOff, Info } from 'lucide-react';
@@ -56,53 +56,68 @@ export default function CompanyProjectsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (authLoading) return;
-
-    if (!user || !userProfile || userProfile.role !== 'company') {
-      setError("Devi essere un'azienda autenticata per visualizzare i progetti.");
+  const fetchProjectsWithApplicationCounts = useCallback(async () => {
+    if (authLoading || !user || !userProfile || userProfile.role !== 'company' || !db) {
+      if (!authLoading && (!user || userProfile?.role !== 'company')) {
+        setError("Devi essere un'azienda autenticata per visualizzare i progetti.");
+      }
+      if (!authLoading && !db) {
+        setError("Database non disponibile.");
+      }
       setLoading(false);
       return;
     }
 
-    const fetchCompanyProjects = async () => {
-      if (!db) {
-        setError("Database non disponibile.");
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      setError(null);
-      try {
-        const projectsCollectionRef = collection(db, 'projects');
-        const q = query(projectsCollectionRef, where('companyId', '==', user.uid), orderBy('postedAt', 'desc'));
-        const querySnapshot = await getDocs(q);
-        const fetchedProjects: Project[] = [];
-        querySnapshot.forEach((doc) => {
-          fetchedProjects.push({ id: doc.id, ...doc.data() } as Project);
-        });
-        setCompanyProjects(fetchedProjects);
-      } catch (e: any)
-      {
-        console.error("Error fetching company projects:", e);
-        let specificError = "Errore nel caricamento dei progetti.";
-        if (typeof e.message === 'string') {
-            if (e.message.includes('offline') || e.message.includes('Failed to get document because the client is offline')) {
-                specificError = "Connessione persa. Controlla la tua rete.";
-            } else if (e.message.includes('permission-denied') || e.message.includes('PERMISSION_DENIED')) {
-                specificError = "Permessi insufficienti per caricare i progetti. Controlla le regole di Firestore.";
-            } else if (e.message.includes('indexes?create_composite=')) {
-                specificError = "Indice Firestore mancante. Controlla la console per il link per crearlo.";
-            }
-        }
-        setError(specificError);
-      } finally {
-        setLoading(false);
-      }
-    };
+    setLoading(true);
+    setError(null);
+    try {
+      // 1. Fetch company projects
+      const projectsCollectionRef = collection(db, 'projects');
+      const qProjects = query(projectsCollectionRef, where('companyId', '==', user.uid), orderBy('postedAt', 'desc'));
+      const projectsSnapshot = await getDocs(qProjects);
+      const fetchedProjects: Project[] = [];
+      projectsSnapshot.forEach((doc) => {
+        fetchedProjects.push({ id: doc.id, ...doc.data() } as Project);
+      });
 
-    fetchCompanyProjects();
+      // 2. For each project, fetch its application count
+      // Note: This makes N+1 queries (1 for projects + N for counts).
+      // For better performance at scale, consider denormalizing applicationsCount
+      // directly onto the Project document using Cloud Functions.
+      const projectsWithCounts = await Promise.all(
+        fetchedProjects.map(async (project) => {
+          if (!project.id) return project; // Should have id
+          const applicationsQuery = query(
+            collection(db, 'projectApplications'),
+            where('projectId', '==', project.id)
+          );
+          const applicationsSnapshot = await getDocs(applicationsQuery);
+          return { ...project, applicationsCount: applicationsSnapshot.size };
+        })
+      );
+
+      setCompanyProjects(projectsWithCounts);
+    } catch (e: any) {
+      console.error("Error fetching company projects or application counts:", e);
+      let specificError = "Errore nel caricamento dei progetti e/o conteggio candidati.";
+      if (typeof e.message === 'string') {
+        if (e.message.includes('offline') || e.message.includes('Failed to get document because the client is offline')) {
+          specificError = "Connessione persa. Controlla la tua rete.";
+        } else if (e.message.includes('permission-denied') || e.message.includes('PERMISSION_DENIED')) {
+          specificError = "Permessi insufficienti per caricare i dati. Controlla le regole di Firestore.";
+        } else if (e.message.includes('indexes?create_composite=')) {
+          specificError = "Indice Firestore mancante. Controlla la console per il link per crearlo (probabilmente per la query dei progetti o delle candidature).";
+        }
+      }
+      setError(specificError);
+    } finally {
+      setLoading(false);
+    }
   }, [db, user, userProfile, authLoading]);
+
+  useEffect(() => {
+    fetchProjectsWithApplicationCounts();
+  }, [fetchProjectsWithApplicationCounts]);
 
   const handleConfirmCloseProject = async (projectToClose: Project) => {
     if (!projectToClose || !db) return;
