@@ -132,37 +132,37 @@ export default function ProfessionalDashboardPage() {
             <CardDescription className="text-sm">Monitora le tue interazioni e scopri nuove possibilità.</CardDescription>
         </CardHeader>
         <CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            <Button asChild size="lg" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                 <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS} passHref legacyBehavior>
-                    <a className="flex flex-col items-center justify-center h-28 p-3 text-center">
-                        <Search className="h-6 w-6 mb-1 text-primary-foreground" />
-                        <span className="text-sm font-semibold text-primary-foreground">Cerca Nuovi Progetti</span>
-                        {loadingCounts ? <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-primary-foreground/80" /> :
-                         <span className="text-xs text-primary-foreground/80 mt-0.5">{activeProjectsCount ?? 0} disponibili</span>}
-                    </a>
-                </Link>
+            <Button
+              asChild
+              size="lg"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 flex flex-col items-center justify-center h-28 p-3 text-center"
+            >
+              <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS}>
+                <Search className="h-6 w-6 mb-1 text-primary-foreground" />
+                <span className="text-sm font-semibold text-primary-foreground">Cerca Nuovi Progetti</span>
+                {loadingCounts ? <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-primary-foreground/80" /> :
+                  <span className="text-xs text-primary-foreground/80 mt-0.5">{activeProjectsCount ?? 0} disponibili</span>}
+              </Link>
             </Button>
             
             <Button
-                asChild
-                size="lg"
-                className={cn(
-                  "w-full text-primary-foreground", 
-                  !loadingCounts && userApplicationsCount && userApplicationsCount > 0 
-                    ? "bg-green-600 hover:bg-green-700" 
-                    : !loadingCounts 
-                      ? "bg-red-600 hover:bg-red-700" 
-                      : "bg-secondary hover:bg-secondary/80" 
-                )}
+              asChild
+              size="lg"
+              className={cn(
+                "w-full text-primary-foreground flex flex-col items-center justify-center h-28 p-3 text-center",
+                // Conditional background classes
+                loadingCounts ? "bg-secondary hover:bg-secondary/80" : 
+                (userApplicationsCount && userApplicationsCount > 0
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-red-600 hover:bg-red-700")
+              )}
             >
-                 <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS + "?filter=applied"} passHref legacyBehavior>
-                    <a className="flex flex-col items-center justify-center h-28 p-3 text-center">
-                        <ListChecks className="h-6 w-6 mb-1 text-primary-foreground" />
-                        <span className="text-sm font-semibold text-primary-foreground">Le Mie Candidature</span>
-                         {loadingCounts ? <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-primary-foreground/80" /> :
-                        <span className="text-xs text-primary-foreground/80 mt-0.5">{userApplicationsCount ?? 0} attive</span>}
-                    </a>
-                 </Link>
+              <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS + "?filter=applied"}>
+                <ListChecks className="h-6 w-6 mb-1 text-primary-foreground" />
+                <span className="text-sm font-semibold text-primary-foreground">Le Mie Candidature</span>
+                {loadingCounts ? <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-primary-foreground/80" /> :
+                  <span className="text-xs text-primary-foreground/80 mt-0.5">{userApplicationsCount ?? 0} attive</span>}
+              </Link>
             </Button>
 
             <Button variant="secondary" size="lg" className="w-full opacity-50 cursor-not-allowed">
@@ -197,3 +197,4 @@ export default function ProfessionalDashboardPage() {
   );
 }
 
+    
