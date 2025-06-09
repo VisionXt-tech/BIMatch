@@ -102,13 +102,13 @@ export default function CompanyCandidatesPage() {
               ...app, 
               professionalProfile: profDocSnap.data() as ProfessionalProfile,
               projectTitle: projectData.title, // For notification context
-              companyName: projectData.companyName // For notification context
+              companyName: userProfile.companyName || userProfile.displayName || 'Un\'azienda' // For notification context
             };
           }
           return {
             ...app,
             projectTitle: projectData.title,
-            companyName: projectData.companyName
+            companyName: userProfile.companyName || userProfile.displayName || 'Un\'azienda'
           };
         })
       );
@@ -349,23 +349,6 @@ export default function CompanyCandidatesPage() {
                                 {updatingStatusForAppId === app.id && app.status === 'preselezionata' ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <Check className="mr-1.5 h-3 w-3" />} Preseleziona
                             </Button>
                         )}
-
-                        {app.status === 'inviata' && app.status !== 'in_revisione' && (
-                           <Button 
-                                variant="default"
-                                size="sm" 
-                                className="text-xs h-7 px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white"
-                                onClick={() => handleApplicationStatusChange(
-                                    app, 
-                                    'in_revisione', 
-                                    `La tua candidatura per "${app.projectTitle}" è in esame`, 
-                                    `L'azienda ${app.companyName} sta attualmente esaminando la tua candidatura per il progetto "${app.projectTitle}".`
-                                )}
-                                disabled={updatingStatusForAppId === app.id}
-                            >
-                                {updatingStatusForAppId === app.id && app.status === 'in_revisione' ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <Briefcase className="mr-1.5 h-3 w-3" />} In Revisione
-                            </Button>
-                        )}
                         
                         {app.status === 'preselezionata' && (
                              <Button 
@@ -401,7 +384,7 @@ export default function CompanyCandidatesPage() {
                             </Button>
                         )}
                          {/* Opzione per rimettere "In Revisione" se è "Preselezionata" */}
-                        {app.status === 'preselezionata' && app.status !== 'in_revisione' && (
+                        {app.status === 'preselezionata' && (
                            <Button 
                                 variant="default"
                                 size="sm" 
@@ -429,4 +412,3 @@ export default function CompanyCandidatesPage() {
     </div>
   );
 }
-
