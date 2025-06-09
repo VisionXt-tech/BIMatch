@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ROUTES } from '@/constants';
 import { User, Search, Edit2, ListChecks, Bell, WifiOff, Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react'; // Added useCallback
 import { useFirebase } from '@/contexts/FirebaseContext';
-import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, Timestamp, limit } from 'firebase/firestore'; // Added limit
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
@@ -19,84 +19,95 @@ export default function ProfessionalDashboardPage() {
 
   const [newProjectsCount, setNewProjectsCount] = useState<number | null>(null);
   const [userActiveApplicationsCount, setUserActiveApplicationsCount] = useState<number | null>(null);
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState<number | null>(null); // New state for notifications
   const [loadingCounts, setLoadingCounts] = useState(true);
   const [errorCounts, setErrorCounts] = useState<string | null>(null);
 
-  // Placeholder for new notifications count, kept as is for now
-  const newNotificationsCount = 3;
-
-  useEffect(() => {
+  const fetchCounts = useCallback(async () => { // Wrapped in useCallback
     if (authLoading || !user || !db || userProfile?.role !== 'professional') {
       if (!authLoading && (!user || userProfile?.role !== 'professional')) {
-         setLoadingCounts(false); // Not a professional or not logged in, no need to load counts.
+         setLoadingCounts(false); 
       }
       return;
     }
 
-    const fetchCounts = async () => {
-      setLoadingCounts(true);
-      setErrorCounts(null);
-      try {
-        // 1. Fetch active, non-expired projects
-        const projectsRef = collection(db, 'projects');
-        const now = new Date();
-        const qProjects = query(projectsRef, where('status', '==', 'attivo'));
-        const projectsSnapshot = await getDocs(qProjects);
-        
-        const activeNonExpiredProjectIds: string[] = [];
-        projectsSnapshot.forEach(doc => {
-          const project = doc.data();
-          const deadline = project.applicationDeadline ? (project.applicationDeadline as Timestamp).toDate() : null;
-          if (!deadline || deadline > now) {
-            activeNonExpiredProjectIds.push(doc.id);
+    setLoadingCounts(true);
+    setErrorCounts(null);
+    try {
+      // 1. Fetch active, non-expired projects & applied project IDs
+      const projectsRef = collection(db, 'projects');
+      const now = new Date();
+      const qProjects = query(projectsRef, where('status', '==', 'attivo'));
+      const projectsSnapshot = await getDocs(qProjects);
+      
+      const activeNonExpiredProjectIds: string[] = [];
+      projectsSnapshot.forEach(doc => {
+        const project = doc.data();
+        const deadline = project.applicationDeadline ? (project.applicationDeadline as Timestamp).toDate() : null;
+        if (!deadline || deadline > now) {
+          activeNonExpiredProjectIds.push(doc.id);
+        }
+      });
+
+      const applicationsRef = collection(db, 'projectApplications');
+      const qApplications = query(applicationsRef, where('professionalId', '==', user.uid));
+      const applicationsSnapshot = await getDocs(qApplications);
+      
+      const appliedProjectIds = new Set<string>();
+      let activeApplicationsCount = 0;
+      applicationsSnapshot.forEach(doc => {
+          const appData = doc.data();
+          appliedProjectIds.add(appData.projectId);
+          if (['inviata', 'in_revisione', 'preselezionata'].includes(appData.status)) {
+              activeApplicationsCount++;
           }
-        });
+      });
+      setUserActiveApplicationsCount(activeApplicationsCount);
 
-        // 2. Fetch all applications for the current professional to get appliedProjectIds
-        //    and count active applications.
-        const applicationsRef = collection(db, 'projectApplications');
-        const qApplications = query(applicationsRef, where('professionalId', '==', user.uid));
-        const applicationsSnapshot = await getDocs(qApplications);
-        
-        const appliedProjectIds = new Set<string>();
-        let activeApplicationsCount = 0;
-        applicationsSnapshot.forEach(doc => {
-            const appData = doc.data();
-            appliedProjectIds.add(appData.projectId);
-            if (['inviata', 'in_revisione', 'preselezionata'].includes(appData.status)) {
-                activeApplicationsCount++;
-            }
-        });
-        setUserActiveApplicationsCount(activeApplicationsCount);
+      const currentNewProjectsCount = activeNonExpiredProjectIds.filter(projectId => !appliedProjectIds.has(projectId)).length;
+      setNewProjectsCount(currentNewProjectsCount);
 
-        // 3. Calculate new projects count (activeNonExpired projects that are NOT in appliedProjectIds)
-        const currentNewProjectsCount = activeNonExpiredProjectIds.filter(projectId => !appliedProjectIds.has(projectId)).length;
-        setNewProjectsCount(currentNewProjectsCount);
+      // 3. Fetch unread notifications count
+      const notificationsQuery = query(
+        collection(db, 'notifications'),
+        where('userId', '==', user.uid),
+        where('isRead', '==', false)
+        // limit(10) // Optional: limit for performance if many unread
+      );
+      const notificationsSnapshot = await getDocs(notificationsQuery);
+      setUnreadNotificationsCount(notificationsSnapshot.size);
 
-      } catch (e: any) {
-        console.error("Error fetching dashboard counts:", e);
-        let specificError = "Errore nel caricamento dei dati della dashboard.";
-        if (typeof e.message === 'string') {
+
+    } catch (e: any) {
+      console.error("Error fetching dashboard counts:", e);
+      let specificError = "Errore nel caricamento dei dati della dashboard.";
+       if (typeof e.message === 'string') {
             if (e.message.includes('offline')) {
                 specificError = "Connessione persa. Controlla la tua rete.";
             } else if (e.message.includes('permission-denied') || e.message.includes('PERMISSION_DENIED')) {
                 specificError = "Permessi insufficienti per caricare i dati.";
             } else if (e.message.includes('indexes?create_composite=')) {
                 specificError = "Indice Firestore mancante. Controlla la console per il link per crearlo.";
+                 if (e.message.includes('notifications') && e.message.includes('userId') && e.message.includes('isRead')) {
+                     specificError = "Indice Firestore mancante per le notifiche. Controlla la console Firebase per il link per crearlo (notifications, userId ASC, isRead ASC, createdAt DESC).";
+                 }
             }
         }
-        setErrorCounts(specificError);
-        setNewProjectsCount(0); 
-        setUserActiveApplicationsCount(0);
-      } finally {
-        setLoadingCounts(false);
-      }
-    };
+      setErrorCounts(specificError);
+      setNewProjectsCount(0); 
+      setUserActiveApplicationsCount(0);
+      setUnreadNotificationsCount(0); // Reset on error
+    } finally {
+      setLoadingCounts(false);
+    }
+  // }, [user, db, authLoading, userProfile]); // Original dependencies
+  }, [user, db, authLoading, userProfile, setNewProjectsCount, setUserActiveApplicationsCount, setUnreadNotificationsCount, setLoadingCounts, setErrorCounts]); // Added state setters to dependency array
 
+  useEffect(() => {
     fetchCounts();
-  }, [user, db, authLoading, userProfile]);
+  }, [fetchCounts]); // Use fetchCounts from useCallback
 
-  if (authLoading) { // Initial loading for auth context
+  if (authLoading) {
     return (
       <div className="space-y-4 w-full max-w-4xl mx-auto">
         <Card className="shadow-lg"><CardHeader className="p-4"><Skeleton className="h-8 w-3/4" /><Skeleton className="h-6 w-1/2 mt-1" /></CardHeader></Card>
@@ -177,12 +188,24 @@ export default function ProfessionalDashboardPage() {
               </Link>
             </Button>
 
-            <Button variant="secondary" size="lg" className="w-full opacity-50 cursor-not-allowed">
-                <div className="flex flex-col items-center justify-center h-28 p-3 text-center">
-                    <Bell className="h-6 w-6 mb-1 text-secondary-foreground" />
+            <Button
+                asChild
+                size="lg"
+                className={cn(
+                    "w-full text-primary-foreground flex flex-col items-center justify-center h-28 p-3 text-center",
+                    loadingCounts ? "bg-secondary hover:bg-secondary/80" :
+                    (unreadNotificationsCount && unreadNotificationsCount > 0 
+                        ? "bg-green-600 hover:bg-green-700" 
+                        : "bg-red-600 hover:bg-red-700")
+                )}
+            >
+                <Link href={ROUTES.DASHBOARD_PROFESSIONAL_NOTIFICATIONS}>
+                    <Bell className="h-6 w-6 mb-1 text-primary-foreground" />
                     <span className="text-sm font-semibold">Notifiche</span>
-                    <span className="text-xs text-secondary-foreground/80 mt-0.5">{newNotificationsCount} non lette (Prossimamente)</span>
-                </div>
+                    {loadingCounts ? <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-primary-foreground/80" /> :
+                      <span className="text-xs text-primary-foreground/80 mt-0.5">{unreadNotificationsCount ?? 0} non lette</span>
+                    }
+                </Link>
             </Button>
         </CardContent>
       </Card>
@@ -196,11 +219,11 @@ export default function ProfessionalDashboardPage() {
                 <p className="text-sm text-muted-foreground">Stato del profilo: <span className={isProfileComplete ? "font-semibold text-green-600" : "font-semibold text-yellow-600"}>{isProfileComplete ? "Completo" : "Incompleto"}</span></p>
                 <p className="text-xs text-muted-foreground mt-0.5">Un profilo curato è il tuo miglior biglietto da visita.</p>
            </div>
-           <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROFILE} passHref legacyBehavior>
+           <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROFILE} passHref>
             <Button asChild variant="outline" size="sm" className="mt-2 sm:mt-0 self-start sm:self-center">
-                <a className="flex items-center">
+                <span className="flex items-center"> {/* Changed from <a> to <span> */}
                 <Edit2 className="mr-2 h-3 w-3" /> Aggiorna Profilo
-                </a>
+                </span>
             </Button>
             </Link>
         </CardContent>
@@ -208,5 +231,3 @@ export default function ProfessionalDashboardPage() {
     </div>
   );
 }
-
-    

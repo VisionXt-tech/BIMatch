@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { ROUTES, ROLES } from '@/constants';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarFooter, SidebarSeparator, SidebarGroup } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, User, Briefcase, LayoutDashboard, FolderPlus, Building, Search, Users } from 'lucide-react';
+import { LogOut, User, Briefcase, LayoutDashboard, FolderPlus, Building, Search, Users, Bell } from 'lucide-react'; // Added Bell
 import Link from 'next/link';
 
 interface DashboardLayoutProps {
@@ -19,6 +19,7 @@ const ProfessionalNavItems = [
   { href: ROUTES.DASHBOARD_PROFESSIONAL, label: 'Dashboard', icon: LayoutDashboard },
   { href: ROUTES.DASHBOARD_PROFESSIONAL_PROFILE, label: 'Il Mio Profilo', icon: User },
   { href: ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS, label: 'Progetti Disponibili', icon: Search },
+  { href: ROUTES.DASHBOARD_PROFESSIONAL_NOTIFICATIONS, label: 'Notifiche', icon: Bell }, // New Item
 ];
 
 const CompanyNavItems = [
@@ -86,7 +87,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <SidebarMenu>
             {navItems.map((item) => (
               <SidebarMenuItem key={item.href}>
-                <Link href={item.href} passHref legacyBehavior>
+                <Link href={item.href} passHref legacyBehavior={item.href.includes('javascript:') ? true : undefined}>
                   <SidebarMenuButton
                     isActive={router.pathname === item.href}
                     tooltip={{children: item.label, side: 'right', align: 'center'}}
@@ -122,7 +123,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <SidebarInset
         style={{ marginTop: `var(--main-content-area-margin-top, ${NAVBAR_HEIGHT_CSS_VAR_VALUE})` }}
       >
-        <div className="px-4 md:px-6 lg:px-8 pt-0 pb-0">
+        <div className="px-4 md:px-6 lg:px-8 pt-6 pb-8"> {/* Added pt-6 pb-8 for padding around content */}
          {children}
         </div>
       </SidebarInset>

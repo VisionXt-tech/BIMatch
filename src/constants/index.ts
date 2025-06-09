@@ -8,6 +8,7 @@ export const ROUTES = {
   DASHBOARD_PROFESSIONAL: '/dashboard/professional',
   DASHBOARD_PROFESSIONAL_PROFILE: '/dashboard/professional/profile',
   DASHBOARD_PROFESSIONAL_PROJECTS: '/dashboard/professional/projects',
+  DASHBOARD_PROFESSIONAL_NOTIFICATIONS: '/dashboard/professional/notifications', // New route
   DASHBOARD_COMPANY: '/dashboard/company',
   DASHBOARD_COMPANY_PROFILE: '/dashboard/company/profile',
   DASHBOARD_COMPANY_POST_PROJECT: '/dashboard/company/post-project',
@@ -112,3 +113,10 @@ export const EXPERIENCE_LEVEL_OPTIONS = [
     { value: "senior", label: "Senior (10+ anni)" },
     { value: "expert", label: "Expert / Specialist" },
 ];
+
+export const NOTIFICATION_TYPES = {
+  APPLICATION_STATUS_UPDATED: 'APPLICATION_STATUS_UPDATED',
+  NEW_PROJECT_MATCH: 'NEW_PROJECT_MATCH', // Future use
+  PROFILE_VIEW: 'PROFILE_VIEW', // Future use
+  GENERIC_INFO: 'GENERIC_INFO',
+};
