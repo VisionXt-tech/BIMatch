@@ -94,13 +94,13 @@ export default function LoginPage() {
   return (
     <div className="relative flex flex-grow items-center justify-center w-full px-4">
       <Image
-        src="https://images.unsplash.com/photo-1511818966892-d7d671e672a2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxhcmNoaXRlY3R1cmV8ZW58MHx8fHwxNzQ3Njc2MTkwfDA&ixlib=rb-4.1.0&q=80&w=1080"
-        alt="Architecture studio background"
+        src="https://images.unsplash.com/photo-1481026469463-66327c86e544?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxCdWlsZGluZyUyMEluZm9ybWF0aW9uJTIwTW9kZWxpbmd8ZW58MHx8fHwxNzQ5NDU1MTY1fDA&ixlib=rb-4.1.0&q=80&w=1080"
+        alt="Abstract BIM model background"
         layout="fill"
         objectFit="cover"
         className="-z-10"
         priority
-        data-ai-hint="architecture studio"
+        data-ai-hint="Building Information"
       />
       <div className="absolute inset-0 bg-black/60 -z-10"></div>
 
