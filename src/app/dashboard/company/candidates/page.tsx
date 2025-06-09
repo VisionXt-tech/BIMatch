@@ -150,7 +150,7 @@ export default function CompanyCandidatesPage() {
       const appDocRef = doc(db, 'projectApplications', application.id);
       await updateDoc(appDocRef, { 
         status: newStatus,
-        updatedAt: serverTimestamp() // Aggiunto per coerenza con le regole
+        updatedAt: serverTimestamp()
       });
 
       // 2. Create notification for professional
@@ -173,7 +173,7 @@ export default function CompanyCandidatesPage() {
       // Update local state to reflect change immediately
       setApplications(prevApps => 
         prevApps.map(app => 
-          app.id === application.id ? { ...app, status: newStatus, updatedAt: Timestamp.now() } : app // Assumiamo che updatedAt sia un Timestamp client per l'UI
+          app.id === application.id ? { ...app, status: newStatus, updatedAt: Timestamp.now() } : app 
         )
       );
 
@@ -251,7 +251,7 @@ export default function CompanyCandidatesPage() {
     switch (status) {
       case 'preselezionata': return 'bg-yellow-500 hover:bg-yellow-600 text-white';
       case 'accettata': return 'bg-green-600 hover:bg-green-700 text-white';
-      case 'in_revisione': return 'bg-blue-500 hover:bg-blue-600 text-white'; // Aggiunto per coerenza se 'default' è blu
+      case 'in_revisione': return 'bg-blue-500 hover:bg-blue-600 text-white';
       default: return '';
     }
   };
@@ -331,9 +331,10 @@ export default function CompanyCandidatesPage() {
                                 </Link>
                             </Button>
                         )}
-                        {app.status === 'inviata' && (
-                            <>
-                            <Button 
+
+                        {/* Azioni basate sullo stato corrente */}
+                        {(app.status === 'inviata' || app.status === 'in_revisione') && (
+                           <Button 
                                 variant="default" 
                                 size="sm" 
                                 className="text-xs h-7 px-2 py-1 bg-yellow-500 hover:bg-yellow-600 text-white"
@@ -345,24 +346,27 @@ export default function CompanyCandidatesPage() {
                                 )}
                                 disabled={updatingStatusForAppId === app.id}
                             >
-                                {updatingStatusForAppId === app.id ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <Check className="mr-1.5 h-3 w-3" />} Preseleziona
+                                {updatingStatusForAppId === app.id && app.status === 'preselezionata' ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <Check className="mr-1.5 h-3 w-3" />} Preseleziona
                             </Button>
-                            <Button 
-                                variant="destructive" 
+                        )}
+
+                        {app.status === 'inviata' && app.status !== 'in_revisione' && (
+                           <Button 
+                                variant="default"
                                 size="sm" 
-                                className="text-xs h-7 px-2 py-1"
+                                className="text-xs h-7 px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white"
                                 onClick={() => handleApplicationStatusChange(
                                     app, 
-                                    'rifiutata',
-                                    `Aggiornamento sulla tua candidatura per "${app.projectTitle}"`,
-                                    `L'azienda ${app.companyName} ha esaminato la tua candidatura per il progetto "${app.projectTitle}". Al momento, hanno deciso di procedere con altri candidati. Ti ringraziamo per l'interesse.`
+                                    'in_revisione', 
+                                    `La tua candidatura per "${app.projectTitle}" è in esame`, 
+                                    `L'azienda ${app.companyName} sta attualmente esaminando la tua candidatura per il progetto "${app.projectTitle}".`
                                 )}
                                 disabled={updatingStatusForAppId === app.id}
                             >
-                                {updatingStatusForAppId === app.id ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <X className="mr-1.5 h-3 w-3" />} Rifiuta
+                                {updatingStatusForAppId === app.id && app.status === 'in_revisione' ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <Briefcase className="mr-1.5 h-3 w-3" />} In Revisione
                             </Button>
-                            </>
                         )}
+                        
                         {app.status === 'preselezionata' && (
                              <Button 
                                 variant="default" 
@@ -376,24 +380,41 @@ export default function CompanyCandidatesPage() {
                                 )}
                                 disabled={updatingStatusForAppId === app.id}
                             >
-                                {updatingStatusForAppId === app.id ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <Check className="mr-1.5 h-3 w-3" />} Accetta
+                                {updatingStatusForAppId === app.id && app.status === 'accettata' ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <Check className="mr-1.5 h-3 w-3" />} Accetta
                             </Button>
                         )}
-                        {/* Aggiungi qui il pulsante per "In Revisione" se necessario */}
-                        {(app.status === 'inviata' || app.status === 'preselezionata') && app.status !== 'in_revisione' && (
-                           <Button 
-                                variant="default" // o un altro colore, es. blu
+
+                        {(app.status === 'inviata' || app.status === 'in_revisione' || app.status === 'preselezionata') && (
+                            <Button 
+                                variant="destructive" 
                                 size="sm" 
-                                className="text-xs h-7 px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white" // Esempio colore blu
+                                className="text-xs h-7 px-2 py-1"
                                 onClick={() => handleApplicationStatusChange(
                                     app, 
-                                    'in_revisione', 
-                                    `La tua candidatura per "${app.projectTitle}" è in esame`, 
-                                    `L'azienda ${app.companyName} sta attualmente esaminando la tua candidatura per il progetto "${app.projectTitle}".`
+                                    'rifiutata',
+                                    `Aggiornamento sulla tua candidatura per "${app.projectTitle}"`,
+                                    `L'azienda ${app.companyName} ha esaminato la tua candidatura per il progetto "${app.projectTitle}". Al momento, hanno deciso di procedere con altri candidati. Ti ringraziamo per l'interesse.`
                                 )}
                                 disabled={updatingStatusForAppId === app.id}
                             >
-                                {updatingStatusForAppId === app.id ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <Briefcase className="mr-1.5 h-3 w-3" />} In Revisione
+                                {updatingStatusForAppId === app.id && app.status === 'rifiutata' ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <X className="mr-1.5 h-3 w-3" />} Rifiuta
+                            </Button>
+                        )}
+                         {/* Opzione per rimettere "In Revisione" se è "Preselezionata" */}
+                        {app.status === 'preselezionata' && app.status !== 'in_revisione' && (
+                           <Button 
+                                variant="default"
+                                size="sm" 
+                                className="text-xs h-7 px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white"
+                                onClick={() => handleApplicationStatusChange(
+                                    app, 
+                                    'in_revisione', 
+                                    `La tua candidatura per "${app.projectTitle}" è nuovamente in esame`, 
+                                    `L'azienda ${app.companyName} sta riesaminando la tua candidatura preselezionata per il progetto "${app.projectTitle}".`
+                                )}
+                                disabled={updatingStatusForAppId === app.id}
+                            >
+                                {updatingStatusForAppId === app.id && app.status === 'in_revisione' ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <Briefcase className="mr-1.5 h-3 w-3" />} In Revisione
                             </Button>
                         )}
                       </TableCell>
@@ -408,3 +429,4 @@ export default function CompanyCandidatesPage() {
     </div>
   );
 }
+
