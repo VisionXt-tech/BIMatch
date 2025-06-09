@@ -13,11 +13,18 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, MapPin, Briefcase, Settings, Code2, CalendarDays, Wallet, FileText, Send, CheckCircle2, XCircle, UserCircle2, Building, Info, Trash2 } from 'lucide-react';
-import { ROUTES, BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS } from '@/constants';
+import { ArrowLeft, MapPin, Briefcase, Settings, Code2, CalendarDays, Wallet, FileText, Send, CheckCircle2, XCircle, UserCircle2, Building, Info, Trash2, Loader2 } from 'lucide-react';
+import { ROUTES, BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, NOTIFICATION_TYPES } from '@/constants';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from '@/components/ui/form';
+import { FormTextarea, FormMultiSelect } from '@/components/ProfileFormElements'; // Assuming FormTextarea exists
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import type { UserNotification } from '@/types/notification';
 
 const getInitials = (name: string | null | undefined): string => {
   if (!name) return 'P';
@@ -32,6 +39,13 @@ const getLabelForValue = (options: { value: string; label: string }[], value?: s
   return options.find(opt => opt.value === value)?.label;
 };
 
+const applicationFormSchema = z.object({
+  coverLetterMessage: z.string().min(50, { message: "Il messaggio di presentazione deve contenere almeno 50 caratteri." }).max(2000, "Il messaggio non può superare i 2000 caratteri."),
+  relevantSkillsForProject: z.array(z.string()).optional(),
+  availabilityNotes: z.string().max(500, "Le note sulla disponibilità non possono superare i 500 caratteri.").optional(),
+});
+type ApplicationFormData = z.infer<typeof applicationFormSchema>;
+
 export default function ProjectDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -43,13 +57,23 @@ export default function ProjectDetailPage() {
   const [loadingProject, setLoadingProject] = useState(true);
   const [errorProject, setErrorProject] = useState<string | null>(null);
   
-  const [isApplying, setIsApplying] = useState(false);
+  const [isSubmittingApplication, setIsSubmittingApplication] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
   const [applicationId, setApplicationId] = useState<string | null>(null);
   const [checkingApplication, setCheckingApplication] = useState(true);
+  const [isApplicationDialogOpen, setIsApplicationDialogOpen] = useState(false);
 
   const projectId = typeof params?.projectId === 'string' ? params.projectId : null;
+
+  const applicationForm = useForm<ApplicationFormData>({
+    resolver: zodResolver(applicationFormSchema),
+    defaultValues: {
+      coverLetterMessage: '',
+      relevantSkillsForProject: [],
+      availabilityNotes: '',
+    },
+  });
 
   const fetchProjectData = useCallback(async () => {
     if (!projectId || !db) {
@@ -91,7 +115,7 @@ export default function ProjectDetailPage() {
       const querySnapshot = await getDocs(q);
       if (!querySnapshot.empty) {
         setHasApplied(true);
-        setApplicationId(querySnapshot.docs[0].id); // Store the application ID
+        setApplicationId(querySnapshot.docs[0].id);
       } else {
         setHasApplied(false);
         setApplicationId(null);
@@ -112,21 +136,22 @@ export default function ProjectDetailPage() {
     if (!authLoading && user && userProfile?.role === 'professional') {
       checkExistingApplication();
     } else if (!authLoading) {
-      setCheckingApplication(false); // User not logged in or not professional
+      setCheckingApplication(false);
     }
   }, [authLoading, user, userProfile, checkExistingApplication]);
 
-  const handleApply = async () => {
+  const handleDetailedApplicationSubmit = async (formData: ApplicationFormData) => {
     if (!user || !userProfile || userProfile.role !== 'professional' || !project || !db) {
       toast({ title: "Azione non permessa", description: "Devi essere un professionista autenticato per candidarti.", variant: "destructive" });
       return;
     }
     if (hasApplied) {
       toast({ title: "Già Candidato", description: "Ti sei già candidato per questo progetto.", variant: "default" });
+      setIsApplicationDialogOpen(false);
       return;
     }
 
-    setIsApplying(true);
+    setIsSubmittingApplication(true);
     try {
       const applicationData: Omit<ProjectApplication, 'id'> = {
         projectId: project.id!,
@@ -135,16 +160,40 @@ export default function ProjectDetailPage() {
         professionalEmail: userProfile.email || '',
         applicationDate: serverTimestamp(),
         status: 'inviata',
+        coverLetterMessage: formData.coverLetterMessage,
+        relevantSkillsForProject: formData.relevantSkillsForProject || [],
+        availabilityNotes: formData.availabilityNotes || '',
+        updatedAt: serverTimestamp(),
       };
-      const docRef = await addDoc(collection(db, 'projectApplications'), applicationData);
-      toast({ title: "Candidatura Inviata!", description: `La tua candidatura per "${project.title}" è stata inviata con successo.` });
+      const appDocRef = await addDoc(collection(db, 'projectApplications'), applicationData);
       setHasApplied(true);
-      setApplicationId(docRef.id); // Store new application ID
+      setApplicationId(appDocRef.id);
+
+      // Create notification for the company
+      if (project.companyId) {
+        const companyNotification: Omit<UserNotification, 'id'> = {
+          userId: project.companyId, // Notify the company
+          type: NOTIFICATION_TYPES.NEW_APPLICATION_RECEIVED,
+          title: `Nuova candidatura per: ${project.title}`,
+          message: `${applicationData.professionalName} si è appena candidato/a al tuo progetto "${project.title}". Vedi i dettagli.`,
+          linkTo: `${ROUTES.DASHBOARD_COMPANY_CANDIDATES}?projectId=${project.id}`,
+          isRead: false,
+          createdAt: serverTimestamp(),
+          relatedEntityId: project.id!,
+          projectTitle: project.title,
+          applicantName: applicationData.professionalName,
+        };
+        await addDoc(collection(db, 'notifications'), companyNotification);
+      }
+
+      toast({ title: "Candidatura Inviata!", description: `La tua candidatura per "${project.title}" è stata inviata con successo.` });
+      setIsApplicationDialogOpen(false);
+      applicationForm.reset();
     } catch (error: any) {
-      console.error("Error applying to project:", error);
+      console.error("Error submitting detailed application:", error);
       toast({ title: "Errore Candidatura", description: error.message || "Impossibile inviare la candidatura.", variant: "destructive" });
     } finally {
-      setIsApplying(false);
+      setIsSubmittingApplication(false);
     }
   };
 
@@ -167,7 +216,6 @@ export default function ProjectDetailPage() {
       setIsWithdrawing(false);
     }
   };
-
 
   if (loadingProject) {
     return (
@@ -228,6 +276,10 @@ export default function ProjectDetailPage() {
   
   const isDeadlinePassed = deadlineDate ? deadlineDate < new Date() : false;
   const canInteractWithApplication = user && userProfile?.role === 'professional' && !isDeadlinePassed;
+  const professionalSkillsOptions = (userProfile as ProfessionalProfile)?.bimSkills?.map(skillValue => {
+    const skill = BIM_SKILLS_OPTIONS.find(s => s.value === skillValue);
+    return skill ? { value: skill.value, label: skill.label } : { value: skillValue, label: skillValue };
+  }) || [];
 
 
   return (
@@ -273,7 +325,7 @@ export default function ProjectDetailPage() {
 
             {project.requiredSkills && project.requiredSkills.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold text-foreground mb-2 flex items-center"><Settings className="mr-2 h-5 w-5 text-primary"/>Competenze BIM Richieste</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-2 flex items-center"><Settings className="mr-2 h-5 w-5 text-primary"/>Competenze BIM Richieste dal Progetto</h3>
                 <div className="flex flex-wrap gap-2">
                   {project.requiredSkills.map(skillKey => {
                     const skill = getLabelForValue(BIM_SKILLS_OPTIONS, skillKey);
@@ -310,36 +362,89 @@ export default function ProjectDetailPage() {
               <div className="mt-6">
                 {checkingApplication ? (
                   <Button className="w-full" disabled>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+                    <Loader2 className="animate-spin -ml-1 mr-3 h-5 w-5" />
                     Verifica candidatura...
                   </Button>
                 ) : hasApplied ? (
                   <Button className="w-full" onClick={handleWithdrawApplication} disabled={isWithdrawing} variant="outline">
                     {isWithdrawing ? (
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
+                      <Loader2 className="animate-spin -ml-1 mr-3 h-5 w-5" />
                     ) : (
                       <Trash2 className="mr-2 h-5 w-5" />
                     )}
                     {isWithdrawing ? 'Ritiro in corso...' : 'Ritira Candidatura'}
                   </Button>
                 ) : (
-                  <Button className="w-full" onClick={handleApply} disabled={isApplying}>
-                    {isApplying ? (
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                    ) : (
-                      <Send className="mr-2 h-5 w-5" />
-                    )}
-                    {isApplying ? 'Invio candidatura...' : 'Candidati per questo Progetto'}
-                  </Button>
+                  <Dialog open={isApplicationDialogOpen} onOpenChange={setIsApplicationDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="w-full">
+                        <Send className="mr-2 h-5 w-5" /> Candidati per questo Progetto
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[525px]">
+                      <DialogHeader>
+                        <DialogTitle>Candidati per: {project.title}</DialogTitle>
+                        <CardDescription>Completa i dettagli della tua candidatura.</CardDescription>
+                      </DialogHeader>
+                      <Form {...applicationForm}>
+                        <form onSubmit={applicationForm.handleSubmit(handleDetailedApplicationSubmit)} className="space-y-4 py-2">
+                          <FormField
+                            control={applicationForm.control}
+                            name="coverLetterMessage"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Messaggio di Presentazione</FormLabel>
+                                <FormControl>
+                                  <Textarea
+                                    placeholder="Scrivi qui il tuo messaggio per l'azienda, evidenziando perché sei adatto per questo progetto..."
+                                    rows={5}
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          {professionalSkillsOptions.length > 0 && (
+                            <FormMultiSelect
+                                control={applicationForm.control}
+                                name="relevantSkillsForProject"
+                                label="Competenze Chiave per Questo Progetto"
+                                options={professionalSkillsOptions}
+                                placeholder="Seleziona le tue competenze più rilevanti"
+                                description="Scegli dalle competenze del tuo profilo quelle più adatte a questo progetto specifico."
+                            />
+                          )}
+                          <FormField
+                            control={applicationForm.control}
+                            name="availabilityNotes"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Note sulla Disponibilità (Opzionale)</FormLabel>
+                                <FormControl>
+                                  <Textarea
+                                    placeholder="Es. 'Disponibile da subito', 'Posso iniziare dal GG/MM/AAAA', 'Flessibile su orari part-time iniziali'..."
+                                    rows={2}
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <DialogFooter className="pt-4">
+                            <DialogClose asChild>
+                                <Button type="button" variant="outline" disabled={isSubmittingApplication}>Annulla</Button>
+                            </DialogClose>
+                            <Button type="submit" disabled={isSubmittingApplication}>
+                              {isSubmittingApplication ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <Send className="mr-2 h-4 w-4"/>}
+                              {isSubmittingApplication ? 'Invio in corso...' : 'Invia Candidatura'}
+                            </Button>
+                          </DialogFooter>
+                        </form>
+                      </Form>
+                    </DialogContent>
+                  </Dialog>
                 )}
               </div>
             )}
@@ -365,4 +470,3 @@ export default function ProjectDetailPage() {
     </div>
   );
 }
-

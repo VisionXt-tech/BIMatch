@@ -1,3 +1,4 @@
+
 import type { Timestamp } from 'firebase/firestore';
 
 export interface Project {
@@ -32,7 +33,12 @@ export interface ProjectApplication {
   professionalEmail?: string; // For notifications
   applicationDate: Timestamp | Date | any;
   status: 'inviata' | 'in_revisione' | 'preselezionata' | 'rifiutata' | 'accettata';
-  coverLetter?: string; // Optional cover letter or message
-  // You might store a snapshot of key professional details at time of application
-  // professionalSkillsSnapshot?: string[]; 
+  
+  // Campi aggiunti per candidatura dettagliata
+  coverLetterMessage: string; // Messaggio di presentazione
+  relevantSkillsForProject?: string[]; // Competenze che il professionista evidenzia per questo progetto
+  availabilityNotes?: string; // Note sulla disponibilità/data inizio
+
+  updatedAt?: Timestamp | Date | any; // Per aggiornamenti di stato da parte dell'azienda
 }
+
