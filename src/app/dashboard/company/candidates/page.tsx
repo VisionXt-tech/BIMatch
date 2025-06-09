@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { collection, query, where, getDocs, doc, getDoc, orderBy, Timestamp, type DocumentData } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, orderBy, Timestamp, type DocumentData, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { useAuth } from '@/contexts/AuthContext';
 import type { ProjectApplication } from '@/types/project';
@@ -16,8 +16,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Link from 'next/link';
-import { Users, ArrowLeft, ExternalLink, Mail, Info, WifiOff, Briefcase } from 'lucide-react';
-import { ROUTES } from '@/constants';
+import { Users, ArrowLeft, ExternalLink, Mail, Info, WifiOff, Briefcase, Check, X, Hourglass } from 'lucide-react';
+import { ROUTES, NOTIFICATION_TYPES } from '@/constants';
+import { useToast } from '@/hooks/use-toast';
+import type { UserNotification } from '@/types/notification';
 
 // Helper function for avatar fallbacks
 const getInitials = (name: string | null | undefined): string => {
@@ -31,6 +33,8 @@ const getInitials = (name: string | null | undefined): string => {
 
 interface EnrichedApplication extends ProjectApplication {
   professionalProfile?: ProfessionalProfile;
+  projectTitle?: string; // Added to pass to notification
+  companyName?: string; // Added to pass to notification
 }
 
 export default function CompanyCandidatesPage() {
@@ -38,6 +42,7 @@ export default function CompanyCandidatesPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { toast } = useToast();
 
   const projectId = searchParams.get('projectId');
 
@@ -45,6 +50,7 @@ export default function CompanyCandidatesPage() {
   const [applications, setApplications] = useState<EnrichedApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [updatingStatusForAppId, setUpdatingStatusForAppId] = useState<string | null>(null);
 
   const fetchProjectAndCandidates = useCallback(async () => {
     if (!projectId || !db) {
@@ -63,7 +69,6 @@ export default function CompanyCandidatesPage() {
     setError(null);
 
     try {
-      // Fetch project details
       const projectDocRef = doc(db, 'projects', projectId);
       const projectDocSnap = await getDoc(projectDocRef);
 
@@ -74,9 +79,9 @@ export default function CompanyCandidatesPage() {
         setLoading(false);
         return;
       }
-      setProject({ id: projectDocSnap.id, ...projectDocSnap.data() } as Project);
+      const projectData = { id: projectDocSnap.id, ...projectDocSnap.data() } as Project;
+      setProject(projectData);
 
-      // Fetch applications for the project
       const applicationsQuery = query(
         collection(db, 'projectApplications'),
         where('projectId', '==', projectId),
@@ -88,15 +93,23 @@ export default function CompanyCandidatesPage() {
         fetchedApplications.push({ id: doc.id, ...doc.data() } as ProjectApplication);
       });
 
-      // Enrich applications with professional profiles
       const enrichedApplications: EnrichedApplication[] = await Promise.all(
         fetchedApplications.map(async (app) => {
           const profDocRef = doc(db, 'users', app.professionalId);
           const profDocSnap = await getDoc(profDocRef);
           if (profDocSnap.exists()) {
-            return { ...app, professionalProfile: profDocSnap.data() as ProfessionalProfile };
+            return { 
+              ...app, 
+              professionalProfile: profDocSnap.data() as ProfessionalProfile,
+              projectTitle: projectData.title, // For notification context
+              companyName: projectData.companyName // For notification context
+            };
           }
-          return app; // Return app without profile if not found
+          return {
+            ...app,
+            projectTitle: projectData.title,
+            companyName: projectData.companyName
+          };
         })
       );
       setApplications(enrichedApplications);
@@ -120,6 +133,55 @@ export default function CompanyCandidatesPage() {
   useEffect(() => {
     fetchProjectAndCandidates();
   }, [fetchProjectAndCandidates]);
+
+  const handleApplicationStatusChange = async (
+    application: EnrichedApplication, 
+    newStatus: ProjectApplication['status'],
+    notificationTitle: string,
+    notificationMessage: string
+  ) => {
+    if (!db || !application.id || !application.projectTitle || !application.companyName) {
+      toast({ title: "Errore", description: "Dati mancanti per aggiornare lo stato o inviare notifica.", variant: "destructive" });
+      return;
+    }
+    setUpdatingStatusForAppId(application.id);
+    try {
+      // 1. Update application status
+      const appDocRef = doc(db, 'projectApplications', application.id);
+      await updateDoc(appDocRef, { status: newStatus });
+
+      // 2. Create notification for professional
+      const notificationData: Omit<UserNotification, 'id'> = {
+        userId: application.professionalId,
+        type: NOTIFICATION_TYPES.APPLICATION_STATUS_UPDATED,
+        title: notificationTitle,
+        message: notificationMessage,
+        linkTo: ROUTES.PROJECT_DETAILS(application.projectId),
+        isRead: false,
+        createdAt: serverTimestamp(),
+        relatedEntityId: application.projectId,
+        projectTitle: application.projectTitle,
+        companyName: application.companyName,
+      };
+      await addDoc(collection(db, 'notifications'), notificationData);
+      
+      toast({ title: "Stato Aggiornato", description: `Lo stato della candidatura di ${application.professionalName} è stato aggiornato a "${newStatus}". Notifica inviata.` });
+
+      // Update local state to reflect change immediately
+      setApplications(prevApps => 
+        prevApps.map(app => 
+          app.id === application.id ? { ...app, status: newStatus } : app
+        )
+      );
+
+    } catch (error: any) {
+      console.error("Error updating application status or sending notification:", error);
+      toast({ title: "Errore", description: `Impossibile aggiornare lo stato o inviare notifica: ${error.message}`, variant: "destructive" });
+    } finally {
+      setUpdatingStatusForAppId(null);
+    }
+  };
+
 
   if (authLoading || loading) {
     return (
@@ -172,6 +234,25 @@ export default function CompanyCandidatesPage() {
     );
   }
 
+  const getStatusBadgeVariant = (status: ProjectApplication['status']) => {
+    switch (status) {
+      case 'inviata': return 'secondary';
+      case 'in_revisione': return 'default'; // Blu/primario
+      case 'preselezionata': return 'default'; // Blu/Primario (o un verde se preferisci)
+      case 'rifiutata': return 'destructive';
+      case 'accettata': return 'default'; // Verde (lo faremo verde con una classe custom o variante)
+      default: return 'outline';
+    }
+  };
+   const getStatusBadgeColorClass = (status: ProjectApplication['status']) => {
+    switch (status) {
+      case 'preselezionata': return 'bg-yellow-500 hover:bg-yellow-600 text-white';
+      case 'accettata': return 'bg-green-600 hover:bg-green-700 text-white';
+      default: return '';
+    }
+  };
+
+
   return (
     <div className="space-y-6">
       <Button variant="outline" size="sm" onClick={() => router.push(ROUTES.DASHBOARD_COMPANY_PROJECTS)} className="mb-0">
@@ -184,7 +265,7 @@ export default function CompanyCandidatesPage() {
             <Briefcase className="h-6 w-6 text-primary mt-1 shrink-0" />
             <div>
               <CardTitle className="text-xl font-bold">Candidati per: {project.title}</CardTitle>
-              <CardDescription className="text-sm">Visualizza i professionisti che si sono candidati per questo progetto.</CardDescription>
+              <CardDescription className="text-sm">Gestisci i professionisti che si sono candidati per questo progetto.</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -231,14 +312,67 @@ export default function CompanyCandidatesPage() {
                           : 'N/A'}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={app.status === 'inviata' ? 'secondary' : 'default'}>{app.status}</Badge>
+                        <Badge 
+                            variant={getStatusBadgeVariant(app.status)}
+                            className={getStatusBadgeColorClass(app.status)}
+                        >
+                            {app.status.replace('_', ' ')}
+                        </Badge>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right space-x-1">
                         {app.professionalProfile?.uid && (
-                             <Button variant="outline" size="sm" asChild>
+                             <Button variant="outline" size="sm" asChild className="text-xs h-7 px-2 py-1">
                                 <Link href={ROUTES.PROFESSIONAL_PROFILE_VIEW(app.professionalProfile.uid)}>
-                                <ExternalLink className="mr-2 h-3.5 w-3.5" /> Vedi Profilo
+                                <ExternalLink className="mr-1.5 h-3 w-3" /> Profilo
                                 </Link>
+                            </Button>
+                        )}
+                        {app.status === 'inviata' && (
+                            <>
+                            <Button 
+                                variant="default" 
+                                size="sm" 
+                                className="text-xs h-7 px-2 py-1 bg-yellow-500 hover:bg-yellow-600 text-white"
+                                onClick={() => handleApplicationStatusChange(
+                                    app, 
+                                    'preselezionata', 
+                                    `Sviluppi sulla tua candidatura per "${app.projectTitle}"!`, 
+                                    `L'azienda ${app.companyName} ha preselezionato la tua candidatura per il progetto "${app.projectTitle}". Potrebbero contattarti a breve.`
+                                )}
+                                disabled={updatingStatusForAppId === app.id}
+                            >
+                                {updatingStatusForAppId === app.id ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <Check className="mr-1.5 h-3 w-3" />} Preseleziona
+                            </Button>
+                            <Button 
+                                variant="destructive" 
+                                size="sm" 
+                                className="text-xs h-7 px-2 py-1"
+                                onClick={() => handleApplicationStatusChange(
+                                    app, 
+                                    'rifiutata',
+                                    `Aggiornamento sulla tua candidatura per "${app.projectTitle}"`,
+                                    `L'azienda ${app.companyName} ha esaminato la tua candidatura per il progetto "${app.projectTitle}". Al momento, hanno deciso di procedere con altri candidati. Ti ringraziamo per l'interesse.`
+                                )}
+                                disabled={updatingStatusForAppId === app.id}
+                            >
+                                {updatingStatusForAppId === app.id ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <X className="mr-1.5 h-3 w-3" />} Rifiuta
+                            </Button>
+                            </>
+                        )}
+                        {app.status === 'preselezionata' && (
+                             <Button 
+                                variant="default" 
+                                size="sm" 
+                                className="text-xs h-7 px-2 py-1 bg-green-600 hover:bg-green-700 text-white"
+                                onClick={() => handleApplicationStatusChange(
+                                    app, 
+                                    'accettata',
+                                    `Ottime notizie per il progetto "${app.projectTitle}"!`,
+                                    `Congratulazioni! L'azienda ${app.companyName} ha accettato la tua candidatura per il progetto "${app.projectTitle}". Sarai ricontattato/a a breve per i prossimi passi.`
+                                )}
+                                disabled={updatingStatusForAppId === app.id}
+                            >
+                                {updatingStatusForAppId === app.id ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <Check className="mr-1.5 h-3 w-3" />} Accetta
                             </Button>
                         )}
                       </TableCell>
@@ -254,3 +388,5 @@ export default function CompanyCandidatesPage() {
   );
 }
 
+
+    
