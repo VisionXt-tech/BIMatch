@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ROUTES } from '@/constants';
-import { Building, Briefcase, Users, FolderPlus, Edit2, WifiOff, Loader2 } from 'lucide-react';
+import { Building, Briefcase, Users, FolderPlus, Edit2, WifiOff, Loader2, Bell } from 'lucide-react'; // Added Bell
 import { useState, useEffect, useCallback } from 'react';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { collection, query, where, getDocs, Timestamp, type DocumentData } from 'firebase/firestore';
@@ -19,6 +19,7 @@ export default function CompanyDashboardPage() {
 
   const [activeProjectsCount, setActiveProjectsCount] = useState<number | null>(null);
   const [newCandidatesCount, setNewCandidatesCount] = useState<number | null>(null);
+  const [unreadCompanyNotificationsCount, setUnreadCompanyNotificationsCount] = useState<number | null>(null); // New state
   const [loadingCounts, setLoadingCounts] = useState(true);
   const [errorCounts, setErrorCounts] = useState<string | null>(null);
 
@@ -40,7 +41,7 @@ export default function CompanyDashboardPage() {
       const projectsSnapshot = await getDocs(qProjects);
       setActiveProjectsCount(projectsSnapshot.size);
 
-      // 2. Fetch new candidates count (applications with status 'inviata' for company's projects)
+      // 2. Fetch new candidates count
       const companyProjectIds: string[] = [];
       projectsSnapshot.forEach(doc => companyProjectIds.push(doc.id));
 
@@ -69,6 +70,13 @@ export default function CompanyDashboardPage() {
       }
       setNewCandidatesCount(candidates);
 
+      // 3. Fetch unread company notifications count
+      const notificationsRef = collection(db, 'notifications');
+      const qNotifications = query(notificationsRef, where('userId', '==', user.uid), where('isRead', '==', false));
+      const notificationsSnapshot = await getDocs(qNotifications);
+      setUnreadCompanyNotificationsCount(notificationsSnapshot.size);
+
+
     } catch (e: any) {
       console.error("Error fetching company dashboard counts:", e);
       let specificError = "Errore nel caricamento dei dati della dashboard.";
@@ -80,13 +88,16 @@ export default function CompanyDashboardPage() {
             } else if (e.message.includes('indexes?create_composite=')) {
                 specificError = "Indice Firestore mancante. Controlla la console per il link per crearlo.";
                  if (e.message.includes('projectApplications') && e.message.includes('projectId') && e.message.includes('status')) {
-                    specificError = "Indice Firestore mancante per le candidature. Controlla la console Firebase per il link per crearlo (projectApplications, projectId ASC, status ASC, __name__ ASC).";
+                    specificError = "Indice Firestore mancante per le candidature. Controlla la console Firebase per il link per crearlo (projectApplications, projectId ASC, status ASC).";
+                } else if (e.message.includes('notifications') && e.message.includes('userId') && e.message.includes('isRead')) {
+                    specificError = "Indice Firestore mancante per le notifiche. Controlla la console Firebase per il link per crearlo (notifications, userId ASC, isRead ASC).";
                 }
             }
         }
       setErrorCounts(specificError);
       setActiveProjectsCount(0);
       setNewCandidatesCount(0);
+      setUnreadCompanyNotificationsCount(0);
     } finally {
       setLoadingCounts(false);
     }
@@ -187,6 +198,23 @@ export default function CompanyDashboardPage() {
                     }
                 </Link>
             </Button>
+            <Button 
+                asChild 
+                size="lg" 
+                className={cn(
+                    "w-full flex flex-col items-center justify-center h-28 p-3 text-center text-primary-foreground",
+                    loadingCounts ? "bg-secondary hover:bg-secondary/80" :
+                    unreadCompanyNotificationsCount && unreadCompanyNotificationsCount > 0 ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
+                )}
+            >
+                <Link href={ROUTES.DASHBOARD_COMPANY_NOTIFICATIONS}>
+                    <Bell className="h-6 w-6 mb-1 text-primary-foreground" />
+                    <span className="text-sm font-semibold">Notifiche Azienda</span>
+                     {loadingCounts ? <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-primary-foreground/80" /> :
+                        <span className="text-xs text-primary-foreground/80 mt-0.5">{unreadCompanyNotificationsCount ?? 0} non lette</span>
+                    }
+                </Link>
+            </Button>
         </CardContent>
       </Card>
       
@@ -209,3 +237,4 @@ export default function CompanyDashboardPage() {
     </div>
   );
 }
+

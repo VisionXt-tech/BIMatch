@@ -8,15 +8,16 @@ export const ROUTES = {
   DASHBOARD_PROFESSIONAL: '/dashboard/professional',
   DASHBOARD_PROFESSIONAL_PROFILE: '/dashboard/professional/profile',
   DASHBOARD_PROFESSIONAL_PROJECTS: '/dashboard/professional/projects',
-  DASHBOARD_PROFESSIONAL_NOTIFICATIONS: '/dashboard/professional/notifications', // New route
+  DASHBOARD_PROFESSIONAL_NOTIFICATIONS: '/dashboard/professional/notifications',
   DASHBOARD_COMPANY: '/dashboard/company',
   DASHBOARD_COMPANY_PROFILE: '/dashboard/company/profile',
   DASHBOARD_COMPANY_POST_PROJECT: '/dashboard/company/post-project',
   DASHBOARD_COMPANY_PROJECTS: '/dashboard/company/projects',
   DASHBOARD_COMPANY_CANDIDATES: '/dashboard/company/candidates', // To view candidates for a project
-  PROFESSIONALS_MARKETPLACE: '/professionals', // New route for browsing professionals
+  DASHBOARD_COMPANY_NOTIFICATIONS: '/dashboard/company/notifications', // New route for company notifications
+  PROFESSIONALS_MARKETPLACE: '/professionals', 
   PROJECT_DETAILS: (id: string) => `/projects/${id}`,
-  PROFESSIONAL_PROFILE_VIEW: (id: string) => `/professionals/${id}`, // This could be the detail page for a professional
+  PROFESSIONAL_PROFILE_VIEW: (id: string) => `/professionals/${id}`, 
   TERMS_OF_SERVICE: '/terms-of-service',
   PRIVACY_POLICY: '/privacy-policy',
 };
@@ -116,7 +117,8 @@ export const EXPERIENCE_LEVEL_OPTIONS = [
 
 export const NOTIFICATION_TYPES = {
   APPLICATION_STATUS_UPDATED: 'APPLICATION_STATUS_UPDATED',
-  NEW_PROJECT_MATCH: 'NEW_PROJECT_MATCH', // Future use
-  PROFILE_VIEW: 'PROFILE_VIEW', // Future use
+  NEW_PROJECT_MATCH: 'NEW_PROJECT_MATCH', // Future use for professionals
+  PROFILE_VIEW: 'PROFILE_VIEW', // Future use for professionals
+  NEW_APPLICATION_RECEIVED: 'NEW_APPLICATION_RECEIVED', // For companies
   GENERIC_INFO: 'GENERIC_INFO',
 };

@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { ROUTES, ROLES } from '@/constants';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarFooter, SidebarSeparator, SidebarGroup } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, User, Briefcase, LayoutDashboard, FolderPlus, Building, Search, Users, Bell } from 'lucide-react'; // Added Bell
+import { LogOut, User, Briefcase, LayoutDashboard, FolderPlus, Building, Search, Users, Bell } from 'lucide-react'; 
 import Link from 'next/link';
 
 interface DashboardLayoutProps {
@@ -19,7 +19,7 @@ const ProfessionalNavItems = [
   { href: ROUTES.DASHBOARD_PROFESSIONAL, label: 'Dashboard', icon: LayoutDashboard },
   { href: ROUTES.DASHBOARD_PROFESSIONAL_PROFILE, label: 'Il Mio Profilo', icon: User },
   { href: ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS, label: 'Progetti Disponibili', icon: Search },
-  { href: ROUTES.DASHBOARD_PROFESSIONAL_NOTIFICATIONS, label: 'Notifiche', icon: Bell }, // New Item
+  { href: ROUTES.DASHBOARD_PROFESSIONAL_NOTIFICATIONS, label: 'Notifiche', icon: Bell }, 
 ];
 
 const CompanyNavItems = [
@@ -28,6 +28,7 @@ const CompanyNavItems = [
   { href: ROUTES.DASHBOARD_COMPANY_POST_PROJECT, label: 'Pubblica Progetto', icon: FolderPlus },
   { href: ROUTES.DASHBOARD_COMPANY_PROJECTS, label: 'I Miei Progetti', icon: Briefcase },
   { href: ROUTES.PROFESSIONALS_MARKETPLACE, label: 'Cerca Professionisti', icon: Users },
+  { href: ROUTES.DASHBOARD_COMPANY_NOTIFICATIONS, label: 'Notifiche', icon: Bell }, // New Item for Company
 ];
 
 // These CSS variables are set by SidebarProvider and consumed by Navbar and SidebarInset
@@ -130,3 +131,4 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     </SidebarProvider>
   );
 }
+
