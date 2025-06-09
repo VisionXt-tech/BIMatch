@@ -126,7 +126,7 @@ export function FormMultiSelect<TFieldValues extends FieldValues>({
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">{placeholder}</p>
               <ScrollArea className="h-40 w-full rounded-md border p-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {options.map((option) => (
                   <div key={option.value} className="flex items-center space-x-2">
                     <Checkbox
