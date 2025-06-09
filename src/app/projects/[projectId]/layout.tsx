@@ -18,16 +18,16 @@ export async function generateMetadata(
   let projectTitle = 'Dettagli Progetto';
   let projectDescription = 'Visualizza i dettagli del progetto e candidati se sei un professionista BIM.';
 
-  // Ensure db is valid and initialized (imported from firebase.ts)
-  // firebase.ts should set db to null if app initialization fails.
   if (!db) {
-    console.error(`generateMetadata for project ${projectId}: Firestore 'db' instance is null. This indicates an issue with Firebase app initialization in 'firebase.ts' or missing/incorrect Firebase config in .env.local. Using default metadata. Check server logs from 'firebase.ts' for more details.`);
+    const dbStatusMessage = "Firestore 'db' instance is null. This indicates an issue with Firebase app initialization in 'firebase.ts' or missing/incorrect Firebase config in .env.local. Check server logs from 'firebase.ts' for more details.";
+    console.error(
+      `generateMetadata for project ${String(projectId)}: ${dbStatusMessage}`
+    );
     return {
       title: `${projectTitle} (Errore Config DB) | BIMatch`,
       description: projectDescription,
     };
   }
-
 
   if (projectId && typeof projectId === 'string') {
     try {
@@ -39,15 +39,20 @@ export async function generateMetadata(
         projectDescription = projectData.description ? projectData.description.substring(0, 160) + '...' : projectDescription;
       } else {
         projectTitle = 'Progetto Non Trovato';
-        console.warn(`generateMetadata: Project with ID ${projectId} not found.`);
+        console.warn(`generateMetadata: Project with ID ${String(projectId)} not found.`);
       }
     } catch (error: any) {
-      console.error(`Error fetching project (ID: ${projectId}) for metadata. Message: ${error.message}. This could be a Firestore permissions issue OR an issue with the 'db' instance if it's not fully functional. Please check your Firestore security rules and ensure Firebase is correctly configured in .env.local. Stack: ${error.stack}`, error);
+      console.error(
+        `Error fetching project (ID: ${String(projectId)}) for metadata. Message: ${error.message}. ` +
+        "This could be a Firestore permissions issue OR an issue with the 'db' instance if it's not fully functional. " +
+        "Please check your Firestore security rules and ensure Firebase is correctly configured in .env.local. " +
+        `Stack: ${error.stack}`
+      );
       projectTitle = 'Errore Caricamento Progetto';
       projectDescription = `Impossibile caricare i dettagli del progetto. Causa: ${error.message}. Controlla i permessi di Firestore e la configurazione Firebase.`;
     }
   } else {
-    console.warn(`generateMetadata: Invalid or missing projectId: ${projectId}. Using default metadata.`);
+    console.warn(`generateMetadata: Invalid or missing projectId: ${String(projectId)}. Using default metadata.`);
   }
 
   return {
