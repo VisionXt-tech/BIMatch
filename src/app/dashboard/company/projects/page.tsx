@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Briefcase, Users, Edit3, Trash2, Eye, PlusCircle, WifiOff, Info } from 'lucide-react';
@@ -25,6 +25,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useSearchParams } from 'next/navigation';
 
 const getStatusBadgeVariant = (status: Project['status']) => {
   switch (status) {
@@ -51,6 +52,7 @@ export default function CompanyProjectsPage() {
   const { db } = useFirebase();
   const { user, userProfile, loading: authLoading } = useAuth();
   const { toast } = useToast();
+  const searchParams = useSearchParams();
 
   const [companyProjects, setCompanyProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,7 +73,6 @@ export default function CompanyProjectsPage() {
     setLoading(true);
     setError(null);
     try {
-      // 1. Fetch company projects
       const projectsCollectionRef = collection(db, 'projects');
       const qProjects = query(projectsCollectionRef, where('companyId', '==', user.uid), orderBy('postedAt', 'desc'));
       const projectsSnapshot = await getDocs(qProjects);
@@ -80,13 +81,9 @@ export default function CompanyProjectsPage() {
         fetchedProjects.push({ id: doc.id, ...doc.data() } as Project);
       });
 
-      // 2. For each project, fetch its application count
-      // Note: This makes N+1 queries (1 for projects + N for counts).
-      // For better performance at scale, consider denormalizing applicationsCount
-      // directly onto the Project document using Cloud Functions.
       const projectsWithCounts = await Promise.all(
         fetchedProjects.map(async (project) => {
-          if (!project.id) return project; // Should have id
+          if (!project.id) return project; 
           const applicationsQuery = query(
             collection(db, 'projectApplications'),
             where('projectId', '==', project.id)
@@ -119,6 +116,14 @@ export default function CompanyProjectsPage() {
     fetchProjectsWithApplicationCounts();
   }, [fetchProjectsWithApplicationCounts]);
 
+  const displayedProjects = useMemo(() => {
+    const filterParam = searchParams.get('filter');
+    if (filterParam === 'candidates') {
+      return companyProjects.filter(p => p.applicationsCount && p.applicationsCount > 0);
+    }
+    return companyProjects;
+  }, [companyProjects, searchParams]);
+
   const handleConfirmCloseProject = async (projectToClose: Project) => {
     if (!projectToClose || !db) return;
     try {
@@ -130,6 +135,8 @@ export default function CompanyProjectsPage() {
       toast({ title: "Errore", description: `Impossibile chiudere il progetto: ${error.message}`, variant: "destructive"});
     }
   };
+  
+  const isFilteringByCandidates = searchParams.get('filter') === 'candidates';
 
   return (
     <div className="space-y-6">
@@ -137,8 +144,15 @@ export default function CompanyProjectsPage() {
         <CardHeader className="px-4 pt-3 pb-1">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <CardTitle className="text-xl font-bold">I Miei Progetti Pubblicati</CardTitle>
-              <CardDescription className="text-sm">Gestisci i tuoi progetti BIM, visualizza le candidature e trova i migliori talenti.</CardDescription>
+              <CardTitle className="text-xl font-bold">
+                {isFilteringByCandidates ? "Progetti con Candidature" : "I Miei Progetti Pubblicati"}
+              </CardTitle>
+              <CardDescription className="text-sm">
+                {isFilteringByCandidates 
+                  ? "Elenco dei tuoi progetti che hanno ricevuto almeno una candidatura." 
+                  : "Gestisci i tuoi progetti BIM, visualizza le candidature e trova i migliori talenti."
+                }
+              </CardDescription>
             </div>
             <Button asChild size="sm">
                 <Link href={ROUTES.DASHBOARD_COMPANY_POST_PROJECT}><PlusCircle className="mr-2 h-4 w-4" /> Pubblica Nuovo Progetto</Link>
@@ -158,9 +172,9 @@ export default function CompanyProjectsPage() {
               <p className="text-lg font-semibold text-destructive mb-1">Errore di Caricamento</p>
               <p className="text-muted-foreground text-sm">{error}</p>
             </div>
-          ) : companyProjects.length > 0 ? (
+          ) : displayedProjects.length > 0 ? (
             <div className="space-y-3">
-              {companyProjects.map((project) => (
+              {displayedProjects.map((project) => (
                 <Card key={project.id} className="shadow-lg hover:shadow-xl transition-shadow duration-300">
                   <CardHeader className="px-3 pt-2 pb-1">
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
@@ -226,6 +240,15 @@ export default function CompanyProjectsPage() {
                 </Card>
               ))}
             </div>
+          ) : isFilteringByCandidates ? (
+             <div className="text-center py-8 border-2 border-dashed border-border rounded-lg">
+              <Users className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
+              <p className="text-lg font-semibold mb-1">Nessun Progetto con Candidature</p>
+              <p className="text-muted-foreground text-sm mb-3">Al momento, nessuno dei tuoi progetti attivi ha candidature.</p>
+              <Button size="md" variant="outline" asChild>
+                <Link href={ROUTES.DASHBOARD_COMPANY_PROJECTS}><Briefcase className="mr-2 h-5 w-5" /> Vedi Tutti i Progetti</Link>
+              </Button>
+            </div>
           ) : (
             <div className="text-center py-8 border-2 border-dashed border-border rounded-lg">
               <Info className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
@@ -241,3 +264,4 @@ export default function CompanyProjectsPage() {
     </div>
   );
 }
+
