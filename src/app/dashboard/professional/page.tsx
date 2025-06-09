@@ -17,8 +17,8 @@ export default function ProfessionalDashboardPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
   const { db } = useFirebase();
 
-  const [activeProjectsCount, setActiveProjectsCount] = useState<number | null>(null);
-  const [userApplicationsCount, setUserApplicationsCount] = useState<number | null>(null);
+  const [newProjectsCount, setNewProjectsCount] = useState<number | null>(null);
+  const [userActiveApplicationsCount, setUserActiveApplicationsCount] = useState<number | null>(null);
   const [loadingCounts, setLoadingCounts] = useState(true);
   const [errorCounts, setErrorCounts] = useState<string | null>(null);
 
@@ -37,44 +37,57 @@ export default function ProfessionalDashboardPage() {
       setLoadingCounts(true);
       setErrorCounts(null);
       try {
-        // 1. Fetch active projects count
+        // 1. Fetch active, non-expired projects
         const projectsRef = collection(db, 'projects');
         const now = new Date();
         const qProjects = query(projectsRef, where('status', '==', 'attivo'));
         const projectsSnapshot = await getDocs(qProjects);
-        let currentActiveProjects = 0;
+        
+        const activeNonExpiredProjectIds: string[] = [];
         projectsSnapshot.forEach(doc => {
           const project = doc.data();
           const deadline = project.applicationDeadline ? (project.applicationDeadline as Timestamp).toDate() : null;
           if (!deadline || deadline > now) {
-            currentActiveProjects++;
+            activeNonExpiredProjectIds.push(doc.id);
           }
         });
-        setActiveProjectsCount(currentActiveProjects);
 
-        // 2. Fetch user's active applications count
+        // 2. Fetch all applications for the current professional to get appliedProjectIds
+        //    and count active applications.
         const applicationsRef = collection(db, 'projectApplications');
-        const qApplications = query(
-          applicationsRef,
-          where('professionalId', '==', user.uid),
-          where('status', 'in', ['inviata', 'in_revisione', 'preselezionata'])
-        );
+        const qApplications = query(applicationsRef, where('professionalId', '==', user.uid));
         const applicationsSnapshot = await getDocs(qApplications);
-        setUserApplicationsCount(applicationsSnapshot.size);
+        
+        const appliedProjectIds = new Set<string>();
+        let activeApplicationsCount = 0;
+        applicationsSnapshot.forEach(doc => {
+            const appData = doc.data();
+            appliedProjectIds.add(appData.projectId);
+            if (['inviata', 'in_revisione', 'preselezionata'].includes(appData.status)) {
+                activeApplicationsCount++;
+            }
+        });
+        setUserActiveApplicationsCount(activeApplicationsCount);
+
+        // 3. Calculate new projects count (activeNonExpired projects that are NOT in appliedProjectIds)
+        const currentNewProjectsCount = activeNonExpiredProjectIds.filter(projectId => !appliedProjectIds.has(projectId)).length;
+        setNewProjectsCount(currentNewProjectsCount);
 
       } catch (e: any) {
         console.error("Error fetching dashboard counts:", e);
         let specificError = "Errore nel caricamento dei dati della dashboard.";
-        if (e.message?.includes('offline')) {
-            specificError = "Connessione persa. Controlla la tua rete.";
-        } else if (e.message?.includes('permission-denied') || e.message?.includes('PERMISSION_DENIED')) {
-            specificError = "Permessi insufficienti per caricare i dati.";
-        } else if (e.message?.includes('indexes?create_composite=')) {
-            specificError = "Indice Firestore mancante. Controlla la console per il link per crearlo.";
+        if (typeof e.message === 'string') {
+            if (e.message.includes('offline')) {
+                specificError = "Connessione persa. Controlla la tua rete.";
+            } else if (e.message.includes('permission-denied') || e.message.includes('PERMISSION_DENIED')) {
+                specificError = "Permessi insufficienti per caricare i dati.";
+            } else if (e.message.includes('indexes?create_composite=')) {
+                specificError = "Indice Firestore mancante. Controlla la console per il link per crearlo.";
+            }
         }
         setErrorCounts(specificError);
-        setActiveProjectsCount(0); // Set to 0 on error to avoid misleading placeholders
-        setUserApplicationsCount(0);
+        setNewProjectsCount(0); 
+        setUserActiveApplicationsCount(0);
       } finally {
         setLoadingCounts(false);
       }
@@ -141,7 +154,7 @@ export default function ProfessionalDashboardPage() {
                 <Search className="h-6 w-6 mb-1 text-primary-foreground" />
                 <span className="text-sm font-semibold text-primary-foreground">Cerca Nuovi Progetti</span>
                 {loadingCounts ? <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-primary-foreground/80" /> :
-                  <span className="text-xs text-primary-foreground/80 mt-0.5">{activeProjectsCount ?? 0} disponibili</span>}
+                  <span className="text-xs text-primary-foreground/80 mt-0.5">{newProjectsCount ?? 0} disponibili</span>}
               </Link>
             </Button>
             
@@ -150,9 +163,8 @@ export default function ProfessionalDashboardPage() {
               size="lg"
               className={cn(
                 "w-full text-primary-foreground flex flex-col items-center justify-center h-28 p-3 text-center",
-                // Conditional background classes
                 loadingCounts ? "bg-secondary hover:bg-secondary/80" : 
-                (userApplicationsCount && userApplicationsCount > 0
+                (userActiveApplicationsCount && userActiveApplicationsCount > 0
                   ? "bg-green-600 hover:bg-green-700"
                   : "bg-red-600 hover:bg-red-700")
               )}
@@ -161,7 +173,7 @@ export default function ProfessionalDashboardPage() {
                 <ListChecks className="h-6 w-6 mb-1 text-primary-foreground" />
                 <span className="text-sm font-semibold text-primary-foreground">Le Mie Candidature</span>
                 {loadingCounts ? <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-primary-foreground/80" /> :
-                  <span className="text-xs text-primary-foreground/80 mt-0.5">{userApplicationsCount ?? 0} attive</span>}
+                  <span className="text-xs text-primary-foreground/80 mt-0.5">{userActiveApplicationsCount ?? 0} attive</span>}
               </Link>
             </Button>
 
