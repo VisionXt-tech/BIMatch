@@ -16,10 +16,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Link from 'next/link';
-import { Users, ArrowLeft, ExternalLink, Mail, Info, WifiOff, Briefcase, Check, X, Hourglass } from 'lucide-react';
-import { ROUTES, NOTIFICATION_TYPES } from '@/constants';
+import { Users, ArrowLeft, ExternalLink, Mail, Info, WifiOff, Briefcase, Check, X, Hourglass, FileText, ListChecks, MessageSquare, CalendarDays } from 'lucide-react';
+import { ROUTES, NOTIFICATION_TYPES, BIM_SKILLS_OPTIONS } from '@/constants';
 import { useToast } from '@/hooks/use-toast';
 import type { UserNotification } from '@/types/notification';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Helper function for avatar fallbacks
 const getInitials = (name: string | null | undefined): string => {
@@ -33,8 +35,8 @@ const getInitials = (name: string | null | undefined): string => {
 
 interface EnrichedApplication extends ProjectApplication {
   professionalProfile?: ProfessionalProfile;
-  projectTitle?: string; // Added to pass to notification
-  companyName?: string; // Added to pass to notification
+  projectTitle?: string; 
+  companyName?: string; 
 }
 
 export default function CompanyCandidatesPage() {
@@ -51,6 +53,9 @@ export default function CompanyCandidatesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updatingStatusForAppId, setUpdatingStatusForAppId] = useState<string | null>(null);
+  const [selectedApplicationForDetails, setSelectedApplicationForDetails] = useState<EnrichedApplication | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+
 
   const fetchProjectAndCandidates = useCallback(async () => {
     if (!projectId || !db) {
@@ -101,8 +106,8 @@ export default function CompanyCandidatesPage() {
             return { 
               ...app, 
               professionalProfile: profDocSnap.data() as ProfessionalProfile,
-              projectTitle: projectData.title, // For notification context
-              companyName: userProfile.companyName || userProfile.displayName || 'Un\'azienda' // For notification context
+              projectTitle: projectData.title, 
+              companyName: userProfile.companyName || userProfile.displayName || 'Un\'azienda' 
             };
           }
           return {
@@ -146,14 +151,12 @@ export default function CompanyCandidatesPage() {
     }
     setUpdatingStatusForAppId(application.id);
     try {
-      // 1. Update application status
       const appDocRef = doc(db, 'projectApplications', application.id);
       await updateDoc(appDocRef, { 
         status: newStatus,
         updatedAt: serverTimestamp()
       });
 
-      // 2. Create notification for professional
       const notificationData: Omit<UserNotification, 'id'> = {
         userId: application.professionalId,
         type: NOTIFICATION_TYPES.APPLICATION_STATUS_UPDATED,
@@ -170,7 +173,6 @@ export default function CompanyCandidatesPage() {
       
       toast({ title: "Stato Aggiornato", description: `Lo stato della candidatura di ${application.professionalName} è stato aggiornato a "${newStatus}". Notifica inviata.` });
 
-      // Update local state to reflect change immediately
       setApplications(prevApps => 
         prevApps.map(app => 
           app.id === application.id ? { ...app, status: newStatus, updatedAt: Timestamp.now() } : app 
@@ -184,6 +186,13 @@ export default function CompanyCandidatesPage() {
       setUpdatingStatusForAppId(null);
     }
   };
+  
+  const openApplicationDetailsModal = (application: EnrichedApplication) => {
+    setSelectedApplicationForDetails(application);
+    setIsDetailsModalOpen(true);
+  };
+
+  const getSkillLabel = (value: string) => BIM_SKILLS_OPTIONS.find(s => s.value === value)?.label || value;
 
 
   if (authLoading || loading) {
@@ -324,6 +333,14 @@ export default function CompanyCandidatesPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right space-x-1">
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="text-xs h-7 px-2 py-1"
+                            onClick={() => openApplicationDetailsModal(app)}
+                            >
+                            <FileText className="mr-1.5 h-3 w-3" /> Dettagli Candidatura
+                        </Button>
                         {app.professionalProfile?.uid && (
                              <Button variant="outline" size="sm" asChild className="text-xs h-7 px-2 py-1">
                                 <Link href={ROUTES.PROFESSIONAL_PROFILE_VIEW(app.professionalProfile.uid)}>
@@ -333,6 +350,23 @@ export default function CompanyCandidatesPage() {
                         )}
 
                         {/* Azioni basate sullo stato corrente */}
+                        {app.status === 'inviata' && (
+                           <Button 
+                                variant="default" 
+                                size="sm" 
+                                className="text-xs h-7 px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white"
+                                onClick={() => handleApplicationStatusChange(
+                                    app, 
+                                    'in_revisione', 
+                                    `La tua candidatura per "${app.projectTitle}" è in esame`, 
+                                    `L'azienda ${app.companyName} sta attualmente esaminando la tua candidatura per il progetto "${app.projectTitle}".`
+                                )}
+                                disabled={updatingStatusForAppId === app.id}
+                            >
+                                {updatingStatusForAppId === app.id && app.status === 'in_revisione' ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <Briefcase className="mr-1.5 h-3 w-3" />} In Revisione
+                            </Button>
+                        )}
+                        
                         {(app.status === 'inviata' || app.status === 'in_revisione') && (
                            <Button 
                                 variant="default" 
@@ -383,7 +417,7 @@ export default function CompanyCandidatesPage() {
                                 {updatingStatusForAppId === app.id && app.status === 'rifiutata' ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <X className="mr-1.5 h-3 w-3" />} Rifiuta
                             </Button>
                         )}
-                         {/* Opzione per rimettere "In Revisione" se è "Preselezionata" */}
+                         
                         {app.status === 'preselezionata' && (
                            <Button 
                                 variant="default"
@@ -409,6 +443,61 @@ export default function CompanyCandidatesPage() {
           )}
         </CardContent>
       </Card>
+
+      {selectedApplicationForDetails && (
+        <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
+            <DialogContent className="sm:max-w-lg max-h-[80vh]">
+                <DialogHeader>
+                    <DialogTitle className="text-xl">Dettagli Candidatura per {project?.title}</DialogTitle>
+                    <DialogDescription>
+                        Candidatura di: <strong>{selectedApplicationForDetails.professionalName}</strong>
+                         {selectedApplicationForDetails.professionalProfile?.email && (
+                            <a href={`mailto:${selectedApplicationForDetails.professionalProfile.email}`} className="text-xs text-muted-foreground hover:text-primary flex items-center mt-1">
+                                <Mail className="h-3 w-3 mr-1" /> {selectedApplicationForDetails.professionalProfile.email}
+                            </a>
+                         )}
+                    </DialogDescription>
+                </DialogHeader>
+                <ScrollArea className="max-h-[calc(80vh-150px)] pr-4">
+                    <div className="space-y-4 py-2">
+                        <div>
+                            <h4 className="font-semibold text-sm mb-1 flex items-center"><MessageSquare className="h-4 w-4 mr-2 text-primary"/>Messaggio di Presentazione:</h4>
+                            <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md whitespace-pre-line">{selectedApplicationForDetails.coverLetterMessage}</p>
+                        </div>
+                        {selectedApplicationForDetails.relevantSkillsForProject && selectedApplicationForDetails.relevantSkillsForProject.length > 0 && (
+                            <div>
+                                <h4 className="font-semibold text-sm mb-1 flex items-center"><ListChecks className="h-4 w-4 mr-2 text-primary"/>Competenze Evidenziate per il Progetto:</h4>
+                                <div className="flex flex-wrap gap-2">
+                                    {selectedApplicationForDetails.relevantSkillsForProject.map(skillValue => (
+                                        <Badge key={skillValue} variant="secondary" className="text-xs">
+                                            {getSkillLabel(skillValue)}
+                                        </Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        {selectedApplicationForDetails.availabilityNotes && (
+                            <div>
+                                <h4 className="font-semibold text-sm mb-1 flex items-center"><CalendarDays className="h-4 w-4 mr-2 text-primary"/>Note sulla Disponibilità:</h4>
+                                <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md whitespace-pre-line">{selectedApplicationForDetails.availabilityNotes}</p>
+                            </div>
+                        )}
+                         {!selectedApplicationForDetails.coverLetterMessage && 
+                         (!selectedApplicationForDetails.relevantSkillsForProject || selectedApplicationForDetails.relevantSkillsForProject.length === 0) && 
+                         !selectedApplicationForDetails.availabilityNotes && (
+                            <p className="text-sm text-muted-foreground italic text-center py-4">Nessun dettaglio aggiuntivo fornito per questa candidatura.</p>
+                         )}
+                    </div>
+                </ScrollArea>
+                <DialogFooter className="pt-4">
+                    <DialogClose asChild>
+                        <Button type="button" variant="outline">Chiudi</Button>
+                    </DialogClose>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
+
