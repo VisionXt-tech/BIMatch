@@ -37,7 +37,6 @@ export default function AvailableProjectsPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
   const searchParams = useSearchParams();
   const [projects, setProjects] = useState<Project[]>([]);
-  // Changed userApplications to store more details
   const [userApplicationDetails, setUserApplicationDetails] = useState<Array<{ projectId: string; status: ProjectApplication['status'] }>>([]);
   const [loading, setLoading] = useState(true);
   const [loadingApplications, setLoadingApplications] = useState(true);
@@ -100,7 +99,6 @@ export default function AvailableProjectsPage() {
           const appsCollectionRef = collection(db, 'projectApplications');
           const qApps = query(appsCollectionRef, where('professionalId', '==', user.uid));
           const querySnapshotApps = await getDocs(qApps);
-          // Store projectId and status
           const fetchedAppDetails: Array<{ projectId: string; status: ProjectApplication['status'] }> = [];
           querySnapshotApps.forEach((doc) => {
             const appData = doc.data() as ProjectApplication;
@@ -137,7 +135,7 @@ export default function AvailableProjectsPage() {
         const hasAppliedForFilter = !!currentAppDetail;
 
         if (filters.applicationStatus === APPLICATION_STATUS_APPLIED) {
-            applicationStatusMatch = hasAppliedForFilter;
+            applicationStatusMatch = hasAppliedForFilter && currentAppDetail?.status !== 'rifiutata'; // Exclude rejected from "Applied" filter
         } else if (filters.applicationStatus === APPLICATION_STATUS_NOT_APPLIED) {
             applicationStatusMatch = !hasAppliedForFilter;
         }
@@ -230,20 +228,26 @@ export default function AvailableProjectsPage() {
                   : undefined;
                 const hasApplied = !!applicationDetail;
                 const currentApplicationStatus = applicationDetail?.status;
+                const showStatusBadge = hasApplied || currentApplicationStatus === 'accettata' || currentApplicationStatus === 'rifiutata';
+
 
                 return (
                   <Card key={project.id} className="shadow-lg hover:shadow-xl transition-shadow duration-300 relative">
-                    {(hasApplied && currentApplicationStatus !== 'rifiutata') && (
-                      <Badge variant="default" className="absolute top-3 right-3 text-xs px-2 py-1 z-10 flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white">
-                        <CheckCircle2 className="h-3.5 w-3.5" /> Candidato
-                      </Badge>
-                    )}
-                     {(hasApplied && currentApplicationStatus === 'rifiutata') && (
-                      <Badge variant="outline" className="absolute top-3 right-3 text-xs px-2 py-1 z-10 flex items-center gap-1 border-orange-500 text-orange-600 bg-orange-50 hover:bg-orange-100">
-                        <XCircle className="h-3.5 w-3.5" /> Rifiutata
-                      </Badge>
-                    )}
-                    <CardHeader className={hasApplied ? "pr-24 md:pr-28" : "pr-3"}>
+                    {currentApplicationStatus === 'accettata' ? (
+                        <Badge variant="default" className="absolute top-3 right-3 text-xs px-2 py-1 z-10 flex items-center gap-1 bg-green-700 hover:bg-green-700 text-white">
+                            <CheckCircle2 className="h-3.5 w-3.5" /> Collaborazione Accettata
+                        </Badge>
+                    ) : currentApplicationStatus === 'rifiutata' ? (
+                        <Badge variant="outline" className="absolute top-3 right-3 text-xs px-2 py-1 z-10 flex items-center gap-1 border-orange-500 text-orange-600 bg-orange-50 hover:bg-orange-100">
+                            <XCircle className="h-3.5 w-3.5" /> Rifiutata
+                        </Badge>
+                    ) : hasApplied ? (
+                        <Badge variant="default" className="absolute top-3 right-3 text-xs px-2 py-1 z-10 flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white">
+                            <CheckCircle2 className="h-3.5 w-3.5" /> Candidato
+                        </Badge>
+                    ) : null}
+
+                    <CardHeader className={cn(showStatusBadge ? "pr-24 md:pr-32" : "pr-3")}>
                       <div className="flex items-start justify-between gap-2">
                           <div>
                               <CardTitle className="text-xl hover:text-primary transition-colors">
@@ -290,20 +294,24 @@ export default function AvailableProjectsPage() {
                           <p className="text-xs text-muted-foreground">
                             Pubblicato: {project.postedAt && (project.postedAt as Timestamp).toDate ? (project.postedAt as Timestamp).toDate().toLocaleDateString('it-IT') : 'Data non disponibile'}
                           </p>
-                          {hasApplied ? (
+                          {currentApplicationStatus === 'accettata' ? (
+                                <Button size="sm" disabled className="w-full bg-green-700 hover:bg-green-700 text-white cursor-default">
+                                    <CheckCircle2 className="mr-1.5 h-4 w-4"/> Collaborazione Accettata
+                                </Button>
+                           ) : hasApplied ? (
                               currentApplicationStatus === 'rifiutata' ? (
-                                <Button size="sm" asChild variant="outline" disabled className="border-orange-500 text-orange-600 bg-orange-50 cursor-not-allowed">
+                                <Button size="sm" asChild variant="outline" disabled className="w-full border-orange-500 text-orange-600 bg-orange-50 cursor-not-allowed">
                                     <span><XCircle className="mr-1.5 h-4 w-4"/> Rifiutata</span>
                                 </Button>
                               ) : (
-                                <Button size="sm" asChild className="bg-green-600 hover:bg-green-700 text-white">
+                                <Button size="sm" asChild className="w-full bg-green-600 hover:bg-green-700 text-white">
                                     <Link href={ROUTES.PROJECT_DETAILS(project.id!)}>
                                         <CheckCircle2 className="mr-1.5 h-4 w-4"/>Già Candidato
                                     </Link>
                                 </Button>
                               )
                           ) : (
-                              <Button size="sm" asChild>
+                              <Button size="sm" asChild className="w-full">
                                   <Link href={ROUTES.PROJECT_DETAILS(project.id!)}>
                                     Dettagli e Candidatura
                                   </Link>
