@@ -56,51 +56,80 @@ export default function ProfessionalNotificationsPage() {
   const [isResponseModalOpen, setIsResponseModalOpen] = useState(false);
   const [responseActionType, setResponseActionType] = useState<'accept' | 'reject' | 'reschedule' | null>(null);
   const [processingResponse, setProcessingResponse] = useState(false);
+  const [applicationDetailsForNotifications, setApplicationDetailsForNotifications] = useState<Record<string, ProjectApplication>>({});
+
 
   const professionalResponseForm = useForm<ProfessionalResponseFormData>({
     resolver: zodResolver(professionalResponseFormSchema),
     defaultValues: { responseReason: '', newProposedDate: undefined },
   });
 
-  const fetchNotifications = useCallback(async () => {
+  const fetchNotificationsAndRelatedApplications = useCallback(async () => {
     if (authLoading || !user || !db) {
-      if (!authLoading && !user) setError("Devi essere autenticato per vedere le notifiche.");
-      if (!authLoading && !db) setError("Database non disponibile.");
-      setLoading(false);
-      return;
+        if (!authLoading && !user) setError("Devi essere autenticato per vedere le notifiche.");
+        if (!authLoading && !db) setError("Database non disponibile.");
+        setLoading(false);
+        return;
     }
 
     setLoading(true);
     setError(null);
+    const fetchedAppDetails: Record<string, ProjectApplication> = {};
+
     try {
-      const notificationsQuery = query(
-        collection(db, 'notifications'),
-        where('userId', '==', user.uid),
-        orderBy('createdAt', 'desc')
-      );
-      const querySnapshot = await getDocs(notificationsQuery);
-      const fetchedNotifications: UserNotification[] = [];
-      querySnapshot.forEach((doc) => {
-        fetchedNotifications.push({ id: doc.id, ...doc.data() } as UserNotification);
-      });
-      setNotifications(fetchedNotifications);
+        const notificationsQuery = query(
+            collection(db, 'notifications'),
+            where('userId', '==', user.uid),
+            orderBy('createdAt', 'desc')
+        );
+        const querySnapshot = await getDocs(notificationsQuery);
+        const fetchedNotifications: UserNotification[] = [];
+        const applicationIdsToFetch: string[] = [];
+
+        querySnapshot.forEach((doc) => {
+            const notification = { id: doc.id, ...doc.data() } as UserNotification;
+            fetchedNotifications.push(notification);
+            if (notification.type === NOTIFICATION_TYPES.INTERVIEW_PROPOSED && notification.applicationId && !applicationIdsToFetch.includes(notification.applicationId)) {
+                applicationIdsToFetch.push(notification.applicationId);
+            }
+        });
+        setNotifications(fetchedNotifications);
+
+        if (applicationIdsToFetch.length > 0) {
+            const MAX_QUERIES = 30; // Firestore 'in' query limit
+            for (let i = 0; i < applicationIdsToFetch.length; i += MAX_QUERIES) {
+                const chunk = applicationIdsToFetch.slice(i, i + MAX_QUERIES);
+                if (chunk.length > 0) {
+                    const applicationsQuery = query(collection(db, 'projectApplications'), where('__name__', 'in', chunk));
+                    const appSnapshot = await getDocs(applicationsQuery);
+                    appSnapshot.forEach(appDoc => {
+                        if(appDoc.exists()){
+                             fetchedAppDetails[appDoc.id] = { id: appDoc.id, ...appDoc.data() } as ProjectApplication;
+                        }
+                    });
+                }
+            }
+        }
+        setApplicationDetailsForNotifications(fetchedAppDetails);
+
     } catch (e: any) {
-      console.error("Error fetching notifications:", e);
-      let specificErrorMessage = "Errore nel caricamento delle notifiche.";
-      if (e.message?.includes('indexes?create_composite=')) { 
-          specificErrorMessage = `Indice Firestore mancante per le notifiche. Controlla la console Firebase per crearlo (notifications, userId ASC, createdAt DESC).`;
-      } else if (e.message?.includes('offline')) {
-           specificErrorMessage = "Connessione persa. Controlla la tua rete.";
-      }
-      setError(specificErrorMessage);
+        console.error("Error fetching notifications or related applications:", e);
+        let specificErrorMessage = "Errore nel caricamento delle notifiche.";
+        if (e.message?.includes('indexes?create_composite=')) {
+            specificErrorMessage = `Indice Firestore mancante per le notifiche. Controlla la console Firebase per crearlo (notifications, userId ASC, createdAt DESC).`;
+        } else if (e.message?.includes('offline')) {
+            specificErrorMessage = "Connessione persa. Controlla la tua rete.";
+        }
+        setError(specificErrorMessage);
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
   }, [authLoading, user, db]);
-
+  
   useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
+    fetchNotificationsAndRelatedApplications();
+  }, [fetchNotificationsAndRelatedApplications]);
+
 
   const handleMarkAsRead = async (notificationId: string) => {
     if (!db) return;
@@ -135,15 +164,15 @@ export default function ProfessionalNotificationsPage() {
 
   const handleSubmitProfessionalResponse = async (
     formData: Partial<ProfessionalResponseFormData>,
-    directNotification?: UserNotification, // Parametro per azione diretta (es. "Accetta")
-    directActionType?: 'accept' // Tipo di azione diretta
+    directNotification?: UserNotification, 
+    directActionType?: 'accept' 
   ) => {
     const activeNotification = directNotification || selectedNotificationForResponse;
     const activeActionType = directActionType || responseActionType;
 
     if (!activeNotification || !activeNotification.applicationId || !userProfile || !db || !activeActionType) {
       toast({ title: "Errore", description: "Dati mancanti per inviare la risposta.", variant: "destructive" });
-      setProcessingResponse(false); // Assicurati che processingResponse sia resettato in caso di errore precoce
+      setProcessingResponse(false); 
       return;
     }
     setProcessingResponse(true);
@@ -158,9 +187,24 @@ export default function ProfessionalNotificationsPage() {
 
     if (activeActionType === 'accept') {
       newStatus = 'colloquio_accettato_prof';
-      updatePayload = { status: newStatus, updatedAt: serverTimestamp() };
+      updatePayload = { 
+        status: newStatus, 
+        updatedAt: serverTimestamp(),
+        professionalNewDateProposal: formData.newProposedDate ? Timestamp.fromDate(formData.newProposedDate) : null, // Può accettare con una nuova data
+        professionalResponseReason: formData.responseReason || undefined, // O con un messaggio
+      };
       companyNotificationType = NOTIFICATION_TYPES.INTERVIEW_ACCEPTED_BY_PRO;
-      companyNotificationMessage = `Il professionista ${userProfile.displayName} ha ACCETTATO la tua proposta di colloquio per il progetto "${activeNotification.projectTitle}".`;
+      let acceptanceMessage = `Il professionista ${userProfile.displayName} ha ACCETTATO la tua proposta di colloquio per il progetto "${activeNotification.projectTitle}".`;
+      if (formData.newProposedDate) {
+          acceptanceMessage += ` Nuova data/ora proposta: ${format(formData.newProposedDate, "PPP HH:mm", { locale: it })}.`;
+          companyNotificationPayload.professionalNewDateProposal = format(formData.newProposedDate, "PPP HH:mm", { locale: it });
+      }
+      if (formData.responseReason) {
+          acceptanceMessage += ` Messaggio: "${formData.responseReason}".`;
+          companyNotificationPayload.professionalResponseReason = formData.responseReason;
+      }
+      companyNotificationMessage = acceptanceMessage;
+
     } else if (activeActionType === 'reject') {
       if (!formData.responseReason || formData.responseReason.length < 10) {
         professionalResponseForm.setError("responseReason", { type: "manual", message: "La motivazione del rifiuto è richiesta (min 10 caratteri)." });
@@ -172,13 +216,13 @@ export default function ProfessionalNotificationsPage() {
       companyNotificationType = NOTIFICATION_TYPES.INTERVIEW_REJECTED_BY_PRO;
       companyNotificationMessage = `Il professionista ${userProfile.displayName} ha RIFIUTATO la tua proposta di colloquio per "${activeNotification.projectTitle}". Motivazione: "${formData.responseReason}".`;
       companyNotificationPayload = { professionalResponseReason: formData.responseReason };
-    } else if (activeActionType === 'reschedule') {
+    } else if (activeActionType === 'reschedule') { // Ora 'reschedule' è implicito se 'accept' ha una nuova data
       if (!formData.newProposedDate) {
         professionalResponseForm.setError("newProposedDate", { type: "manual", message: "Devi proporre una nuova data." });
         setProcessingResponse(false);
         return;
       }
-      newStatus = 'colloquio_ripianificato_prof';
+      newStatus = 'colloquio_ripianificato_prof'; // Questo stato viene usato se si accetta con riprogrammazione
       const formattedNewDate = format(formData.newProposedDate, "PPP HH:mm", { locale: it });
       updatePayload = { 
         status: newStatus, 
@@ -186,8 +230,8 @@ export default function ProfessionalNotificationsPage() {
         professionalResponseReason: formData.responseReason || undefined, 
         updatedAt: serverTimestamp() 
       };
-      companyNotificationType = NOTIFICATION_TYPES.INTERVIEW_RESCHEDULED_BY_PRO;
-      companyNotificationMessage = `Il professionista ${userProfile.displayName} ha proposto una NUOVA DATA (${formattedNewDate}) per il colloquio relativo al progetto "${activeNotification.projectTitle}".${formData.responseReason ? ` Messaggio: "${formData.responseReason}".` : ''}`;
+      companyNotificationType = NOTIFICATION_TYPES.INTERVIEW_RESCHEDULED_BY_PRO; // O INTERVIEW_ACCEPTED_BY_PRO con dettagli
+      companyNotificationMessage = `Il professionista ${userProfile.displayName} ha ACCETTATO la proposta di colloquio per "${activeNotification.projectTitle}" ma ha proposto una NUOVA DATA/ORA: ${formattedNewDate}.${formData.responseReason ? ` Messaggio: "${formData.responseReason}".` : ''}`;
       companyNotificationPayload = { professionalNewDateProposal: formattedNewDate, professionalResponseReason: formData.responseReason || undefined };
     } else {
       setProcessingResponse(false);
@@ -222,12 +266,22 @@ export default function ProfessionalNotificationsPage() {
 
       toast({ title: "Risposta Inviata", description: "La tua risposta è stata inviata all'azienda." });
       
-      if(isResponseModalOpen) setIsResponseModalOpen(false); // Chiudi solo se era aperta
+      if(isResponseModalOpen) setIsResponseModalOpen(false); 
       setSelectedNotificationForResponse(null); 
       setResponseActionType(null);
       professionalResponseForm.reset();
-      if(activeNotification.id) handleMarkAsRead(activeNotification.id);
-      fetchNotifications(); 
+      if(activeNotification.id && !activeNotification.isRead) handleMarkAsRead(activeNotification.id);
+      
+      // Aggiorna lo stato locale dell'applicazione per riflettere immediatamente il cambiamento
+      setApplicationDetailsForNotifications(prev => ({
+        ...prev,
+        [activeNotification.applicationId!]: {
+          ...(prev[activeNotification.applicationId!] || {}),
+          status: newStatus,
+          ...updatePayload // includi altri campi aggiornati come professionalResponseReason
+        } as ProjectApplication
+      }));
+
 
     } catch (error: any) {
       console.error("Error submitting professional response:", error);
@@ -239,19 +293,9 @@ export default function ProfessionalNotificationsPage() {
 
   const handleOpenResponseModal = (notification: UserNotification, action: 'accept' | 'reject' | 'reschedule') => {
     professionalResponseForm.reset({ responseReason: '', newProposedDate: undefined });
-    // Imposta comunque gli stati per coerenza se il modale viene aperto
     setSelectedNotificationForResponse(notification);
     setResponseActionType(action);
-
-    if (action === 'accept' && notification.applicationId) { 
-        // Chiama direttamente handleSubmitProfessionalResponse passando i dati necessari
-        handleSubmitProfessionalResponse({}, notification, action); 
-    } else {
-        // Per 'reject' e 'reschedule', apri il modale
-        // Gli stati selectedNotificationForResponse e responseActionType saranno usati da handleSubmitProfessionalResponse
-        // quando chiamato dall'handler onSubmit del form del modale.
-        setIsResponseModalOpen(true);
-    }
+    setIsResponseModalOpen(true);
   };
 
 
@@ -263,9 +307,9 @@ export default function ProfessionalNotificationsPage() {
     if (originalProposalDateStr) {
         try {
             originalProposalDate = parse(originalProposalDateStr, "PPP", new Date(), { locale: it });
-            if (isNaN(originalProposalDate.getTime())) { // Verifica se il parsing ha prodotto una data valida
+            if (isNaN(originalProposalDate.getTime())) { 
                 console.warn("Failed to parse original proposal date string:", originalProposalDateStr);
-                originalProposalDate = null; // Resetta a null se invalida
+                originalProposalDate = null; 
             }
         } catch (e) {
             console.error("Error parsing date for modal display:", e);
@@ -275,6 +319,64 @@ export default function ProfessionalNotificationsPage() {
     
     const originalProposalMessage = selectedNotificationForResponse.interviewProposalMessage;
 
+    if (responseActionType === 'accept') {
+        return (
+            <>
+              <DialogDescription className="mb-4 text-sm">
+                Stai per ACCETTARE la proposta di colloquio per <strong>&quot;{selectedNotificationForResponse.projectTitle}&quot;</strong>.
+                <br/>Proposta originale dall&apos;azienda: <em>&quot;{originalProposalMessage}&quot;</em> {originalProposalDate && ` per il ${format(originalProposalDate, "PPP", {locale:it})}`}.
+                <br/>Puoi confermare direttamente o proporre una data/ora alternativa e aggiungere un messaggio.
+              </DialogDescription>
+              <FormField
+                control={professionalResponseForm.control}
+                name="newProposedDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Proponi Data/Ora Alternativa (Opzionale)</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                            {field.value ? format(field.value, "PPP HH:mm", { locale: it }) : <span>Scegli se vuoi proporre un&apos;alternativa</span>}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))} initialFocus locale={it} />
+                        <div className="p-2 border-t">
+                            <input 
+                                type="time" 
+                                className="w-full p-1 border rounded text-sm"
+                                defaultValue={field.value ? format(field.value, "HH:mm") : "09:00"}
+                                onChange={(e) => {
+                                    const [hours, minutes] = e.target.value.split(':').map(Number);
+                                    const currentSelectedDate = field.value || new Date();
+                                    currentSelectedDate.setHours(hours, minutes);
+                                    field.onChange(new Date(currentSelectedDate)); 
+                                }}
+                            />
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={professionalResponseForm.control}
+                name="responseReason"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Messaggio Aggiuntivo (Opzionale)</FormLabel>
+                    <FormControl><Textarea placeholder="Es. Confermo disponibilità, oppure 'preferirei il...' " rows={2} {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </>
+        );
+    }
     if (responseActionType === 'reject') {
       return (
         <>
@@ -297,7 +399,7 @@ export default function ProfessionalNotificationsPage() {
         </>
       );
     }
-    if (responseActionType === 'reschedule') {
+    if (responseActionType === 'reschedule') { // Questo caso ora è gestito da "accept" con data alternativa.
       return (
         <>
           <DialogDescription className="mb-4 text-sm">
@@ -394,7 +496,12 @@ export default function ProfessionalNotificationsPage() {
         <Card className="shadow-sm"><CardContent className="py-10 text-center"><Info className="mx-auto h-12 w-12 text-muted-foreground mb-4" /><p className="text-lg font-semibold">Nessuna notifica.</p><p className="text-sm text-muted-foreground">Non hai ancora ricevuto notifiche.</p></CardContent></Card>
       ) : (
         <div className="space-y-3">
-          {notifications.map((notification) => (
+          {notifications.map((notification) => {
+            const associatedApplication = notification.applicationId ? applicationDetailsForNotifications[notification.applicationId] : null;
+            const showResponseButtons = notification.type === NOTIFICATION_TYPES.INTERVIEW_PROPOSED &&
+                                        notification.applicationId &&
+                                        associatedApplication?.status === 'colloquio_proposto';
+            return (
             <Card key={notification.id} className={cn("shadow-sm hover:shadow-md transition-shadow", !notification.isRead && "bg-primary/5 border-primary/20")}>
               <CardContent className="p-4">
                 <div className="flex items-start space-x-3">
@@ -406,15 +513,15 @@ export default function ProfessionalNotificationsPage() {
                     </div>
                     <p className={cn("text-xs text-muted-foreground whitespace-pre-line", !notification.isRead && "text-foreground/80")}>{notification.message}</p>
                     
-                    {notification.type === NOTIFICATION_TYPES.INTERVIEW_PROPOSED && notification.applicationId && (
+                    {showResponseButtons && (
                       <div className="mt-2 flex flex-wrap gap-2">
-                        <Button size="sm" className="text-xs bg-green-600 hover:bg-green-700 h-7 px-2 py-1" onClick={() => handleOpenResponseModal(notification, 'accept')} disabled={processingResponse}><CalendarCheck className="mr-1.5 h-3.5 w-3.5"/> Accetta</Button>
+                        <Button size="sm" className="text-xs bg-green-600 hover:bg-green-700 h-7 px-2 py-1" onClick={() => handleOpenResponseModal(notification, 'accept')} disabled={processingResponse}><CalendarCheck className="mr-1.5 h-3.5 w-3.5"/> Accetta / Riproposta</Button>
                         <Button size="sm" variant="destructive" className="text-xs h-7 px-2 py-1" onClick={() => handleOpenResponseModal(notification, 'reject')} disabled={processingResponse}><X className="mr-1.5 h-3.5 w-3.5"/> Rifiuta</Button>
-                        <Button size="sm" variant="outline" className="text-xs h-7 px-2 py-1" onClick={() => handleOpenResponseModal(notification, 'reschedule')} disabled={processingResponse}><CalendarPlus className="mr-1.5 h-3.5 w-3.5"/> Proponi Altra Data</Button>
+                        {/* Il pulsante "Proponi Altra Data" è ora integrato in "Accetta / Riproposta" */}
                       </div>
                     )}
 
-                    {notification.linkTo && notification.type !== NOTIFICATION_TYPES.INTERVIEW_PROPOSED && (
+                    {notification.linkTo && !showResponseButtons && (
                       <div className="mt-2">
                         <Button variant="outline" size="sm" asChild onClick={() => !notification.isRead && handleMarkAsRead(notification.id)} className={cn("text-xs h-7 px-2 py-1", !notification.isRead && "border-primary/50 text-primary hover:bg-primary/10 hover:text-primary")}>
                           <Link href={notification.linkTo}><Eye className="mr-1.5 h-3.5 w-3.5" /> Vedi Dettagli</Link>
@@ -426,37 +533,40 @@ export default function ProfessionalNotificationsPage() {
                 </div>
               </CardContent>
             </Card>
-          ))}
+          );
+        })}
         </div>
       )}
 
       <Dialog open={isResponseModalOpen} onOpenChange={(isOpen) => {
           setIsResponseModalOpen(isOpen);
-          if (!isOpen) { // Quando il modale viene chiuso (non sottomesso)
-              setSelectedNotificationForResponse(null); // Resetta per evitare che rimanga "appeso"
+          if (!isOpen) { 
+              setSelectedNotificationForResponse(null); 
               setResponseActionType(null);
               professionalResponseForm.reset();
           }
       }}>
-        {selectedNotificationForResponse && responseActionType && ['reject', 'reschedule'].includes(responseActionType) && (
+        {selectedNotificationForResponse && responseActionType && ['accept', 'reject', 'reschedule'].includes(responseActionType) && (
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>
+                {responseActionType === 'accept' && 'Accetta Proposta / Proponi Alternativa'}
                 {responseActionType === 'reject' && 'Rifiuta Proposta di Colloquio'}
                 {responseActionType === 'reschedule' && 'Proponi Nuova Data per Colloquio'}
               </DialogTitle>
             </DialogHeader>
             <Form {...professionalResponseForm}>
-              {/* L'handler onSubmit del form ora chiama handleSubmitProfessionalResponse SENZA argomenti extra */}
-              {/* Farà affidamento sugli stati selectedNotificationForResponse e responseActionType, che sono stati */}
-              {/* impostati da handleOpenResponseModal prima di aprire il modale. */}
               <form onSubmit={professionalResponseForm.handleSubmit(data => handleSubmitProfessionalResponse(data))} className="space-y-4 py-2">
                 {renderResponseModalContent()}
                 <DialogFooter className="pt-4">
                   <DialogClose asChild><Button type="button" variant="outline" disabled={processingResponse}>Annulla</Button></DialogClose>
                   <Button type="submit" variant={responseActionType === 'reject' ? 'destructive' : 'default'} disabled={processingResponse}>
                     {processingResponse ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                    {processingResponse ? 'Invio...' : 'Invia Risposta'}
+                    {processingResponse ? 'Invio...' : 
+                        responseActionType === 'accept' ? 'Invia Accettazione/Proposta' :
+                        responseActionType === 'reject' ? 'Conferma Rifiuto' :
+                        'Invia Risposta'
+                    }
                   </Button>
                 </DialogFooter>
               </form>

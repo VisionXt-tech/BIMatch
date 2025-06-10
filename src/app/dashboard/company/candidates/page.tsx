@@ -217,11 +217,8 @@ export default function CompanyCandidatesPage() {
       
       toast({ title: "Stato Aggiornato", description: `Lo stato della candidatura di ${application.professionalName} è stato aggiornato. Notifica inviata.` });
 
-      setApplications(prevApps => 
-        prevApps.map(app => 
-          app.id === application.id ? { ...app, status: newStatus, ...applicationUpdatePayload, updatedAt: Timestamp.now() } : app 
-        )
-      );
+      // Re-fetch applications to get the latest data including the one just updated
+      fetchProjectAndCandidates(); 
       
       if (isRejectModalOpen) setIsRejectModalOpen(false);
       if (isPreselectModalOpen) setIsPreselectModalOpen(false);
@@ -277,12 +274,12 @@ export default function CompanyCandidatesPage() {
       applicationForModal,
       'colloquio_proposto', 
       { interviewProposalMessage, proposedInterviewDate: Timestamp.fromDate(proposedInterviewDate) },
-      NOTIFICATION_TYPES.INTERVIEW_PROPOSED, 
+      NOTIFICATION_TYPES.INTERVIEW_PROPOSED,
       notificationTitle,
       notificationMessage,
       { 
         interviewProposalMessage: interviewProposalMessage,
-        proposedInterviewDate: formattedDate, // Data già formattata per la notifica
+        proposedInterviewDate: formattedDate, 
         applicationId: applicationForModal.id
       }
     );
@@ -350,21 +347,20 @@ export default function CompanyCandidatesPage() {
   const getStatusBadgeVariant = (status: ProjectApplication['status']) => {
     switch (status) {
       case 'inviata': return 'secondary';
-      case 'in_revisione': return 'default'; 
-      case 'preselezionata': // Mantenuto per retrocompatibilità se presente
+      case 'in_revisione':
       case 'colloquio_proposto':
       case 'colloquio_accettato_prof':
-      case 'colloquio_rifiutato_prof':
       case 'colloquio_ripianificato_prof':
          return 'default'; 
-      case 'rifiutata': return 'destructive';
+      case 'rifiutata': 
+      case 'colloquio_rifiutato_prof':
+        return 'destructive';
       case 'accettata': return 'default'; 
       default: return 'outline';
     }
   };
    const getStatusBadgeColorClass = (status: ProjectApplication['status']) => {
     switch (status) {
-      case 'preselezionata':
       case 'colloquio_proposto':
       case 'colloquio_ripianificato_prof':
          return 'bg-yellow-500 hover:bg-yellow-600 text-white';
@@ -379,9 +375,10 @@ export default function CompanyCandidatesPage() {
     const statusMap: Record<ProjectApplication['status'], string> = {
         inviata: 'Inviata',
         in_revisione: 'In Revisione',
-        preselezionata: 'Preselezionata',
+        // 'preselezionata' era un vecchio stato, ora si usa 'colloquio_proposto'
+        preselezionata: 'Colloquio Proposto (Obsoleto)', 
         rifiutata: 'Rifiutata',
-        accettata: 'Accettata',
+        accettata: 'Accettata', // Azienda ha finalizzato
         colloquio_proposto: 'Colloquio Proposto',
         colloquio_accettato_prof: 'Colloquio Accettato (Prof.)',
         colloquio_rifiutato_prof: 'Colloquio Rifiutato (Prof.)',
@@ -497,27 +494,17 @@ export default function CompanyCandidatesPage() {
                           </>
                         )}
                         
+                         {/* Se il professionista ha accettato, rifiutato o riproposto, l'azienda può solo rifiutare il candidato se cambia idea */}
                         {(app.status === 'colloquio_proposto' || app.status === 'colloquio_accettato_prof' || app.status === 'colloquio_ripianificato_prof') && (
-                          <>
-                            <Button 
-                                variant="default" 
-                                size="sm" 
-                                className="text-xs h-7 px-2 py-1 bg-green-600 hover:bg-green-700 text-white"
-                                onClick={() => updateApplicationAndSendNotification(app, 'accettata', {}, NOTIFICATION_TYPES.APPLICATION_STATUS_UPDATED, `Ottime notizie per il progetto "${app.projectTitle}"!`, `Congratulazioni! L'azienda ${app.companyName} ha accettato la tua candidatura per il progetto "${app.projectTitle}". Sarai ricontattato/a a breve per i prossimi passi.`)}
-                                disabled={processingApplicationId === app.id}
-                            >
-                                {processingApplicationId === app.id ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <Check className="mr-1.5 h-3 w-3" />} Accetta Collaborazione
-                            </Button>
-                            <Button 
-                                variant="destructive" 
-                                size="sm" 
-                                className="text-xs h-7 px-2 py-1"
-                                onClick={() => handleOpenRejectDialog(app)} 
-                                disabled={processingApplicationId === app.id}
-                            >
-                                {processingApplicationId === app.id ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <X className="mr-1.5 h-3 w-3" />} Rifiuta Candidato
-                            </Button>
-                          </>
+                          <Button 
+                              variant="destructive" 
+                              size="sm" 
+                              className="text-xs h-7 px-2 py-1"
+                              onClick={() => handleOpenRejectDialog(app)} 
+                              disabled={processingApplicationId === app.id}
+                          >
+                              {processingApplicationId === app.id ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <X className="mr-1.5 h-3 w-3" />} Rifiuta Candidato
+                          </Button>
                         )}
                         
                          {app.status === 'rifiutata' && (
@@ -527,7 +514,7 @@ export default function CompanyCandidatesPage() {
                          )}
                          {app.status === 'accettata' && (
                             <Badge variant="default" className={cn("text-xs cursor-default", getStatusBadgeColorClass(app.status))}>
-                                <Check className="mr-1.5 h-3 w-3" /> Accettata
+                                <Check className="mr-1.5 h-3 w-3" /> Collaborazione Accettata
                             </Badge>
                          )}
                          {app.status === 'in_revisione' && (
@@ -571,10 +558,12 @@ export default function CompanyCandidatesPage() {
                 </DialogHeader>
                 <ScrollArea className="max-h-[calc(80vh-150px)] pr-4">
                     <div className="space-y-4 py-2">
-                        <div>
-                            <h4 className="font-semibold text-sm mb-1 flex items-center"><MessageSquare className="h-4 w-4 mr-2 text-primary"/>Messaggio di Presentazione:</h4>
-                            <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md whitespace-pre-line">{selectedApplicationForDetails.coverLetterMessage}</p>
-                        </div>
+                        {selectedApplicationForDetails.coverLetterMessage && (
+                          <div>
+                              <h4 className="font-semibold text-sm mb-1 flex items-center"><MessageSquare className="h-4 w-4 mr-2 text-primary"/>Messaggio di Presentazione:</h4>
+                              <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md whitespace-pre-line">{selectedApplicationForDetails.coverLetterMessage}</p>
+                          </div>
+                        )}
                         {selectedApplicationForDetails.relevantSkillsForProject && selectedApplicationForDetails.relevantSkillsForProject.length > 0 && (
                             <div>
                                 <h4 className="font-semibold text-sm mb-1 flex items-center"><ListChecks className="h-4 w-4 mr-2 text-primary"/>Competenze Evidenziate per il Progetto:</h4>
@@ -751,3 +740,4 @@ export default function CompanyCandidatesPage() {
     </div>
   );
 }
+
