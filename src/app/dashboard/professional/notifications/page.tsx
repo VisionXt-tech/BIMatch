@@ -182,18 +182,17 @@ export default function ProfessionalNotificationsPage() {
         return;
       }
       newStatus = 'colloquio_ripianificato_prof';
-      const formattedNewDate = format(formData.newProposedDate, "PPP 'alle' HH:mm", { locale: it });
+      const formattedNewDate = format(formData.newProposedDate, "PPP HH:mm", { locale: it });
       updatePayload = { 
         status: newStatus, 
         professionalNewDateProposal: Timestamp.fromDate(formData.newProposedDate),
-        professionalResponseReason: formData.responseReason || undefined, // Salva undefined se vuoto, non stringa vuota
+        professionalResponseReason: formData.responseReason || undefined, 
         updatedAt: serverTimestamp() 
       };
       companyNotificationType = NOTIFICATION_TYPES.INTERVIEW_RESCHEDULED_BY_PRO;
       companyNotificationMessage = `Il professionista ${userProfile.displayName} ha proposto una NUOVA DATA (${formattedNewDate}) per il colloquio relativo al progetto "${selectedNotificationForResponse.projectTitle}".${formData.responseReason ? ` Messaggio: "${formData.responseReason}".` : ''}`;
       companyNotificationPayload = { professionalNewDateProposal: formattedNewDate, professionalResponseReason: formData.responseReason || undefined };
     } else {
-      // Should not happen
       setProcessingResponse(false);
       return;
     }
@@ -229,7 +228,7 @@ export default function ProfessionalNotificationsPage() {
       setSelectedNotificationForResponse(null);
       professionalResponseForm.reset();
       if(selectedNotificationForResponse.id) handleMarkAsRead(selectedNotificationForResponse.id);
-      fetchNotifications(); // Refresh notifications list to reflect changes
+      fetchNotifications(); 
 
     } catch (error: any) {
       console.error("Error submitting professional response:", error);
@@ -242,8 +241,8 @@ export default function ProfessionalNotificationsPage() {
   const renderResponseModalContent = () => {
     if (!selectedNotificationForResponse) return null;
 
-    const originalProposalDate = selectedNotificationForResponse.proposedInterviewDate 
-      ? parse(selectedNotificationForResponse.proposedInterviewDate, "PPP", new Date()) // Removed locale, was causing issues in parse for "02 lug 2024"
+    const originalProposalDate = selectedNotificationForResponse.proposedInterviewDate
+      ? parse(selectedNotificationForResponse.proposedInterviewDate, "PPP", new Date(), { locale: it })
       : null;
     
     const originalProposalMessage = selectedNotificationForResponse.interviewProposalMessage;
@@ -437,3 +436,4 @@ export default function ProfessionalNotificationsPage() {
     </div>
   );
 }
+
