@@ -222,7 +222,7 @@ export default function CompanyCandidatesPage() {
       
       if (isRejectModalOpen) setIsRejectModalOpen(false);
       if (isPreselectModalOpen) setIsPreselectModalOpen(false);
-      setApplicationForModal(null);
+      setApplicationForModal(null); // Resetta dopo chiusura modale
       rejectionForm.reset();
       preselectionForm.reset();
 
@@ -465,15 +465,6 @@ export default function CompanyCandidatesPage() {
                         
                         {app.status === 'preselezionata' && (
                           <>
-                             <Button 
-                                variant="default" 
-                                size="sm" 
-                                className="text-xs h-7 px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white"
-                                onClick={() => updateApplicationAndSendNotification(app, 'in_revisione', {}, `Candidatura di ${app.professionalName} in revisione`, `La candidatura di ${app.professionalName} per "${app.projectTitle}" è ora in fase di revisione.`)}
-                                disabled={processingApplicationId === app.id}
-                            >
-                                {processingApplicationId === app.id ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <ListChecks className="mr-1.5 h-3 w-3" />} In Revisione
-                            </Button>
                             <Button 
                                 variant="default" 
                                 size="sm" 
@@ -725,3 +716,5 @@ export default function CompanyCandidatesPage() {
     </div>
   );
 }
+
+    
