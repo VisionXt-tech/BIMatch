@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, MapPin, Briefcase, Settings, Code2, CalendarDays, Wallet, FileText, Send, CheckCircle2, XCircle, UserCircle2, Building, Info, Trash2, Loader2 } from 'lucide-react';
+import { ArrowLeft, MapPin, Briefcase, Settings, Code2, CalendarDays, Wallet, FileText, Send, CheckCircle2, XCircle, UserCircle2, Building, Info, Trash2, Loader2, Ban } from 'lucide-react';
 import { ROUTES, BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, NOTIFICATION_TYPES } from '@/constants';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -21,7 +21,7 @@ import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from '@/components/ui/form';
 import { FormTextarea, FormMultiSelect } from '@/components/ProfileFormElements';
-import { Textarea } from '@/components/ui/textarea'; // Corrected import
+import { Textarea } from '@/components/ui/textarea';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -62,6 +62,7 @@ export default function ProjectDetailPage() {
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
   const [applicationId, setApplicationId] = useState<string | null>(null);
+  const [applicationStatus, setApplicationStatus] = useState<ProjectApplication['status'] | null>(null);
   const [checkingApplication, setCheckingApplication] = useState(true);
   const [isApplicationDialogOpen, setIsApplicationDialogOpen] = useState(false);
 
@@ -104,6 +105,7 @@ export default function ProjectDetailPage() {
   const checkExistingApplication = useCallback(async () => {
     if (!projectId || !user || !db || userProfile?.role !== 'professional') {
       setCheckingApplication(false);
+      setApplicationStatus(null);
       return;
     }
     setCheckingApplication(true);
@@ -115,15 +117,19 @@ export default function ProjectDetailPage() {
       );
       const querySnapshot = await getDocs(q);
       if (!querySnapshot.empty) {
+        const appData = querySnapshot.docs[0].data() as ProjectApplication;
         setHasApplied(true);
         setApplicationId(querySnapshot.docs[0].id);
+        setApplicationStatus(appData.status);
       } else {
         setHasApplied(false);
         setApplicationId(null);
+        setApplicationStatus(null);
       }
     } catch (error) {
       console.error("Error checking existing application:", error);
       toast({ title: "Errore", description: "Impossibile verificare lo stato della candidatura.", variant: "destructive" });
+      setApplicationStatus(null);
     } finally {
       setCheckingApplication(false);
     }
@@ -138,6 +144,7 @@ export default function ProjectDetailPage() {
       checkExistingApplication();
     } else if (!authLoading) {
       setCheckingApplication(false);
+      setApplicationStatus(null);
     }
   }, [authLoading, user, userProfile, checkExistingApplication]);
 
@@ -146,8 +153,8 @@ export default function ProjectDetailPage() {
       toast({ title: "Azione non permessa", description: "Devi essere un professionista autenticato per candidarti.", variant: "destructive" });
       return;
     }
-    if (hasApplied) {
-      toast({ title: "Già Candidato", description: "Ti sei già candidato per questo progetto.", variant: "default" });
+    if (hasApplied) { // Includes being previously rejected
+      toast({ title: "Azione non Permessa", description: applicationStatus === 'rifiutata' ? "La tua candidatura per questo progetto è stata rifiutata." : "Ti sei già candidato per questo progetto.", variant: "default" });
       setIsApplicationDialogOpen(false);
       return;
     }
@@ -169,6 +176,7 @@ export default function ProjectDetailPage() {
       const appDocRef = await addDoc(collection(db, 'projectApplications'), applicationData);
       setHasApplied(true);
       setApplicationId(appDocRef.id);
+      setApplicationStatus('inviata');
 
       // Create notification for the company
       if (project.companyId) {
@@ -203,6 +211,11 @@ export default function ProjectDetailPage() {
       toast({ title: "Azione non permessa", description: "Impossibile ritirare la candidatura.", variant: "destructive" });
       return;
     }
+    if (applicationStatus === 'rifiutata') {
+        toast({ title: "Azione non permessa", description: "Non puoi ritirare una candidatura già rifiutata.", variant: "default" });
+        return;
+    }
+
     setIsWithdrawing(true);
     try {
       const appDocRef = doc(db, 'projectApplications', applicationId);
@@ -210,6 +223,7 @@ export default function ProjectDetailPage() {
       toast({ title: "Candidatura Ritirata", description: `La tua candidatura per "${project.title}" è stata ritirata.` });
       setHasApplied(false);
       setApplicationId(null);
+      setApplicationStatus(null);
     } catch (error: any) {
       console.error("Error withdrawing application:", error);
       toast({ title: "Errore Ritiro Candidatura", description: error.message || "Impossibile ritirare la candidatura.", variant: "destructive" });
@@ -276,7 +290,8 @@ export default function ProjectDetailPage() {
     : null;
   
   const isDeadlinePassed = deadlineDate ? deadlineDate < new Date() : false;
-  const canInteractWithApplication = user && userProfile?.role === 'professional' && !isDeadlinePassed;
+  const isApplicationRejected = applicationStatus === 'rifiutata';
+  const canInteractWithApplication = user && userProfile?.role === 'professional' && !isDeadlinePassed && !isApplicationRejected;
   const professionalSkillsOptions = (userProfile as ProfessionalProfile)?.bimSkills?.map(skillValue => {
     const skill = BIM_SKILLS_OPTIONS.find(s => s.value === skillValue);
     return skill ? { value: skill.value, label: skill.label } : { value: skillValue, label: skillValue };
@@ -359,12 +374,20 @@ export default function ProjectDetailPage() {
                 </CardContent>
             </Card>
             
-            {!authLoading && canInteractWithApplication && (
+            {!authLoading && user && userProfile?.role === 'professional' && (
               <div className="mt-6">
                 {checkingApplication ? (
                   <Button className="w-full" disabled>
                     <Loader2 className="animate-spin -ml-1 mr-3 h-5 w-5" />
                     Verifica candidatura...
+                  </Button>
+                ) : isDeadlinePassed ? (
+                  <Button className="w-full" disabled variant="destructive">
+                    <XCircle className="mr-2 h-5 w-5" /> Termine Candidature Scaduto
+                  </Button>
+                ) : isApplicationRejected ? (
+                  <Button className="w-full" disabled variant="destructive">
+                    <Ban className="mr-2 h-5 w-5" /> Candidatura Rifiutata
                   </Button>
                 ) : hasApplied ? (
                   <Button className="w-full" onClick={handleWithdrawApplication} disabled={isWithdrawing} variant="outline">
@@ -449,18 +472,18 @@ export default function ProjectDetailPage() {
                 )}
               </div>
             )}
-             {!authLoading && user && userProfile?.role === 'professional' && isDeadlinePassed && (
-                 <Button className="w-full" disabled variant="destructive">
-                    <XCircle className="mr-2 h-5 w-5" /> Termine Candidature Scaduto
-                </Button>
-             )}
-             {!user && !authLoading && (
+             {!user && !authLoading && !isDeadlinePassed && (
                  <Card className="bg-accent/10 border-accent/30 text-center p-4">
                      <p className="text-sm text-accent-foreground/90 mb-2">Per candidarti, accedi come professionista.</p>
                      <Button size="sm" asChild>
                          <Link href={`${ROUTES.LOGIN}?redirect=/projects/${projectId}`}>Accedi o Registrati</Link>
                      </Button>
                  </Card>
+             )}
+             {!user && !authLoading && isDeadlinePassed && (
+                <Button className="w-full" disabled variant="destructive">
+                    <XCircle className="mr-2 h-5 w-5" /> Termine Candidature Scaduto
+                </Button>
              )}
           </div>
         </CardContent>
@@ -471,5 +494,3 @@ export default function ProjectDetailPage() {
     </div>
   );
 }
-
-    

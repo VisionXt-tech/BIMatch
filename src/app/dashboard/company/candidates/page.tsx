@@ -219,8 +219,9 @@ export default function CompanyCandidatesPage() {
         )
       );
       
-      setIsRejectModalOpen(false);
-      setIsPreselectModalOpen(false);
+      // Close and reset modals
+      if (isRejectModalOpen) setIsRejectModalOpen(false);
+      if (isPreselectModalOpen) setIsPreselectModalOpen(false);
       setApplicationForModal(null);
       rejectionForm.reset();
       preselectionForm.reset();
@@ -249,7 +250,7 @@ export default function CompanyCandidatesPage() {
     if (!applicationForModal) return;
     const { rejectionReason } = formData;
     const notificationTitle = `Esito candidatura per "${applicationForModal.projectTitle}"`;
-    const notificationMessage = `L'azienda ${applicationForModal.companyName} ha esaminato la tua candidatura per il progetto "${applicationForModal.projectTitle}". Motivazione: ${rejectionReason}. Ti ringraziamo per l'interesse.`;
+    const notificationMessage = `L'azienda ${applicationForModal.companyName} ha esaminato la tua candidatura per il progetto "${applicationForModal.projectTitle}".\nMotivazione del rifiuto: ${rejectionReason}\nTi ringraziamo per l'interesse.`;
     
     await updateApplicationAndSendNotification(
       applicationForModal,
@@ -266,7 +267,7 @@ export default function CompanyCandidatesPage() {
     const formattedDate = format(proposedInterviewDate, "PPP", { locale: it });
 
     const notificationTitle = `Proposta di colloquio per "${applicationForModal.projectTitle}"!`;
-    const notificationMessage = `L'azienda ${applicationForModal.companyName} ha preselezionato la tua candidatura per il progetto "${applicationForModal.projectTitle}" e vorrebbe proporti un colloquio. Messaggio: "${interviewProposalMessage}". Data proposta: ${formattedDate}. Sarai ricontattato/a per conferma.`;
+    const notificationMessage = `L'azienda ${applicationForModal.companyName} ha preselezionato la tua candidatura per il progetto "${applicationForModal.projectTitle}" e vorrebbe proporti un colloquio.\nMessaggio: "${interviewProposalMessage}"\nData proposta: ${formattedDate}.\nSarai ricontattato/a per conferma.`;
     
     await updateApplicationAndSendNotification(
       applicationForModal,
@@ -467,7 +468,7 @@ export default function CompanyCandidatesPage() {
                              <Button 
                                 variant="default" 
                                 size="sm" 
-                                className="text-xs h-7 px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white" // "In Revisione" button
+                                className="text-xs h-7 px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white"
                                 onClick={() => updateApplicationAndSendNotification(app, 'in_revisione', {}, `Candidatura di ${app.professionalName} in revisione`, `La candidatura di ${app.professionalName} per "${app.projectTitle}" è ora in fase di revisione.`)}
                                 disabled={processingApplicationId === app.id}
                             >
@@ -504,7 +505,7 @@ export default function CompanyCandidatesPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={isDetailsModalOpen && !!selectedApplicationForDetails} onOpenChange={(isOpen) => {
+      <Dialog open={isDetailsModalOpen} onOpenChange={(isOpen) => {
           setIsDetailsModalOpen(isOpen);
           if (!isOpen) {
               setSelectedApplicationForDetails(null);
@@ -563,7 +564,7 @@ export default function CompanyCandidatesPage() {
         )}
       </Dialog>
 
-      <Dialog open={isRejectModalOpen && !!applicationForModal} onOpenChange={(isOpen) => {
+      <Dialog open={isRejectModalOpen} onOpenChange={(isOpen) => {
           setIsRejectModalOpen(isOpen);
           if (!isOpen) {
               setApplicationForModal(null);
@@ -575,7 +576,8 @@ export default function CompanyCandidatesPage() {
             <DialogHeader>
               <DialogTitle>Rifiuta Candidatura</DialogTitle>
               <DialogDescription>
-                Fornisci una motivazione per il rifiuto della candidatura di <strong>{applicationForModal.professionalName}</strong> per il progetto "{applicationForModal.projectTitle}". Il professionista riceverà una notifica.
+                Fornisci una motivazione per il rifiuto della candidatura di <strong>{applicationForModal.professionalName}</strong> per il progetto "{applicationForModal.projectTitle}".
+                <br/>Il professionista riceverà una notifica. Una volta rifiutata, il professionista non potrà ricandidarsi per questo specifico progetto.
               </DialogDescription>
             </DialogHeader>
             <Form {...rejectionForm}>
@@ -612,7 +614,7 @@ export default function CompanyCandidatesPage() {
         )}
       </Dialog>
 
-      <Dialog open={isPreselectModalOpen && !!applicationForModal} onOpenChange={(isOpen) => {
+      <Dialog open={isPreselectModalOpen} onOpenChange={(isOpen) => {
           setIsPreselectModalOpen(isOpen);
           if (!isOpen) {
               setApplicationForModal(null);
@@ -704,4 +706,3 @@ export default function CompanyCandidatesPage() {
     </div>
   );
 }
-
