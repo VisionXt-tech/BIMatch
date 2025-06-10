@@ -33,7 +33,6 @@ import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
-// Helper function for avatar fallbacks
 const getInitials = (name: string | null | undefined): string => {
   if (!name) return 'P';
   const names = name.split(' ');
@@ -181,8 +180,10 @@ export default function CompanyCandidatesPage() {
     application: EnrichedApplication,
     newStatus: ProjectApplication['status'],
     applicationUpdatePayload: Partial<Omit<ProjectApplication, 'id' | 'projectId' | 'professionalId' | 'professionalName' | 'professionalEmail' | 'applicationDate' | 'status'>>,
+    notificationType: UserNotification['type'],
     notificationTitle: string,
-    notificationMessage: string
+    notificationMessage: string,
+    notificationPayload?: Partial<Pick<UserNotification, 'interviewProposalMessage' | 'proposedInterviewDate' | 'applicationId'>>
   ) => {
     if (!db || !application.id || !application.projectTitle || !application.companyName) {
       toast({ title: "Errore", description: "Dati mancanti per aggiornare lo stato o inviare notifica.", variant: "destructive" });
@@ -200,19 +201,21 @@ export default function CompanyCandidatesPage() {
 
       const notificationData: Omit<UserNotification, 'id'> = {
         userId: application.professionalId,
-        type: NOTIFICATION_TYPES.APPLICATION_STATUS_UPDATED,
+        type: notificationType,
         title: notificationTitle,
         message: notificationMessage,
-        linkTo: ROUTES.PROJECT_DETAILS(application.projectId),
+        linkTo: ROUTES.DASHBOARD_PROFESSIONAL_NOTIFICATIONS, // Link alle notifiche del professionista
         isRead: false,
         createdAt: serverTimestamp(),
         relatedEntityId: application.projectId,
         projectTitle: application.projectTitle,
         companyName: application.companyName,
+        applicationId: application.id, // Includi applicationId per riferimento
+        ...notificationPayload,
       };
       await addDoc(collection(db, 'notifications'), notificationData);
       
-      toast({ title: "Stato Aggiornato", description: `Lo stato della candidatura di ${application.professionalName} è stato aggiornato a "${newStatus}". Notifica inviata.` });
+      toast({ title: "Stato Aggiornato", description: `Lo stato della candidatura di ${application.professionalName} è stato aggiornato. Notifica inviata.` });
 
       setApplications(prevApps => 
         prevApps.map(app => 
@@ -222,7 +225,7 @@ export default function CompanyCandidatesPage() {
       
       if (isRejectModalOpen) setIsRejectModalOpen(false);
       if (isPreselectModalOpen) setIsPreselectModalOpen(false);
-      setApplicationForModal(null); // Resetta dopo chiusura modale
+      setApplicationForModal(null); 
       rejectionForm.reset();
       preselectionForm.reset();
 
@@ -256,6 +259,7 @@ export default function CompanyCandidatesPage() {
       applicationForModal,
       'rifiutata',
       { rejectionReason },
+      NOTIFICATION_TYPES.APPLICATION_STATUS_UPDATED, // Potrebbe essere un tipo più specifico se necessario
       notificationTitle,
       notificationMessage
     );
@@ -267,14 +271,20 @@ export default function CompanyCandidatesPage() {
     const formattedDate = format(proposedInterviewDate, "PPP", { locale: it });
 
     const notificationTitle = `Proposta di colloquio per "${applicationForModal.projectTitle}"!`;
-    const notificationMessage = `L'azienda ${applicationForModal.companyName} ha preselezionato la tua candidatura per il progetto "${applicationForModal.projectTitle}" e vorrebbe proporti un colloquio.\nMessaggio: "${interviewProposalMessage}"\nData proposta: ${formattedDate}.\nSarai ricontattato/a per conferma.`;
+    const notificationMessage = `L'azienda ${applicationForModal.companyName} ha preselezionato la tua candidatura per il progetto "${applicationForModal.projectTitle}" e vorrebbe proporti un colloquio.\nMessaggio: "${interviewProposalMessage}"\nData proposta: ${formattedDate}.\nPuoi rispondere alla proposta dalla tua area notifiche.`;
     
     await updateApplicationAndSendNotification(
       applicationForModal,
-      'preselezionata',
+      'colloquio_proposto', // Nuovo stato
       { interviewProposalMessage, proposedInterviewDate: Timestamp.fromDate(proposedInterviewDate) },
+      NOTIFICATION_TYPES.INTERVIEW_PROPOSED, // Tipo di notifica specifico
       notificationTitle,
-      notificationMessage
+      notificationMessage,
+      { // Payload aggiuntivo per la notifica INTERVIEW_PROPOSED
+        interviewProposalMessage: interviewProposalMessage,
+        proposedInterviewDate: formattedDate,
+        applicationId: applicationForModal.id
+      }
     );
   };
   
@@ -341,7 +351,12 @@ export default function CompanyCandidatesPage() {
     switch (status) {
       case 'inviata': return 'secondary';
       case 'in_revisione': return 'default'; 
-      case 'preselezionata': return 'default'; 
+      case 'preselezionata':
+      case 'colloquio_proposto':
+      case 'colloquio_accettato_prof':
+      case 'colloquio_rifiutato_prof':
+      case 'colloquio_ripianificato_prof':
+         return 'default'; 
       case 'rifiutata': return 'destructive';
       case 'accettata': return 'default'; 
       default: return 'outline';
@@ -349,12 +364,26 @@ export default function CompanyCandidatesPage() {
   };
    const getStatusBadgeColorClass = (status: ProjectApplication['status']) => {
     switch (status) {
-      case 'preselezionata': return 'bg-yellow-500 hover:bg-yellow-600 text-white';
-      case 'accettata': return 'bg-green-600 hover:bg-green-700 text-white';
+      case 'preselezionata': // Mantenuto per retrocompatibilità se presente
+      case 'colloquio_proposto':
+      case 'colloquio_ripianificato_prof':
+         return 'bg-yellow-500 hover:bg-yellow-600 text-white';
+      case 'accettata':
+      case 'colloquio_accettato_prof':
+         return 'bg-green-600 hover:bg-green-700 text-white';
       case 'in_revisione': return 'bg-blue-500 hover:bg-blue-600 text-white';
       default: return '';
     }
   };
+  const getStatusText = (status: ProjectApplication['status']) => {
+    switch (status) {
+        case 'colloquio_proposto': return 'Colloquio Proposto';
+        case 'colloquio_accettato_prof': return 'Colloquio Accettato (Prof.)';
+        case 'colloquio_rifiutato_prof': return 'Colloquio Rifiutato (Prof.)';
+        case 'colloquio_ripianificato_prof': return 'Nuova Data Proposta (Prof.)';
+        default: return status.replace(/_/g, ' ');
+    }
+  }
 
 
   return (
@@ -420,7 +449,7 @@ export default function CompanyCandidatesPage() {
                             variant={getStatusBadgeVariant(app.status)}
                             className={getStatusBadgeColorClass(app.status)}
                         >
-                            {app.status.replace(/_/g, ' ')}
+                            {getStatusText(app.status)}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right space-x-1">
@@ -463,16 +492,16 @@ export default function CompanyCandidatesPage() {
                           </>
                         )}
                         
-                        {app.status === 'preselezionata' && (
+                        {(app.status === 'preselezionata' || app.status === 'colloquio_proposto' || app.status === 'colloquio_accettato_prof' || app.status === 'colloquio_ripianificato_prof') && (
                           <>
                             <Button 
                                 variant="default" 
                                 size="sm" 
                                 className="text-xs h-7 px-2 py-1 bg-green-600 hover:bg-green-700 text-white"
-                                onClick={() => updateApplicationAndSendNotification(app, 'accettata', {}, `Ottime notizie per il progetto "${app.projectTitle}"!`, `Congratulazioni! L'azienda ${app.companyName} ha accettato la tua candidatura per il progetto "${app.projectTitle}". Sarai ricontattato/a a breve per i prossimi passi.`)}
+                                onClick={() => updateApplicationAndSendNotification(app, 'accettata', {}, NOTIFICATION_TYPES.APPLICATION_STATUS_UPDATED, `Ottime notizie per il progetto "${app.projectTitle}"!`, `Congratulazioni! L'azienda ${app.companyName} ha accettato la tua candidatura per il progetto "${app.projectTitle}". Sarai ricontattato/a a breve per i prossimi passi.`)}
                                 disabled={processingApplicationId === app.id}
                             >
-                                {processingApplicationId === app.id ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <Check className="mr-1.5 h-3 w-3" />} Accetta
+                                {processingApplicationId === app.id ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <Check className="mr-1.5 h-3 w-3" />} Accetta Collaborazione
                             </Button>
                             <Button 
                                 variant="destructive" 
@@ -481,7 +510,7 @@ export default function CompanyCandidatesPage() {
                                 onClick={() => handleOpenRejectDialog(app)} 
                                 disabled={processingApplicationId === app.id}
                             >
-                                {processingApplicationId === app.id ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <X className="mr-1.5 h-3 w-3" />} Rifiuta
+                                {processingApplicationId === app.id ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <X className="mr-1.5 h-3 w-3" />} Rifiuta Candidato
                             </Button>
                           </>
                         )}
@@ -501,6 +530,12 @@ export default function CompanyCandidatesPage() {
                                 <Hourglass className="mr-1.5 h-3 w-3" /> In Revisione
                             </Badge>
                          )}
+                         {app.status === 'colloquio_rifiutato_prof' && (
+                            <Badge variant="destructive" className={cn("text-xs cursor-default")}>
+                                <X className="mr-1.5 h-3 w-3" /> Colloquio Rifiutato
+                            </Badge>
+                         )}
+
 
                       </TableCell>
                     </TableRow>
@@ -512,7 +547,6 @@ export default function CompanyCandidatesPage() {
         </CardContent>
       </Card>
 
-      {/* Details Modal */}
       <Dialog open={isDetailsModalOpen} onOpenChange={(isOpen) => {
           setIsDetailsModalOpen(isOpen);
           if (!isOpen) {
@@ -572,7 +606,6 @@ export default function CompanyCandidatesPage() {
         )}
       </Dialog>
 
-      {/* Rejection Modal */}
       <Dialog open={isRejectModalOpen} onOpenChange={(isOpen) => {
           setIsRejectModalOpen(isOpen);
           if (!isOpen) {
@@ -623,7 +656,6 @@ export default function CompanyCandidatesPage() {
         )}
       </Dialog>
 
-      {/* Preselection Modal */}
       <Dialog open={isPreselectModalOpen} onOpenChange={(isOpen) => {
           setIsPreselectModalOpen(isOpen);
           if (!isOpen) {
@@ -716,5 +748,3 @@ export default function CompanyCandidatesPage() {
     </div>
   );
 }
-
-    

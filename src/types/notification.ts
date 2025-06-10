@@ -4,17 +4,34 @@ import type { Timestamp } from 'firebase/firestore';
 export interface UserNotification {
   id: string; // Firestore document ID
   userId: string; // UID of the user (professional or company) to whom the notification belongs
-  type: 'APPLICATION_STATUS_UPDATED' | 'NEW_PROJECT_MATCH' | 'PROFILE_VIEW' | 'GENERIC_INFO' | 'NEW_APPLICATION_RECEIVED' | string; // Added NEW_APPLICATION_RECEIVED
-  title: string; // A concise title for the notification
-  message: string; // Detailed message of the notification
-  linkTo?: string; // Relative path within the app (e.g., /projects/projectId)
+  type: 
+    | 'APPLICATION_STATUS_UPDATED' // Generico, usato prima, ora più specifico
+    | 'NEW_PROJECT_MATCH' 
+    | 'PROFILE_VIEW' 
+    | 'GENERIC_INFO' 
+    | 'NEW_APPLICATION_RECEIVED' // Per azienda: nuovo candidato
+    | 'INTERVIEW_PROPOSED' // Per professionista: azienda propone colloquio
+    | 'INTERVIEW_ACCEPTED_BY_PRO' // Per azienda: professionista accetta colloquio
+    | 'INTERVIEW_REJECTED_BY_PRO' // Per azienda: professionista rifiuta colloquio
+    | 'INTERVIEW_RESCHEDULED_BY_PRO' // Per azienda: professionista propone nuova data
+    | string; 
+  title: string; 
+  message: string; 
+  linkTo?: string; 
   isRead: boolean;
   createdAt: Timestamp;
   relatedEntityId?: string; // e.g., projectId, applicationId
-  icon?: string; // Optional: Lucide icon name string
-  companyName?: string; // Optional: for notifications related to a company action (e.g., when professional is notified)
-  projectTitle?: string; // Optional: for notifications related to a project
-  applicantName?: string; // Optional: for company notifications about a new applicant
-  professionalName?: string; // Optional: alias for applicantName, or if a professional is the subject for a company
+  icon?: string; 
+  companyName?: string; 
+  projectTitle?: string; 
+  applicantName?: string; 
+  professionalName?: string; 
+
+  // Campi specifici per payload notifiche
+  interviewProposalMessage?: string;
+  proposedInterviewDate?: string; // Stringa formattata della data per la notifica
+  professionalResponseReason?: string;
+  professionalNewDateProposal?: string; // Stringa formattata della nuova data per la notifica
+  applicationId?: string; // ID della candidatura per azioni dirette dalla notifica
 }
 

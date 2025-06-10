@@ -19,10 +19,6 @@ export interface Project {
   updatedAt: Timestamp | Date | any; // Firestore serverTimestamp
   applicationDeadline?: Timestamp | Date | null; // Optional deadline for applications
   applicationsCount?: number; // Number of applications received (denormalized or calculated)
-  // Add other relevant fields as needed:
-  // experienceLevelRequired?: string;
-  // remoteOption?: 'si' | 'no' | 'ibrido';
-  // projectStartDate?: Timestamp | Date;
 }
 
 export interface ProjectApplication {
@@ -32,16 +28,29 @@ export interface ProjectApplication {
   professionalName: string;
   professionalEmail?: string; // For notifications
   applicationDate: Timestamp | Date | any;
-  status: 'inviata' | 'in_revisione' | 'preselezionata' | 'rifiutata' | 'accettata';
+  status: 
+    | 'inviata' 
+    | 'in_revisione' // Stato intermedio se l'azienda vuole segnarla come tale (non per rifiuto/preselezione diretta)
+    | 'preselezionata' // L'azienda ha inviato una prima proposta di colloquio
+    | 'rifiutata' 
+    | 'accettata' // L'azienda ha accettato il professionista per il progetto
+    | 'colloquio_proposto' // Sinonimo di preselezionata, ma più esplicito
+    | 'colloquio_accettato_prof' // Il professionista ha accettato la data del colloquio
+    | 'colloquio_rifiutato_prof' // Il professionista ha rifiutato il colloquio
+    | 'colloquio_ripianificato_prof'; // Il professionista ha proposto una nuova data
   
   coverLetterMessage: string; 
   relevantSkillsForProject?: string[]; 
   availabilityNotes?: string; 
 
   // Campi per il feedback/proposta dell'azienda
-  rejectionReason?: string; // Motivo del rifiuto fornito dall'azienda
-  interviewProposalMessage?: string; // Messaggio di proposta colloquio dall'azienda
-  proposedInterviewDate?: Timestamp | Date | null; // Data proposta per il colloquio
+  rejectionReason?: string; 
+  interviewProposalMessage?: string; 
+  proposedInterviewDate?: Timestamp | Date | null; 
+
+  // Campi per la risposta del professionista alla proposta di colloquio
+  professionalResponseReason?: string; // Motivo se rifiuta o per riprogrammare
+  professionalNewDateProposal?: Timestamp | Date | null; // Nuova data proposta dal professionista
 
   updatedAt?: Timestamp | Date | any; 
 }
