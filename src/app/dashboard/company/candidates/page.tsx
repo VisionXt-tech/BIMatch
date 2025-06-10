@@ -16,7 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Link from 'next/link';
-import { Users, ArrowLeft, ExternalLink, Mail, Info, WifiOff, Briefcase, Check, X, Hourglass, FileText, ListChecks, MessageSquare, CalendarDays, Calendar as CalendarIcon, AlertTriangle } from 'lucide-react';
+import { Users, ArrowLeft, ExternalLink, Mail, Info, WifiOff, Briefcase, Check, X, Hourglass, FileText, ListChecks, MessageSquare, CalendarDays, Calendar as CalendarIcon, AlertTriangle, Ban } from 'lucide-react';
 import { ROUTES, NOTIFICATION_TYPES, BIM_SKILLS_OPTIONS } from '@/constants';
 import { useToast } from '@/hooks/use-toast';
 import type { UserNotification } from '@/types/notification';
@@ -180,7 +180,7 @@ export default function CompanyCandidatesPage() {
   const updateApplicationAndSendNotification = async (
     application: EnrichedApplication,
     newStatus: ProjectApplication['status'],
-    applicationUpdatePayload: Partial<ProjectApplication>,
+    applicationUpdatePayload: Partial<Omit<ProjectApplication, 'id' | 'projectId' | 'professionalId' | 'professionalName' | 'professionalEmail' | 'applicationDate' | 'status'>>,
     notificationTitle: string,
     notificationMessage: string
   ) => {
@@ -191,11 +191,12 @@ export default function CompanyCandidatesPage() {
     setProcessingApplicationId(application.id);
     try {
       const appDocRef = doc(db, 'projectApplications', application.id);
-      await updateDoc(appDocRef, { 
+      const updatePayload: Partial<ProjectApplication> = { 
         status: newStatus,
         ...applicationUpdatePayload, 
         updatedAt: serverTimestamp()
-      });
+      };
+      await updateDoc(appDocRef, updatePayload);
 
       const notificationData: Omit<UserNotification, 'id'> = {
         userId: application.professionalId,
@@ -219,7 +220,6 @@ export default function CompanyCandidatesPage() {
         )
       );
       
-      // Close and reset modals
       if (isRejectModalOpen) setIsRejectModalOpen(false);
       if (isPreselectModalOpen) setIsPreselectModalOpen(false);
       setApplicationForModal(null);
@@ -472,7 +472,7 @@ export default function CompanyCandidatesPage() {
                                 onClick={() => updateApplicationAndSendNotification(app, 'in_revisione', {}, `Candidatura di ${app.professionalName} in revisione`, `La candidatura di ${app.professionalName} per "${app.projectTitle}" è ora in fase di revisione.`)}
                                 disabled={processingApplicationId === app.id}
                             >
-                                {processingApplicationId === app.id && app.status === 'in_revisione' ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <ListChecks className="mr-1.5 h-3 w-3" />} In Revisione
+                                {processingApplicationId === app.id ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <ListChecks className="mr-1.5 h-3 w-3" />} In Revisione
                             </Button>
                             <Button 
                                 variant="default" 
@@ -481,7 +481,7 @@ export default function CompanyCandidatesPage() {
                                 onClick={() => updateApplicationAndSendNotification(app, 'accettata', {}, `Ottime notizie per il progetto "${app.projectTitle}"!`, `Congratulazioni! L'azienda ${app.companyName} ha accettato la tua candidatura per il progetto "${app.projectTitle}". Sarai ricontattato/a a breve per i prossimi passi.`)}
                                 disabled={processingApplicationId === app.id}
                             >
-                                {processingApplicationId === app.id && app.status === 'accettata' ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <Check className="mr-1.5 h-3 w-3" />} Accetta
+                                {processingApplicationId === app.id ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <Check className="mr-1.5 h-3 w-3" />} Accetta
                             </Button>
                             <Button 
                                 variant="destructive" 
@@ -495,6 +495,22 @@ export default function CompanyCandidatesPage() {
                           </>
                         )}
                         
+                         {app.status === 'rifiutata' && (
+                            <Badge variant="destructive" className="text-xs cursor-default">
+                                <Ban className="mr-1.5 h-3 w-3" /> Rifiutata
+                            </Badge>
+                         )}
+                         {app.status === 'accettata' && (
+                            <Badge variant="default" className={cn("text-xs cursor-default", getStatusBadgeColorClass(app.status))}>
+                                <Check className="mr-1.5 h-3 w-3" /> Accettata
+                            </Badge>
+                         )}
+                         {app.status === 'in_revisione' && (
+                            <Badge variant="default" className={cn("text-xs cursor-default", getStatusBadgeColorClass(app.status))}>
+                                <Hourglass className="mr-1.5 h-3 w-3" /> In Revisione
+                            </Badge>
+                         )}
+
                       </TableCell>
                     </TableRow>
                   ))}
@@ -505,6 +521,7 @@ export default function CompanyCandidatesPage() {
         </CardContent>
       </Card>
 
+      {/* Details Modal */}
       <Dialog open={isDetailsModalOpen} onOpenChange={(isOpen) => {
           setIsDetailsModalOpen(isOpen);
           if (!isOpen) {
@@ -564,6 +581,7 @@ export default function CompanyCandidatesPage() {
         )}
       </Dialog>
 
+      {/* Rejection Modal */}
       <Dialog open={isRejectModalOpen} onOpenChange={(isOpen) => {
           setIsRejectModalOpen(isOpen);
           if (!isOpen) {
@@ -614,6 +632,7 @@ export default function CompanyCandidatesPage() {
         )}
       </Dialog>
 
+      {/* Preselection Modal */}
       <Dialog open={isPreselectModalOpen} onOpenChange={(isOpen) => {
           setIsPreselectModalOpen(isOpen);
           if (!isOpen) {
