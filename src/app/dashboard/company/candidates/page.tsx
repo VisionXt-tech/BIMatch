@@ -595,7 +595,7 @@ export default function CompanyCandidatesPage() {
               <DialogTitle>Rifiuta Candidatura</DialogTitle>
               <DialogDescription>
                 Fornisci una motivazione per il rifiuto della candidatura di <strong>{applicationForModal.professionalName}</strong> per il progetto "{applicationForModal.projectTitle}".
-                <br/>Il professionista riceverà una notifica. Una volta rifiutata, il professionista non potrà ricandidarsi per questo specifico progetto.
+                <br/>Il professionista riceverà una notifica. <span className="text-destructive font-semibold">Una volta rifiutata, il professionista non potrà ricandidarsi per questo specifico progetto.</span>
               </DialogDescription>
             </DialogHeader>
             <Form {...rejectionForm}>
