@@ -76,6 +76,7 @@ export default function CompanyCandidatesPage() {
   const [error, setError] = useState<string | null>(null);
   
   const [applicationForModal, setApplicationForModal] = useState<EnrichedApplication | null>(null);
+  const [selectedApplicationForDetails, setSelectedApplicationForDetails] = useState<EnrichedApplication | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [isPreselectModalOpen, setIsPreselectModalOpen] = useState(false);
@@ -192,7 +193,7 @@ export default function CompanyCandidatesPage() {
       const appDocRef = doc(db, 'projectApplications', application.id);
       await updateDoc(appDocRef, { 
         status: newStatus,
-        ...applicationUpdatePayload, // Include reason or proposal details
+        ...applicationUpdatePayload, 
         updatedAt: serverTimestamp()
       });
 
@@ -200,7 +201,7 @@ export default function CompanyCandidatesPage() {
         userId: application.professionalId,
         type: NOTIFICATION_TYPES.APPLICATION_STATUS_UPDATED,
         title: notificationTitle,
-        message: notificationMessage, // This message should include the reason/proposal
+        message: notificationMessage,
         linkTo: ROUTES.PROJECT_DETAILS(application.projectId),
         isRead: false,
         createdAt: serverTimestamp(),
@@ -217,7 +218,7 @@ export default function CompanyCandidatesPage() {
           app.id === application.id ? { ...app, status: newStatus, ...applicationUpdatePayload, updatedAt: Timestamp.now() } : app 
         )
       );
-      // Close any open modals
+      
       setIsRejectModalOpen(false);
       setIsPreselectModalOpen(false);
       setApplicationForModal(null);
@@ -438,7 +439,6 @@ export default function CompanyCandidatesPage() {
                             </Button>
                         )}
 
-                        {/* Nuove Azioni per stato 'inviata' */}
                         {app.status === 'inviata' && (
                           <>
                             <Button 
@@ -462,9 +462,18 @@ export default function CompanyCandidatesPage() {
                           </>
                         )}
                         
-                        {/* Azioni per stato 'preselezionata' (esistenti, potrebbero necessitare di modifiche future) */}
                         {app.status === 'preselezionata' && (
+                          <>
                              <Button 
+                                variant="default" 
+                                size="sm" 
+                                className="text-xs h-7 px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white" // "In Revisione" button
+                                onClick={() => updateApplicationAndSendNotification(app, 'in_revisione', {}, `Candidatura di ${app.professionalName} in revisione`, `La candidatura di ${app.professionalName} per "${app.projectTitle}" è ora in fase di revisione.`)}
+                                disabled={processingApplicationId === app.id}
+                            >
+                                {processingApplicationId === app.id && app.status === 'in_revisione' ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <ListChecks className="mr-1.5 h-3 w-3" />} In Revisione
+                            </Button>
+                            <Button 
                                 variant="default" 
                                 size="sm" 
                                 className="text-xs h-7 px-2 py-1 bg-green-600 hover:bg-green-700 text-white"
@@ -473,18 +482,16 @@ export default function CompanyCandidatesPage() {
                             >
                                 {processingApplicationId === app.id && app.status === 'accettata' ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <Check className="mr-1.5 h-3 w-3" />} Accetta
                             </Button>
-                        )}
-                         {/* Pulsante "Rifiuta" per stato 'preselezionata' */}
-                         {app.status === 'preselezionata' && (
                             <Button 
                                 variant="destructive" 
                                 size="sm" 
                                 className="text-xs h-7 px-2 py-1"
-                                onClick={() => handleOpenRejectDialog(app)} // Usa il modale anche qui
+                                onClick={() => handleOpenRejectDialog(app)} 
                                 disabled={processingApplicationId === app.id}
                             >
                                 {processingApplicationId === app.id ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <X className="mr-1.5 h-3 w-3" />} Rifiuta
                             </Button>
+                          </>
                         )}
                         
                       </TableCell>
@@ -497,9 +504,13 @@ export default function CompanyCandidatesPage() {
         </CardContent>
       </Card>
 
-      {/* Modale Dettagli Candidatura (esistente) */}
-      {selectedApplicationForDetails && (
-        <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
+      <Dialog open={isDetailsModalOpen && !!selectedApplicationForDetails} onOpenChange={(isOpen) => {
+          setIsDetailsModalOpen(isOpen);
+          if (!isOpen) {
+              setSelectedApplicationForDetails(null);
+          }
+      }}>
+        {selectedApplicationForDetails && (
             <DialogContent className="sm:max-w-lg max-h-[80vh]">
                 <DialogHeader>
                     <DialogTitle className="text-xl">Dettagli Candidatura per {project?.title}</DialogTitle>
@@ -549,12 +560,17 @@ export default function CompanyCandidatesPage() {
                     </DialogClose>
                 </DialogFooter>
             </DialogContent>
-        </Dialog>
-      )}
+        )}
+      </Dialog>
 
-      {/* Modale Rifiuta Candidatura */}
-      {applicationForModal && (
-        <Dialog open={isRejectModalOpen} onOpenChange={setIsRejectModalOpen}>
+      <Dialog open={isRejectModalOpen && !!applicationForModal} onOpenChange={(isOpen) => {
+          setIsRejectModalOpen(isOpen);
+          if (!isOpen) {
+              setApplicationForModal(null);
+              rejectionForm.reset();
+          }
+      }}>
+        {applicationForModal && (
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Rifiuta Candidatura</DialogTitle>
@@ -593,12 +609,17 @@ export default function CompanyCandidatesPage() {
               </form>
             </Form>
           </DialogContent>
-        </Dialog>
-      )}
+        )}
+      </Dialog>
 
-      {/* Modale Preseleziona Candidatura */}
-      {applicationForModal && (
-        <Dialog open={isPreselectModalOpen} onOpenChange={setIsPreselectModalOpen}>
+      <Dialog open={isPreselectModalOpen && !!applicationForModal} onOpenChange={(isOpen) => {
+          setIsPreselectModalOpen(isOpen);
+          if (!isOpen) {
+              setApplicationForModal(null);
+              preselectionForm.reset();
+          }
+      }}>
+        {applicationForModal && (
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>Preseleziona e Proponi Colloquio</DialogTitle>
@@ -655,7 +676,7 @@ export default function CompanyCandidatesPage() {
                             mode="single"
                             selected={field.value}
                             onSelect={field.onChange}
-                            disabled={(date) => date < new Date(new Date().setHours(0,0,0,0)) } // Disable past dates
+                            disabled={(date) => date < new Date(new Date().setHours(0,0,0,0)) } 
                             initialFocus
                             locale={it}
                           />
@@ -677,8 +698,8 @@ export default function CompanyCandidatesPage() {
               </form>
             </Form>
           </DialogContent>
-        </Dialog>
-      )}
+        )}
+      </Dialog>
 
     </div>
   );
