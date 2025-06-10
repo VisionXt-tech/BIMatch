@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFirebase } from '@/contexts/FirebaseContext';
-import { collection, query, where, orderBy, getDocs, doc, updateDoc, Timestamp, serverTimestamp, setDoc } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, doc, updateDoc, Timestamp, serverTimestamp, addDoc, getDoc } from 'firebase/firestore';
 import type { UserNotification } from '@/types/notification';
 import type { ProjectApplication } from '@/types/project';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,16 +12,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
-import { BellRing, CheckCheck, Eye, ListChecks, WifiOff, Info, MailReply, CalendarCheck, X, CalendarPlus, Send, Loader2 } from 'lucide-react';
+import { BellRing, CheckCheck, Eye, ListChecks, WifiOff, Info, MailReply, CalendarCheck, X, CalendarPlus, Send, Loader2, MessageSquare, Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, formatDistanceToNowStrict, parse } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Calendar as CalendarIcon } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -39,7 +38,7 @@ const getIconForNotificationType = (type: string, isRead: boolean) => {
 };
 
 const professionalResponseFormSchema = z.object({
-  responseReason: z.string().min(10, { message: "La motivazione deve contenere almeno 10 caratteri." }).max(1000).optional(),
+  responseReason: z.string().min(10, { message: "La motivazione deve contenere almeno 10 caratteri." }).max(1000, "La motivazione non può superare i 1000 caratteri.").optional(),
   newProposedDate: z.date().optional(),
 });
 type ProfessionalResponseFormData = z.infer<typeof professionalResponseFormSchema>;
@@ -137,32 +136,34 @@ export default function ProfessionalNotificationsPage() {
   const handleOpenResponseModal = (notification: UserNotification, action: 'accept' | 'reject' | 'reschedule') => {
     setSelectedNotificationForResponse(notification);
     setResponseActionType(action);
-    professionalResponseForm.reset({ responseReason: '', newProposedDate: undefined }); // Reset form
-    if (action === 'accept' && notification.applicationId) { // If accepting, submit immediately
-        handleSubmitProfessionalResponse({}); // Pass empty data as not needed for simple accept
+    professionalResponseForm.reset({ responseReason: '', newProposedDate: undefined }); 
+    if (action === 'accept' && notification.applicationId) { 
+        handleSubmitProfessionalResponse({}); 
     } else {
         setIsResponseModalOpen(true);
     }
   };
 
   const handleSubmitProfessionalResponse = async (formData: Partial<ProfessionalResponseFormData>) => {
-    if (!selectedNotificationForResponse || !selectedNotificationForResponse.applicationId || !userProfile || !db) {
+    if (!selectedNotificationForResponse || !selectedNotificationForResponse.applicationId || !userProfile || !db || !responseActionType) {
       toast({ title: "Errore", description: "Dati mancanti per inviare la risposta.", variant: "destructive" });
       return;
     }
     setProcessingResponse(true);
 
     const appDocRef = doc(db, 'projectApplications', selectedNotificationForResponse.applicationId);
-    let newStatus: ProjectApplication['status'] = 'colloquio_accettato_prof'; // Default
+    let newStatus: ProjectApplication['status'];
     let updatePayload: Partial<ProjectApplication> = {};
-    let companyNotificationType: UserNotification['type'] = NOTIFICATION_TYPES.INTERVIEW_ACCEPTED_BY_PRO;
-    let companyNotificationMessage = `Il professionista ${userProfile.displayName} ha ACCETTATO la tua proposta di colloquio per il progetto "${selectedNotificationForResponse.projectTitle}".`;
-    let companyNotificationPayload: Partial<UserNotification> = {};
+    let companyNotificationType: UserNotification['type'];
+    let companyNotificationMessage: string;
+    let companyNotificationPayload: Partial<Pick<UserNotification, 'professionalResponseReason' | 'professionalNewDateProposal'>> = {};
 
 
     if (responseActionType === 'accept') {
       newStatus = 'colloquio_accettato_prof';
       updatePayload = { status: newStatus, updatedAt: serverTimestamp() };
+      companyNotificationType = NOTIFICATION_TYPES.INTERVIEW_ACCEPTED_BY_PRO;
+      companyNotificationMessage = `Il professionista ${userProfile.displayName} ha ACCETTATO la tua proposta di colloquio per il progetto "${selectedNotificationForResponse.projectTitle}".`;
     } else if (responseActionType === 'reject') {
       if (!formData.responseReason || formData.responseReason.length < 10) {
         professionalResponseForm.setError("responseReason", { type: "manual", message: "La motivazione del rifiuto è richiesta (min 10 caratteri)." });
@@ -185,18 +186,21 @@ export default function ProfessionalNotificationsPage() {
       updatePayload = { 
         status: newStatus, 
         professionalNewDateProposal: Timestamp.fromDate(formData.newProposedDate),
-        professionalResponseReason: formData.responseReason || "Nessun messaggio aggiuntivo.",
+        professionalResponseReason: formData.responseReason || undefined, // Salva undefined se vuoto, non stringa vuota
         updatedAt: serverTimestamp() 
       };
       companyNotificationType = NOTIFICATION_TYPES.INTERVIEW_RESCHEDULED_BY_PRO;
-      companyNotificationMessage = `Il professionista ${userProfile.displayName} ha proposto una NUOVA DATA (${formattedNewDate}) per il colloquio relativo al progetto "${selectedNotificationForResponse.projectTitle}". Messaggio: "${formData.responseReason || 'Nessun messaggio aggiuntivo'}".`;
-      companyNotificationPayload = { professionalNewDateProposal: formattedNewDate, professionalResponseReason: formData.responseReason };
+      companyNotificationMessage = `Il professionista ${userProfile.displayName} ha proposto una NUOVA DATA (${formattedNewDate}) per il colloquio relativo al progetto "${selectedNotificationForResponse.projectTitle}".${formData.responseReason ? ` Messaggio: "${formData.responseReason}".` : ''}`;
+      companyNotificationPayload = { professionalNewDateProposal: formattedNewDate, professionalResponseReason: formData.responseReason || undefined };
+    } else {
+      // Should not happen
+      setProcessingResponse(false);
+      return;
     }
 
     try {
       await updateDoc(appDocRef, updatePayload);
 
-      // Fetch companyId from the project document
       const projectDocSnap = await getDoc(doc(db, 'projects', selectedNotificationForResponse.relatedEntityId!));
       if (!projectDocSnap.exists()) throw new Error("Progetto non trovato per inviare notifica all'azienda.");
       const projectData = projectDocSnap.data();
@@ -211,10 +215,11 @@ export default function ProfessionalNotificationsPage() {
         linkTo: `${ROUTES.DASHBOARD_COMPANY_CANDIDATES}?projectId=${selectedNotificationForResponse.relatedEntityId}`,
         isRead: false,
         createdAt: serverTimestamp(),
-        relatedEntityId: selectedNotificationForResponse.relatedEntityId, // projectId
+        relatedEntityId: selectedNotificationForResponse.relatedEntityId, 
         applicationId: selectedNotificationForResponse.applicationId,
-        projectTitle: selectedNotificationForResponse.projectTitle,
+        projectTitle: selectedNotificationForResponse.projectTitle || "N/D",
         professionalName: userProfile.displayName || "Un Professionista",
+        companyName: selectedNotificationForResponse.companyName || "Un'azienda",
         ...companyNotificationPayload,
       };
       await addDoc(collection(db, 'notifications'), companyNotification);
@@ -223,8 +228,8 @@ export default function ProfessionalNotificationsPage() {
       setIsResponseModalOpen(false);
       setSelectedNotificationForResponse(null);
       professionalResponseForm.reset();
-      // Optionally, mark the original notification as read or update its display
       if(selectedNotificationForResponse.id) handleMarkAsRead(selectedNotificationForResponse.id);
+      fetchNotifications(); // Refresh notifications list to reflect changes
 
     } catch (error: any) {
       console.error("Error submitting professional response:", error);
@@ -238,7 +243,7 @@ export default function ProfessionalNotificationsPage() {
     if (!selectedNotificationForResponse) return null;
 
     const originalProposalDate = selectedNotificationForResponse.proposedInterviewDate 
-      ? parse(selectedNotificationForResponse.proposedInterviewDate, "PPP", new Date(), { locale: it })
+      ? parse(selectedNotificationForResponse.proposedInterviewDate, "PPP", new Date()) // Removed locale, was causing issues in parse for "02 lug 2024"
       : null;
     
     const originalProposalMessage = selectedNotificationForResponse.interviewProposalMessage;
@@ -246,10 +251,10 @@ export default function ProfessionalNotificationsPage() {
     if (responseActionType === 'reject') {
       return (
         <>
-          <DialogDescription className="mb-4">
-            Stai rifiutando la proposta di colloquio per il progetto <strong>"{selectedNotificationForResponse.projectTitle}"</strong>.
-            <br/>Proposta originale dall'azienda: <em>"{originalProposalMessage}"</em> {originalProposalDate && ` per il ${format(originalProposalDate, "PPP", {locale:it})}`}.
-            <br/>Fornisci una breve motivazione per l'azienda.
+          <DialogDescription className="mb-4 text-sm">
+            Stai rifiutando la proposta di colloquio per il progetto <strong>&quot;{selectedNotificationForResponse.projectTitle}&quot;</strong>.
+            <br/>Proposta originale dall&apos;azienda: <em>&quot;{originalProposalMessage}&quot;</em> {originalProposalDate && ` per il ${format(originalProposalDate, "PPP", {locale:it})}`}.
+            <br/>Fornisci una breve motivazione per l&apos;azienda.
           </DialogDescription>
           <FormField
             control={professionalResponseForm.control}
@@ -268,9 +273,9 @@ export default function ProfessionalNotificationsPage() {
     if (responseActionType === 'reschedule') {
       return (
         <>
-          <DialogDescription className="mb-4">
-            Stai proponendo una nuova data per il colloquio per <strong>"{selectedNotificationForResponse.projectTitle}"</strong>.
-            <br/>Proposta originale dall'azienda: <em>"{originalProposalMessage}"</em> {originalProposalDate && ` per il ${format(originalProposalDate, "PPP", {locale:it})}`}.
+          <DialogDescription className="mb-4 text-sm">
+            Stai proponendo una nuova data per il colloquio per <strong>&quot;{selectedNotificationForResponse.projectTitle}&quot;</strong>.
+            <br/>Proposta originale dall&apos;azienda: <em>&quot;{originalProposalMessage}&quot;</em> {originalProposalDate && ` per il ${format(originalProposalDate, "PPP", {locale:it})}`}.
           </DialogDescription>
           <FormField
             control={professionalResponseForm.control}
@@ -289,17 +294,16 @@ export default function ProfessionalNotificationsPage() {
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))} initialFocus locale={it} />
-                     {/* Basic time picker - consider a proper time picker component for better UX */}
                     <div className="p-2 border-t">
                         <input 
                             type="time" 
-                            className="w-full p-1 border rounded"
+                            className="w-full p-1 border rounded text-sm"
                             defaultValue={field.value ? format(field.value, "HH:mm") : "09:00"}
                             onChange={(e) => {
                                 const [hours, minutes] = e.target.value.split(':').map(Number);
                                 const currentSelectedDate = field.value || new Date();
                                 currentSelectedDate.setHours(hours, minutes);
-                                field.onChange(new Date(currentSelectedDate)); // Ensure a new Date object is passed
+                                field.onChange(new Date(currentSelectedDate)); 
                             }}
                         />
                     </div>
@@ -323,7 +327,7 @@ export default function ProfessionalNotificationsPage() {
         </>
       );
     }
-    return null; // Should not happen if actionType is set
+    return null; 
   };
 
 
@@ -377,15 +381,15 @@ export default function ProfessionalNotificationsPage() {
                     
                     {notification.type === NOTIFICATION_TYPES.INTERVIEW_PROPOSED && notification.applicationId && (
                       <div className="mt-2 flex flex-wrap gap-2">
-                        <Button size="sm" className="text-xs bg-green-600 hover:bg-green-700" onClick={() => handleOpenResponseModal(notification, 'accept')}><CalendarCheck className="mr-1.5 h-3.5 w-3.5"/> Accetta</Button>
-                        <Button size="sm" variant="destructive" className="text-xs" onClick={() => handleOpenResponseModal(notification, 'reject')}><X className="mr-1.5 h-3.5 w-3.5"/> Rifiuta</Button>
-                        <Button size="sm" variant="outline" className="text-xs" onClick={() => handleOpenResponseModal(notification, 'reschedule')}><CalendarPlus className="mr-1.5 h-3.5 w-3.5"/> Proponi Altra Data</Button>
+                        <Button size="sm" className="text-xs bg-green-600 hover:bg-green-700 h-7 px-2 py-1" onClick={() => handleOpenResponseModal(notification, 'accept')} disabled={processingResponse}><CalendarCheck className="mr-1.5 h-3.5 w-3.5"/> Accetta</Button>
+                        <Button size="sm" variant="destructive" className="text-xs h-7 px-2 py-1" onClick={() => handleOpenResponseModal(notification, 'reject')} disabled={processingResponse}><X className="mr-1.5 h-3.5 w-3.5"/> Rifiuta</Button>
+                        <Button size="sm" variant="outline" className="text-xs h-7 px-2 py-1" onClick={() => handleOpenResponseModal(notification, 'reschedule')} disabled={processingResponse}><CalendarPlus className="mr-1.5 h-3.5 w-3.5"/> Proponi Altra Data</Button>
                       </div>
                     )}
 
                     {notification.linkTo && notification.type !== NOTIFICATION_TYPES.INTERVIEW_PROPOSED && (
                       <div className="mt-2">
-                        <Button variant="outline" size="sm" asChild onClick={() => !notification.isRead && handleMarkAsRead(notification.id)} className={cn("text-xs", !notification.isRead && "border-primary/50 text-primary hover:bg-primary/10 hover:text-primary")}>
+                        <Button variant="outline" size="sm" asChild onClick={() => !notification.isRead && handleMarkAsRead(notification.id)} className={cn("text-xs h-7 px-2 py-1", !notification.isRead && "border-primary/50 text-primary hover:bg-primary/10 hover:text-primary")}>
                           <Link href={notification.linkTo}><Eye className="mr-1.5 h-3.5 w-3.5" /> Vedi Dettagli</Link>
                         </Button>
                       </div>
@@ -420,7 +424,7 @@ export default function ProfessionalNotificationsPage() {
                 {renderResponseModalContent()}
                 <DialogFooter className="pt-4">
                   <DialogClose asChild><Button type="button" variant="outline" disabled={processingResponse}>Annulla</Button></DialogClose>
-                  <Button type="submit" disabled={processingResponse}>
+                  <Button type="submit" variant={responseActionType === 'reject' ? 'destructive' : 'default'} disabled={processingResponse}>
                     {processingResponse ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                     {processingResponse ? 'Invio...' : 'Invia Risposta'}
                   </Button>

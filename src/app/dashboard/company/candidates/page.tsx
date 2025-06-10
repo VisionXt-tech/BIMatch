@@ -204,13 +204,13 @@ export default function CompanyCandidatesPage() {
         type: notificationType,
         title: notificationTitle,
         message: notificationMessage,
-        linkTo: ROUTES.DASHBOARD_PROFESSIONAL_NOTIFICATIONS, // Link alle notifiche del professionista
+        linkTo: ROUTES.DASHBOARD_PROFESSIONAL_NOTIFICATIONS, 
         isRead: false,
         createdAt: serverTimestamp(),
         relatedEntityId: application.projectId,
         projectTitle: application.projectTitle,
         companyName: application.companyName,
-        applicationId: application.id, // Includi applicationId per riferimento
+        applicationId: application.id, 
         ...notificationPayload,
       };
       await addDoc(collection(db, 'notifications'), notificationData);
@@ -259,7 +259,7 @@ export default function CompanyCandidatesPage() {
       applicationForModal,
       'rifiutata',
       { rejectionReason },
-      NOTIFICATION_TYPES.APPLICATION_STATUS_UPDATED, // Potrebbe essere un tipo più specifico se necessario
+      NOTIFICATION_TYPES.APPLICATION_STATUS_UPDATED, 
       notificationTitle,
       notificationMessage
     );
@@ -275,14 +275,14 @@ export default function CompanyCandidatesPage() {
     
     await updateApplicationAndSendNotification(
       applicationForModal,
-      'colloquio_proposto', // Nuovo stato
+      'colloquio_proposto', 
       { interviewProposalMessage, proposedInterviewDate: Timestamp.fromDate(proposedInterviewDate) },
-      NOTIFICATION_TYPES.INTERVIEW_PROPOSED, // Tipo di notifica specifico
+      NOTIFICATION_TYPES.INTERVIEW_PROPOSED, 
       notificationTitle,
       notificationMessage,
-      { // Payload aggiuntivo per la notifica INTERVIEW_PROPOSED
+      { 
         interviewProposalMessage: interviewProposalMessage,
-        proposedInterviewDate: formattedDate,
+        proposedInterviewDate: formattedDate, // Data già formattata per la notifica
         applicationId: applicationForModal.id
       }
     );
@@ -351,7 +351,7 @@ export default function CompanyCandidatesPage() {
     switch (status) {
       case 'inviata': return 'secondary';
       case 'in_revisione': return 'default'; 
-      case 'preselezionata':
+      case 'preselezionata': // Mantenuto per retrocompatibilità se presente
       case 'colloquio_proposto':
       case 'colloquio_accettato_prof':
       case 'colloquio_rifiutato_prof':
@@ -364,7 +364,7 @@ export default function CompanyCandidatesPage() {
   };
    const getStatusBadgeColorClass = (status: ProjectApplication['status']) => {
     switch (status) {
-      case 'preselezionata': // Mantenuto per retrocompatibilità se presente
+      case 'preselezionata':
       case 'colloquio_proposto':
       case 'colloquio_ripianificato_prof':
          return 'bg-yellow-500 hover:bg-yellow-600 text-white';
@@ -376,13 +376,18 @@ export default function CompanyCandidatesPage() {
     }
   };
   const getStatusText = (status: ProjectApplication['status']) => {
-    switch (status) {
-        case 'colloquio_proposto': return 'Colloquio Proposto';
-        case 'colloquio_accettato_prof': return 'Colloquio Accettato (Prof.)';
-        case 'colloquio_rifiutato_prof': return 'Colloquio Rifiutato (Prof.)';
-        case 'colloquio_ripianificato_prof': return 'Nuova Data Proposta (Prof.)';
-        default: return status.replace(/_/g, ' ');
-    }
+    const statusMap: Record<ProjectApplication['status'], string> = {
+        inviata: 'Inviata',
+        in_revisione: 'In Revisione',
+        preselezionata: 'Preselezionata',
+        rifiutata: 'Rifiutata',
+        accettata: 'Accettata',
+        colloquio_proposto: 'Colloquio Proposto',
+        colloquio_accettato_prof: 'Colloquio Accettato (Prof.)',
+        colloquio_rifiutato_prof: 'Colloquio Rifiutato (Prof.)',
+        colloquio_ripianificato_prof: 'Nuova Data Proposta (Prof.)'
+    };
+    return statusMap[status] || status.replace(/_/g, ' ');
   }
 
 
@@ -447,7 +452,7 @@ export default function CompanyCandidatesPage() {
                       <TableCell>
                         <Badge 
                             variant={getStatusBadgeVariant(app.status)}
-                            className={getStatusBadgeColorClass(app.status)}
+                            className={cn("capitalize", getStatusBadgeColorClass(app.status))}
                         >
                             {getStatusText(app.status)}
                         </Badge>
@@ -459,7 +464,7 @@ export default function CompanyCandidatesPage() {
                             className="text-xs h-7 px-2 py-1"
                             onClick={() => openApplicationDetailsModal(app)}
                             >
-                            <FileText className="mr-1.5 h-3 w-3" /> Dettagli Candidatura
+                            <FileText className="mr-1.5 h-3 w-3" /> Dettagli
                         </Button>
                         {app.professionalProfile?.uid && (
                              <Button variant="outline" size="sm" asChild className="text-xs h-7 px-2 py-1">
@@ -492,7 +497,7 @@ export default function CompanyCandidatesPage() {
                           </>
                         )}
                         
-                        {(app.status === 'preselezionata' || app.status === 'colloquio_proposto' || app.status === 'colloquio_accettato_prof' || app.status === 'colloquio_ripianificato_prof') && (
+                        {(app.status === 'colloquio_proposto' || app.status === 'colloquio_accettato_prof' || app.status === 'colloquio_ripianificato_prof') && (
                           <>
                             <Button 
                                 variant="default" 
@@ -530,13 +535,11 @@ export default function CompanyCandidatesPage() {
                                 <Hourglass className="mr-1.5 h-3 w-3" /> In Revisione
                             </Badge>
                          )}
-                         {app.status === 'colloquio_rifiutato_prof' && (
+                          {app.status === 'colloquio_rifiutato_prof' && (
                             <Badge variant="destructive" className={cn("text-xs cursor-default")}>
-                                <X className="mr-1.5 h-3 w-3" /> Colloquio Rifiutato
+                                <X className="mr-1.5 h-3 w-3" /> Colloquio Rifiutato (Prof.)
                             </Badge>
                          )}
-
-
                       </TableCell>
                     </TableRow>
                   ))}
