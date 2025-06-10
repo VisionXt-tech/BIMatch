@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, ITALIAN_REGIONS, ROUTES } from '@/constants';
-import { Briefcase, MapPin, Percent, Search, Filter, Construction, Code2, WifiOff, Info, CheckCircle2, ListFilter } from 'lucide-react';
+import { Briefcase, MapPin, Percent, Search, Filter, Construction, Code2, WifiOff, Info, CheckCircle2, ListFilter, XCircle } from 'lucide-react'; // Added XCircle
 import Link from 'next/link';
 import Image from 'next/image';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -17,6 +17,7 @@ import { collection, getDocs, query, Timestamp, orderBy, where } from 'firebase/
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { useSearchParams } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 const getSkillLabel = (value: string) => BIM_SKILLS_OPTIONS.find(s => s.value === value)?.label || value;
 const getSoftwareLabel = (value: string) => SOFTWARE_PROFICIENCY_OPTIONS.find(s => s.value === value)?.label || value;
@@ -36,7 +37,8 @@ export default function AvailableProjectsPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
   const searchParams = useSearchParams();
   const [projects, setProjects] = useState<Project[]>([]);
-  const [userApplications, setUserApplications] = useState<string[]>([]);
+  // Changed userApplications to store more details
+  const [userApplicationDetails, setUserApplicationDetails] = useState<Array<{ projectId: string; status: ProjectApplication['status'] }>>([]);
   const [loading, setLoading] = useState(true);
   const [loadingApplications, setLoadingApplications] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,13 +53,9 @@ export default function AvailableProjectsPage() {
   useEffect(() => {
     const filterParam = searchParams.get('filter');
     if (filterParam === 'applied' && userProfile?.role === 'professional') {
-      // We set the filter here, but the actual filtering logic in useMemo
-      // will depend on userApplications being loaded.
-      // This ensures that if a user lands here with ?filter=applied,
-      // the dropdown shows "Solo Candidati" pre-selected.
       setFilters(prev => ({ ...prev, applicationStatus: APPLICATION_STATUS_APPLIED }));
     }
-  }, [searchParams, userProfile, loadingApplications]); // Rerun if loadingApplications changes to ensure filter applies post-load
+  }, [searchParams, userProfile, loadingApplications]);
 
   useEffect(() => {
     const fetchProjectsAndApplications = async () => {
@@ -102,30 +100,30 @@ export default function AvailableProjectsPage() {
           const appsCollectionRef = collection(db, 'projectApplications');
           const qApps = query(appsCollectionRef, where('professionalId', '==', user.uid));
           const querySnapshotApps = await getDocs(qApps);
-          const appliedProjectIds: string[] = [];
+          // Store projectId and status
+          const fetchedAppDetails: Array<{ projectId: string; status: ProjectApplication['status'] }> = [];
           querySnapshotApps.forEach((doc) => {
-            appliedProjectIds.push((doc.data() as ProjectApplication).projectId);
+            const appData = doc.data() as ProjectApplication;
+            fetchedAppDetails.push({ projectId: appData.projectId, status: appData.status });
           });
-          setUserApplications(appliedProjectIds);
+          setUserApplicationDetails(fetchedAppDetails);
         } catch (e: any) {
           console.error("Error fetching user applications:", e);
-          // setError for applications could be set here if critical
         } finally {
           setLoadingApplications(false);
         }
       } else {
-        setLoadingApplications(false); // Not a professional or not logged in
+        setLoadingApplications(false);
       }
     };
-    if (!authLoading) { // Only fetch if auth state is resolved
+    if (!authLoading) {
         fetchProjectsAndApplications();
     }
   }, [db, user, userProfile, authLoading]);
 
   const filteredProjects = useMemo(() => {
-    // Wait for applications to load if the filter is application-status dependent
     if (filters.applicationStatus !== ALL_ITEMS_FILTER_VALUE && loadingApplications && userProfile?.role === 'professional') {
-        return []; // Or return projects without application status filter yet, and let UI show loading for that part
+        return []; 
     }
 
     return projects.filter(project => {
@@ -135,21 +133,18 @@ export default function AvailableProjectsPage() {
       
       let applicationStatusMatch = true;
       if (userProfile?.role === 'professional' && !loadingApplications) {
-        const hasApplied = userApplications.includes(project.id!);
+        const currentAppDetail = userApplicationDetails.find(app => app.projectId === project.id!);
+        const hasAppliedForFilter = !!currentAppDetail;
+
         if (filters.applicationStatus === APPLICATION_STATUS_APPLIED) {
-            applicationStatusMatch = hasApplied;
+            applicationStatusMatch = hasAppliedForFilter;
         } else if (filters.applicationStatus === APPLICATION_STATUS_NOT_APPLIED) {
-            applicationStatusMatch = !hasApplied;
+            applicationStatusMatch = !hasAppliedForFilter;
         }
       }
-      // If user is not professional or applications are still loading for a specific filter, 
-      // and filter is not "ALL", we might decide to show all or none.
-      // Current logic: if filter is specific and apps loading, this project might be excluded if it doesn't match other criteria.
-      // This seems fine as the filter will re-evaluate once loadingApplications is false.
-
       return skillMatch && softwareMatch && locationMatch && applicationStatusMatch && project.status === 'attivo';
     });
-  }, [projects, filters, userApplications, userProfile, loadingApplications]);
+  }, [projects, filters, userApplicationDetails, userProfile, loadingApplications]);
 
 
   return (
@@ -198,7 +193,7 @@ export default function AvailableProjectsPage() {
                         <Select 
                             onValueChange={(value) => setFilters(prev => ({...prev, applicationStatus: value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value}))} 
                             value={filters.applicationStatus}
-                            disabled={loadingApplications && authLoading} // Disable while initial auth or apps are loading
+                            disabled={loadingApplications && authLoading}
                         >
                             <SelectTrigger><SelectValue placeholder="Stato Candidatura" /></SelectTrigger>
                             <SelectContent>
@@ -230,15 +225,25 @@ export default function AvailableProjectsPage() {
           ) : filteredProjects.length > 0 ? (
             <div className="space-y-6">
               {filteredProjects.map((project) => {
-                const hasApplied = userProfile?.role === 'professional' && !loadingApplications && userApplications.includes(project.id!);
+                const applicationDetail = userProfile?.role === 'professional' && !loadingApplications 
+                  ? userApplicationDetails.find(app => app.projectId === project.id!) 
+                  : undefined;
+                const hasApplied = !!applicationDetail;
+                const currentApplicationStatus = applicationDetail?.status;
+
                 return (
                   <Card key={project.id} className="shadow-lg hover:shadow-xl transition-shadow duration-300 relative">
-                    {hasApplied && (
+                    {(hasApplied && currentApplicationStatus !== 'rifiutata') && (
                       <Badge variant="default" className="absolute top-3 right-3 text-xs px-2 py-1 z-10 flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white">
                         <CheckCircle2 className="h-3.5 w-3.5" /> Candidato
                       </Badge>
                     )}
-                    <CardHeader className={hasApplied ? "pr-24" : "pr-3"}> {/* Adjust padding if badge is present */}
+                     {(hasApplied && currentApplicationStatus === 'rifiutata') && (
+                      <Badge variant="outline" className="absolute top-3 right-3 text-xs px-2 py-1 z-10 flex items-center gap-1 border-orange-500 text-orange-600 bg-orange-50 hover:bg-orange-100">
+                        <XCircle className="h-3.5 w-3.5" /> Rifiutata
+                      </Badge>
+                    )}
+                    <CardHeader className={hasApplied ? "pr-24 md:pr-28" : "pr-3"}>
                       <div className="flex items-start justify-between gap-2">
                           <div>
                               <CardTitle className="text-xl hover:text-primary transition-colors">
@@ -285,11 +290,25 @@ export default function AvailableProjectsPage() {
                           <p className="text-xs text-muted-foreground">
                             Pubblicato: {project.postedAt && (project.postedAt as Timestamp).toDate ? (project.postedAt as Timestamp).toDate().toLocaleDateString('it-IT') : 'Data non disponibile'}
                           </p>
-                          <Button size="sm" asChild className={hasApplied ? "bg-green-600 hover:bg-green-700 text-white" : ""}>
-                              <Link href={ROUTES.PROJECT_DETAILS(project.id!)}>
-                                {hasApplied ? <><CheckCircle2 className="mr-1.5 h-4 w-4"/>Già Candidato</> : "Dettagli e Candidatura"}
-                              </Link>
-                          </Button>
+                          {hasApplied ? (
+                              currentApplicationStatus === 'rifiutata' ? (
+                                <Button size="sm" asChild variant="outline" disabled className="border-orange-500 text-orange-600 bg-orange-50 cursor-not-allowed">
+                                    <span><XCircle className="mr-1.5 h-4 w-4"/> Rifiutata</span>
+                                </Button>
+                              ) : (
+                                <Button size="sm" asChild className="bg-green-600 hover:bg-green-700 text-white">
+                                    <Link href={ROUTES.PROJECT_DETAILS(project.id!)}>
+                                        <CheckCircle2 className="mr-1.5 h-4 w-4"/>Già Candidato
+                                    </Link>
+                                </Button>
+                              )
+                          ) : (
+                              <Button size="sm" asChild>
+                                  <Link href={ROUTES.PROJECT_DETAILS(project.id!)}>
+                                    Dettagli e Candidatura
+                                  </Link>
+                              </Button>
+                          )}
                       </div>
                     </CardContent>
                   </Card>
@@ -308,3 +327,4 @@ export default function AvailableProjectsPage() {
     </div>
   );
 }
+
