@@ -23,13 +23,17 @@ const getSkillLabel = (value: string) => BIM_SKILLS_OPTIONS.find(s => s.value ==
 const getSoftwareLabel = (value: string) => SOFTWARE_PROFICIENCY_OPTIONS.find(s => s.value === value)?.label || value;
 
 const ALL_ITEMS_FILTER_VALUE = "__ALL_ITEMS__";
-const APPLICATION_STATUS_APPLIED = "APPLIED";
+const APPLICATION_STATUS_APPLIED = "APPLIED"; // Applied and not rejected (includes accepted)
 const APPLICATION_STATUS_NOT_APPLIED = "NOT_APPLIED";
+const APPLICATION_STATUS_ACCEPTED = "ACCEPTED"; // Specifically accepted
+const APPLICATION_STATUS_REJECTED = "REJECTED"; // Specifically rejected
 
 const applicationStatusOptions = [
     { value: ALL_ITEMS_FILTER_VALUE, label: "Tutti gli stati candidatura" },
-    { value: APPLICATION_STATUS_APPLIED, label: "Solo Candidati" },
+    { value: APPLICATION_STATUS_APPLIED, label: "Solo Candidati (non rifiutati)" },
     { value: APPLICATION_STATUS_NOT_APPLIED, label: "Solo Non Candidati" },
+    { value: APPLICATION_STATUS_ACCEPTED, label: "Solo Accettate" },
+    { value: APPLICATION_STATUS_REJECTED, label: "Solo Rifiutate" },
 ];
 
 export default function AvailableProjectsPage() {
@@ -135,9 +139,13 @@ export default function AvailableProjectsPage() {
         const hasAppliedForFilter = !!currentAppDetail;
 
         if (filters.applicationStatus === APPLICATION_STATUS_APPLIED) {
-            applicationStatusMatch = hasAppliedForFilter && currentAppDetail?.status !== 'rifiutata'; // Exclude rejected from "Applied" filter
+            applicationStatusMatch = hasAppliedForFilter && currentAppDetail?.status !== 'rifiutata';
         } else if (filters.applicationStatus === APPLICATION_STATUS_NOT_APPLIED) {
             applicationStatusMatch = !hasAppliedForFilter;
+        } else if (filters.applicationStatus === APPLICATION_STATUS_ACCEPTED) {
+            applicationStatusMatch = hasAppliedForFilter && currentAppDetail?.status === 'accettata';
+        } else if (filters.applicationStatus === APPLICATION_STATUS_REJECTED) {
+            applicationStatusMatch = hasAppliedForFilter && currentAppDetail?.status === 'rifiutata';
         }
       }
       return skillMatch && softwareMatch && locationMatch && applicationStatusMatch && project.status === 'attivo';
