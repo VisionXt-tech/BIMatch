@@ -16,12 +16,22 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Link from 'next/link';
-import { Users, ArrowLeft, ExternalLink, Mail, Info, WifiOff, Briefcase, Check, X, Hourglass, FileText, ListChecks, MessageSquare, CalendarDays } from 'lucide-react';
+import { Users, ArrowLeft, ExternalLink, Mail, Info, WifiOff, Briefcase, Check, X, Hourglass, FileText, ListChecks, MessageSquare, CalendarDays, Calendar as CalendarIcon, AlertTriangle } from 'lucide-react';
 import { ROUTES, NOTIFICATION_TYPES, BIM_SKILLS_OPTIONS } from '@/constants';
 import { useToast } from '@/hooks/use-toast';
 import type { UserNotification } from '@/types/notification';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Textarea } from '@/components/ui/textarea';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { format } from 'date-fns';
+import { it } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 // Helper function for avatar fallbacks
 const getInitials = (name: string | null | undefined): string => {
@@ -39,6 +49,18 @@ interface EnrichedApplication extends ProjectApplication {
   companyName?: string; 
 }
 
+const rejectionFormSchema = z.object({
+  rejectionReason: z.string().min(10, { message: "La motivazione del rifiuto deve contenere almeno 10 caratteri." }).max(1000, "La motivazione non può superare i 1000 caratteri."),
+});
+type RejectionFormData = z.infer<typeof rejectionFormSchema>;
+
+const preselectionFormSchema = z.object({
+  interviewProposalMessage: z.string().min(10, { message: "Il messaggio di proposta deve contenere almeno 10 caratteri." }).max(1000, "Il messaggio non può superare i 1000 caratteri."),
+  proposedInterviewDate: z.date({ required_error: "La data per il colloquio è richiesta." }),
+});
+type PreselectionFormData = z.infer<typeof preselectionFormSchema>;
+
+
 export default function CompanyCandidatesPage() {
   const { db } = useFirebase();
   const { user, userProfile, loading: authLoading } = useAuth();
@@ -52,9 +74,24 @@ export default function CompanyCandidatesPage() {
   const [applications, setApplications] = useState<EnrichedApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [updatingStatusForAppId, setUpdatingStatusForAppId] = useState<string | null>(null);
-  const [selectedApplicationForDetails, setSelectedApplicationForDetails] = useState<EnrichedApplication | null>(null);
+  
+  const [applicationForModal, setApplicationForModal] = useState<EnrichedApplication | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [isPreselectModalOpen, setIsPreselectModalOpen] = useState(false);
+
+  const [processingApplicationId, setProcessingApplicationId] = useState<string | null>(null);
+
+
+  const rejectionForm = useForm<RejectionFormData>({
+    resolver: zodResolver(rejectionFormSchema),
+    defaultValues: { rejectionReason: '' },
+  });
+
+  const preselectionForm = useForm<PreselectionFormData>({
+    resolver: zodResolver(preselectionFormSchema),
+    defaultValues: { interviewProposalMessage: '' , proposedInterviewDate: undefined},
+  });
 
 
   const fetchProjectAndCandidates = useCallback(async () => {
@@ -139,9 +176,10 @@ export default function CompanyCandidatesPage() {
     fetchProjectAndCandidates();
   }, [fetchProjectAndCandidates]);
 
-  const handleApplicationStatusChange = async (
-    application: EnrichedApplication, 
+  const updateApplicationAndSendNotification = async (
+    application: EnrichedApplication,
     newStatus: ProjectApplication['status'],
+    applicationUpdatePayload: Partial<ProjectApplication>,
     notificationTitle: string,
     notificationMessage: string
   ) => {
@@ -149,11 +187,12 @@ export default function CompanyCandidatesPage() {
       toast({ title: "Errore", description: "Dati mancanti per aggiornare lo stato o inviare notifica.", variant: "destructive" });
       return;
     }
-    setUpdatingStatusForAppId(application.id);
+    setProcessingApplicationId(application.id);
     try {
       const appDocRef = doc(db, 'projectApplications', application.id);
       await updateDoc(appDocRef, { 
         status: newStatus,
+        ...applicationUpdatePayload, // Include reason or proposal details
         updatedAt: serverTimestamp()
       });
 
@@ -161,7 +200,7 @@ export default function CompanyCandidatesPage() {
         userId: application.professionalId,
         type: NOTIFICATION_TYPES.APPLICATION_STATUS_UPDATED,
         title: notificationTitle,
-        message: notificationMessage,
+        message: notificationMessage, // This message should include the reason/proposal
         linkTo: ROUTES.PROJECT_DETAILS(application.projectId),
         isRead: false,
         createdAt: serverTimestamp(),
@@ -175,16 +214,66 @@ export default function CompanyCandidatesPage() {
 
       setApplications(prevApps => 
         prevApps.map(app => 
-          app.id === application.id ? { ...app, status: newStatus, updatedAt: Timestamp.now() } : app 
+          app.id === application.id ? { ...app, status: newStatus, ...applicationUpdatePayload, updatedAt: Timestamp.now() } : app 
         )
       );
+      // Close any open modals
+      setIsRejectModalOpen(false);
+      setIsPreselectModalOpen(false);
+      setApplicationForModal(null);
+      rejectionForm.reset();
+      preselectionForm.reset();
 
     } catch (error: any) {
       console.error("Error updating application status or sending notification:", error);
       toast({ title: "Errore", description: `Impossibile aggiornare lo stato o inviare notifica: ${error.message}`, variant: "destructive" });
     } finally {
-      setUpdatingStatusForAppId(null);
+      setProcessingApplicationId(null);
     }
+  };
+
+  const handleOpenRejectDialog = (application: EnrichedApplication) => {
+    setApplicationForModal(application);
+    rejectionForm.reset();
+    setIsRejectModalOpen(true);
+  };
+
+  const handleOpenPreselectDialog = (application: EnrichedApplication) => {
+    setApplicationForModal(application);
+    preselectionForm.reset();
+    setIsPreselectModalOpen(true);
+  };
+
+  const onSubmitRejection = async (formData: RejectionFormData) => {
+    if (!applicationForModal) return;
+    const { rejectionReason } = formData;
+    const notificationTitle = `Esito candidatura per "${applicationForModal.projectTitle}"`;
+    const notificationMessage = `L'azienda ${applicationForModal.companyName} ha esaminato la tua candidatura per il progetto "${applicationForModal.projectTitle}". Motivazione: ${rejectionReason}. Ti ringraziamo per l'interesse.`;
+    
+    await updateApplicationAndSendNotification(
+      applicationForModal,
+      'rifiutata',
+      { rejectionReason },
+      notificationTitle,
+      notificationMessage
+    );
+  };
+
+  const onSubmitPreselection = async (formData: PreselectionFormData) => {
+    if (!applicationForModal) return;
+    const { interviewProposalMessage, proposedInterviewDate } = formData;
+    const formattedDate = format(proposedInterviewDate, "PPP", { locale: it });
+
+    const notificationTitle = `Proposta di colloquio per "${applicationForModal.projectTitle}"!`;
+    const notificationMessage = `L'azienda ${applicationForModal.companyName} ha preselezionato la tua candidatura per il progetto "${applicationForModal.projectTitle}" e vorrebbe proporti un colloquio. Messaggio: "${interviewProposalMessage}". Data proposta: ${formattedDate}. Sarai ricontattato/a per conferma.`;
+    
+    await updateApplicationAndSendNotification(
+      applicationForModal,
+      'preselezionata',
+      { interviewProposalMessage, proposedInterviewDate: Timestamp.fromDate(proposedInterviewDate) },
+      notificationTitle,
+      notificationMessage
+    );
   };
   
   const openApplicationDetailsModal = (application: EnrichedApplication) => {
@@ -349,91 +438,55 @@ export default function CompanyCandidatesPage() {
                             </Button>
                         )}
 
-                        {/* Azioni basate sullo stato corrente */}
+                        {/* Nuove Azioni per stato 'inviata' */}
                         {app.status === 'inviata' && (
-                           <Button 
-                                variant="default" 
-                                size="sm" 
-                                className="text-xs h-7 px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white"
-                                onClick={() => handleApplicationStatusChange(
-                                    app, 
-                                    'in_revisione', 
-                                    `La tua candidatura per "${app.projectTitle}" è in esame`, 
-                                    `L'azienda ${app.companyName} sta attualmente esaminando la tua candidatura per il progetto "${app.projectTitle}".`
-                                )}
-                                disabled={updatingStatusForAppId === app.id}
-                            >
-                                {updatingStatusForAppId === app.id && app.status === 'in_revisione' ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <Briefcase className="mr-1.5 h-3 w-3" />} In Revisione
-                            </Button>
-                        )}
-                        
-                        {(app.status === 'inviata' || app.status === 'in_revisione') && (
-                           <Button 
+                          <>
+                            <Button 
                                 variant="default" 
                                 size="sm" 
                                 className="text-xs h-7 px-2 py-1 bg-yellow-500 hover:bg-yellow-600 text-white"
-                                onClick={() => handleApplicationStatusChange(
-                                    app, 
-                                    'preselezionata', 
-                                    `Sviluppi sulla tua candidatura per "${app.projectTitle}"!`, 
-                                    `L'azienda ${app.companyName} ha preselezionato la tua candidatura per il progetto "${app.projectTitle}". Potrebbero contattarti a breve.`
-                                )}
-                                disabled={updatingStatusForAppId === app.id}
+                                onClick={() => handleOpenPreselectDialog(app)}
+                                disabled={processingApplicationId === app.id}
                             >
-                                {updatingStatusForAppId === app.id && app.status === 'preselezionata' ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <Check className="mr-1.5 h-3 w-3" />} Preseleziona
+                                {processingApplicationId === app.id ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <Check className="mr-1.5 h-3 w-3" />} Preseleziona
                             </Button>
+                            <Button 
+                                variant="destructive" 
+                                size="sm" 
+                                className="text-xs h-7 px-2 py-1"
+                                onClick={() => handleOpenRejectDialog(app)}
+                                disabled={processingApplicationId === app.id}
+                            >
+                                {processingApplicationId === app.id ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <X className="mr-1.5 h-3 w-3" />} Rifiuta
+                            </Button>
+                          </>
                         )}
                         
+                        {/* Azioni per stato 'preselezionata' (esistenti, potrebbero necessitare di modifiche future) */}
                         {app.status === 'preselezionata' && (
                              <Button 
                                 variant="default" 
                                 size="sm" 
                                 className="text-xs h-7 px-2 py-1 bg-green-600 hover:bg-green-700 text-white"
-                                onClick={() => handleApplicationStatusChange(
-                                    app, 
-                                    'accettata',
-                                    `Ottime notizie per il progetto "${app.projectTitle}"!`,
-                                    `Congratulazioni! L'azienda ${app.companyName} ha accettato la tua candidatura per il progetto "${app.projectTitle}". Sarai ricontattato/a a breve per i prossimi passi.`
-                                )}
-                                disabled={updatingStatusForAppId === app.id}
+                                onClick={() => updateApplicationAndSendNotification(app, 'accettata', {}, `Ottime notizie per il progetto "${app.projectTitle}"!`, `Congratulazioni! L'azienda ${app.companyName} ha accettato la tua candidatura per il progetto "${app.projectTitle}". Sarai ricontattato/a a breve per i prossimi passi.`)}
+                                disabled={processingApplicationId === app.id}
                             >
-                                {updatingStatusForAppId === app.id && app.status === 'accettata' ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <Check className="mr-1.5 h-3 w-3" />} Accetta
+                                {processingApplicationId === app.id && app.status === 'accettata' ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <Check className="mr-1.5 h-3 w-3" />} Accetta
                             </Button>
                         )}
-
-                        {(app.status === 'inviata' || app.status === 'in_revisione' || app.status === 'preselezionata') && (
+                         {/* Pulsante "Rifiuta" per stato 'preselezionata' */}
+                         {app.status === 'preselezionata' && (
                             <Button 
                                 variant="destructive" 
                                 size="sm" 
                                 className="text-xs h-7 px-2 py-1"
-                                onClick={() => handleApplicationStatusChange(
-                                    app, 
-                                    'rifiutata',
-                                    `Aggiornamento sulla tua candidatura per "${app.projectTitle}"`,
-                                    `L'azienda ${app.companyName} ha esaminato la tua candidatura per il progetto "${app.projectTitle}". Al momento, hanno deciso di procedere con altri candidati. Ti ringraziamo per l'interesse.`
-                                )}
-                                disabled={updatingStatusForAppId === app.id}
+                                onClick={() => handleOpenRejectDialog(app)} // Usa il modale anche qui
+                                disabled={processingApplicationId === app.id}
                             >
-                                {updatingStatusForAppId === app.id && app.status === 'rifiutata' ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <X className="mr-1.5 h-3 w-3" />} Rifiuta
+                                {processingApplicationId === app.id ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <X className="mr-1.5 h-3 w-3" />} Rifiuta
                             </Button>
                         )}
-                         
-                        {app.status === 'preselezionata' && (
-                           <Button 
-                                variant="default"
-                                size="sm" 
-                                className="text-xs h-7 px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white"
-                                onClick={() => handleApplicationStatusChange(
-                                    app, 
-                                    'in_revisione', 
-                                    `La tua candidatura per "${app.projectTitle}" è nuovamente in esame`, 
-                                    `L'azienda ${app.companyName} sta riesaminando la tua candidatura preselezionata per il progetto "${app.projectTitle}".`
-                                )}
-                                disabled={updatingStatusForAppId === app.id}
-                            >
-                                {updatingStatusForAppId === app.id && app.status === 'in_revisione' ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <Briefcase className="mr-1.5 h-3 w-3" />} In Revisione
-                            </Button>
-                        )}
+                        
                       </TableCell>
                     </TableRow>
                   ))}
@@ -444,6 +497,7 @@ export default function CompanyCandidatesPage() {
         </CardContent>
       </Card>
 
+      {/* Modale Dettagli Candidatura (esistente) */}
       {selectedApplicationForDetails && (
         <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
             <DialogContent className="sm:max-w-lg max-h-[80vh]">
@@ -497,6 +551,135 @@ export default function CompanyCandidatesPage() {
             </DialogContent>
         </Dialog>
       )}
+
+      {/* Modale Rifiuta Candidatura */}
+      {applicationForModal && (
+        <Dialog open={isRejectModalOpen} onOpenChange={setIsRejectModalOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Rifiuta Candidatura</DialogTitle>
+              <DialogDescription>
+                Fornisci una motivazione per il rifiuto della candidatura di <strong>{applicationForModal.professionalName}</strong> per il progetto "{applicationForModal.projectTitle}". Il professionista riceverà una notifica.
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...rejectionForm}>
+              <form onSubmit={rejectionForm.handleSubmit(onSubmitRejection)} className="space-y-4 py-2">
+                <FormField
+                  control={rejectionForm.control}
+                  name="rejectionReason"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Motivazione del Rifiuto</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Es. Profilo non in linea con i requisiti specifici del progetto, esperienza insufficiente per il ruolo, ecc."
+                          rows={4}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter className="pt-4">
+                  <DialogClose asChild>
+                    <Button type="button" variant="outline" disabled={processingApplicationId === applicationForModal.id}>Annulla</Button>
+                  </DialogClose>
+                  <Button type="submit" variant="destructive" disabled={processingApplicationId === applicationForModal.id}>
+                    {processingApplicationId === applicationForModal.id ? <Hourglass className="mr-2 h-4 w-4 animate-spin" /> : <X className="mr-2 h-4 w-4" />}
+                    Conferma Rifiuto
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Modale Preseleziona Candidatura */}
+      {applicationForModal && (
+        <Dialog open={isPreselectModalOpen} onOpenChange={setIsPreselectModalOpen}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Preseleziona e Proponi Colloquio</DialogTitle>
+              <DialogDescription>
+                Invia un messaggio e proponi una data per un colloquio a <strong>{applicationForModal.professionalName}</strong> per il progetto "{applicationForModal.projectTitle}".
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...preselectionForm}>
+              <form onSubmit={preselectionForm.handleSubmit(onSubmitPreselection)} className="space-y-4 py-2">
+                <FormField
+                  control={preselectionForm.control}
+                  name="interviewProposalMessage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Messaggio di Proposta Colloquio</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Es. Siamo rimasti colpiti dal suo profilo e vorremmo invitarla per un colloquio conoscitivo..."
+                          rows={4}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={preselectionForm.control}
+                  name="proposedInterviewDate"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Data Proposta per il Colloquio</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP", { locale: it })
+                              ) : (
+                                <span>Scegli una data</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) => date < new Date(new Date().setHours(0,0,0,0)) } // Disable past dates
+                            initialFocus
+                            locale={it}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter className="pt-4">
+                  <DialogClose asChild>
+                    <Button type="button" variant="outline" disabled={processingApplicationId === applicationForModal.id}>Annulla</Button>
+                  </DialogClose>
+                  <Button type="submit" className="bg-yellow-500 hover:bg-yellow-600 text-white" disabled={processingApplicationId === applicationForModal.id}>
+                    {processingApplicationId === applicationForModal.id ? <Hourglass className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                    Invia Proposta
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      )}
+
     </div>
   );
 }

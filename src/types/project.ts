@@ -34,11 +34,15 @@ export interface ProjectApplication {
   applicationDate: Timestamp | Date | any;
   status: 'inviata' | 'in_revisione' | 'preselezionata' | 'rifiutata' | 'accettata';
   
-  // Campi aggiunti per candidatura dettagliata
-  coverLetterMessage: string; // Messaggio di presentazione
-  relevantSkillsForProject?: string[]; // Competenze che il professionista evidenzia per questo progetto
-  availabilityNotes?: string; // Note sulla disponibilità/data inizio
+  coverLetterMessage: string; 
+  relevantSkillsForProject?: string[]; 
+  availabilityNotes?: string; 
 
-  updatedAt?: Timestamp | Date | any; // Per aggiornamenti di stato da parte dell'azienda
+  // Campi per il feedback/proposta dell'azienda
+  rejectionReason?: string; // Motivo del rifiuto fornito dall'azienda
+  interviewProposalMessage?: string; // Messaggio di proposta colloquio dall'azienda
+  proposedInterviewDate?: Timestamp | Date | null; // Data proposta per il colloquio
+
+  updatedAt?: Timestamp | Date | any; 
 }
 
