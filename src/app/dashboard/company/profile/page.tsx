@@ -21,7 +21,7 @@ import Image from 'next/image';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
-// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Removed Tabs
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 const companyProfileSchema = z.object({
@@ -40,7 +40,7 @@ const companyProfileSchema = z.object({
 type CompanyProfileFormData = z.infer<typeof companyProfileSchema>;
 
 const mapProfileToFormData = (profile?: CompanyProfile | null): CompanyProfileFormData => {
-  const p = profile || {}; 
+  const p = profile || {};
   return {
     companyName: p.companyName || '',
     companyVat: p.companyVat || '',
@@ -71,7 +71,7 @@ export default function CompanyProfilePage() {
 
   const form = useForm<CompanyProfileFormData>({
     resolver: zodResolver(companyProfileSchema),
-    defaultValues: mapProfileToFormData(), 
+    defaultValues: mapProfileToFormData(),
   });
 
   useEffect(() => {
@@ -102,7 +102,7 @@ export default function CompanyProfilePage() {
           setLogoFile(null);
           return;
       }
-      if (file.size > 2 * 1024 * 1024) { 
+      if (file.size > 2 * 1024 * 1024) {
           toast({ title: "File Troppo Grande", description: "Il logo non deve superare i 2MB.", variant: "destructive"});
           if(event.target) event.target.value = '';
           setLogoFile(null);
@@ -197,7 +197,7 @@ export default function CompanyProfilePage() {
       } catch (uploadError) {
         setIsUploading(false);
         setUploadProgress(null);
-        return; 
+        return;
       }
     }
 
@@ -212,13 +212,13 @@ export default function CompanyProfilePage() {
        if (updatedProfile) {
         toast({ title: "Profilo Aggiornato", description: "Le modifiche sono state salvate con successo." });
       }
-      setLogoFile(null); 
+      setLogoFile(null);
       if (logoInputRef.current) {
-        logoInputRef.current.value = ""; 
+        logoInputRef.current.value = "";
       }
     } catch (error) {
     } finally {
-       if (logoFile || isUploading) { 
+       if (logoFile || isUploading) {
         setIsUploading(false);
         setUploadProgress(null);
       }
@@ -254,102 +254,103 @@ export default function CompanyProfilePage() {
         <CardContent className="p-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              
-              <div className="space-y-2">
-                 <h3 className="text-lg font-semibold text-primary border-b pb-2 mb-4">Logo Aziendale</h3>
-                <FormItem>
-                    <div className="flex items-center space-x-4">
-                    <Avatar className="h-24 w-24 rounded-md border">
-                        <AvatarImage src={logoPreview || undefined} alt={(userProfile as CompanyProfile).companyName || 'Logo Azienda'} data-ai-hint="company logo" className="object-contain"/>
-                        <AvatarFallback className="rounded-md text-2xl">{getInitials((userProfile as CompanyProfile).companyName)}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col space-y-2">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={handleLogoPickerClick}
-                            className="bg-accent text-accent-foreground hover:bg-accent/90 w-fit"
-                            >
-                            <Upload className="mr-2 h-4 w-4" />
-                            Carica / Modifica Logo
-                        </Button>
-                        {logoFile && (
-                            <span className="text-sm text-muted-foreground">
-                            File selezionato: {logoFile.name}
-                            </span>
-                        )}
-                        <Input
-                            type="file"
-                            accept="image/jpeg, image/png, image/webp"
-                            onChange={handleFileChange}
-                            className="hidden"
-                            ref={logoInputRef}
-                            />
-                        <FormDescription className="text-xs">Max 2MB (JPG, PNG, WEBP).</FormDescription>
+              <Tabs defaultValue="base-info" className="w-full">
+                <TabsList className="grid w-full grid-cols-3 mb-6">
+                  <TabsTrigger value="base-info">Logo e Info Base</TabsTrigger>
+                  <TabsTrigger value="details">Dettagli Azienda</TabsTrigger>
+                  <TabsTrigger value="contacts">Contatti</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="base-info" className="space-y-4">
+                  <FormItem>
+                      <FormLabel className="text-sm font-semibold text-primary">Logo Aziendale</FormLabel>
+                      <div className="flex items-center space-x-4 pt-2">
+                        <Avatar className="h-24 w-24 rounded-md border">
+                            <AvatarImage src={logoPreview || undefined} alt={(userProfile as CompanyProfile).companyName || 'Logo Azienda'} data-ai-hint="company logo" className="object-contain"/>
+                            <AvatarFallback className="rounded-md text-2xl">{getInitials((userProfile as CompanyProfile).companyName)}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col space-y-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={handleLogoPickerClick}
+                                className="bg-accent text-accent-foreground hover:bg-accent/90 w-fit"
+                                >
+                                <Upload className="mr-2 h-4 w-4" />
+                                Carica / Modifica Logo
+                            </Button>
+                            {logoFile && (
+                                <span className="text-sm text-muted-foreground">
+                                File selezionato: {logoFile.name}
+                                </span>
+                            )}
+                            <Input
+                                type="file"
+                                accept="image/jpeg, image/png, image/webp"
+                                onChange={handleFileChange}
+                                className="hidden"
+                                ref={logoInputRef}
+                                />
+                            <FormDescription className="text-xs">Max 2MB (JPG, PNG, WEBP).</FormDescription>
+                        </div>
+                      </div>
+                      {isUploading && uploadProgress !== null && (
+                        <div className="mt-2">
+                            <Progress value={uploadProgress} className="w-full h-2" />
+                            <p className="text-xs text-muted-foreground mt-1">Caricamento: {Math.round(uploadProgress)}%</p>
+                        </div>
+                      )}
+                      {!isUploading && uploadProgress === null && logoFile && (
+                        <p className="text-sm text-green-600 mt-1">Nuovo logo pronto. Salva per applicare.</p>
+                      )}
+                      <FormMessage className="text-xs"/>
+                  </FormItem>
+                   <FormInput control={form.control} name="companyName" label="Nome Azienda" placeholder="La Mia Azienda S.r.l." />
+                   <FormInput control={form.control} name="companyVat" label="Partita IVA" placeholder="12345678901" />
+                </TabsContent>
+
+                <TabsContent value="details" className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormSingleSelect
+                            key={`companyLocation-${form.watch('companyLocation') || 'default'}`}
+                            control={form.control}
+                            name="companyLocation"
+                            label="Sede Azienda (Regione)"
+                            options={ITALIAN_REGIONS.map(r => ({ value: r, label: r }))}
+                            placeholder="Seleziona la regione della sede"
+                        />
+                        <FormInput control={form.control} name="companyWebsite" label="Sito Web" placeholder="https://www.lamiaazienda.it" />
                     </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormSingleSelect
+                            key={`companySize-${form.watch('companySize') || 'default'}`}
+                            control={form.control}
+                            name="companySize"
+                            label="Dimensioni Azienda"
+                            options={COMPANY_SIZE_OPTIONS}
+                            placeholder="Seleziona dimensioni"
+                        />
+                        <FormSingleSelect
+                            key={`industry-${form.watch('industry') || 'default'}`}
+                            control={form.control}
+                            name="industry"
+                            label="Settore di Attività"
+                            options={INDUSTRY_SECTORS}
+                            placeholder="Seleziona settore"
+                        />
                     </div>
-                    {isUploading && uploadProgress !== null && (
-                    <div className="mt-2">
-                        <Progress value={uploadProgress} className="w-full h-2" />
-                        <p className="text-xs text-muted-foreground mt-1">Caricamento: {Math.round(uploadProgress)}%</p>
-                    </div>
-                    )}
-                    {!isUploading && uploadProgress === null && logoFile && (
-                    <p className="text-sm text-green-600 mt-1">Nuovo logo pronto. Salva per applicare.</p>
-                    )}
-                    <FormMessage className="text-xs"/>
-                </FormItem>
-              </div>
+                    <FormTextarea control={form.control} name="companyDescription" label="Descrizione Azienda" placeholder="Descrivi la tua azienda, la mission, i valori e i tipi di progetti..." rows={5} />
+                </TabsContent>
 
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-primary border-b pb-2 mb-4">Informazioni Aziendali</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormInput control={form.control} name="companyName" label="Nome Azienda" placeholder="La Mia Azienda S.r.l." />
-                  <FormInput control={form.control} name="companyVat" label="Partita IVA" placeholder="12345678901" />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormSingleSelect
-                    key={`companyLocation-${form.watch('companyLocation') || 'default'}`}
-                    control={form.control}
-                    name="companyLocation"
-                    label="Sede Azienda (Regione)"
-                    options={ITALIAN_REGIONS.map(r => ({ value: r, label: r }))}
-                    placeholder="Seleziona la regione della sede"
-                  />
-                  <FormInput control={form.control} name="companyWebsite" label="Sito Web" placeholder="https://www.lamiaazienda.it" />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormSingleSelect
-                    key={`companySize-${form.watch('companySize') || 'default'}`}
-                    control={form.control}
-                    name="companySize"
-                    label="Dimensioni Azienda"
-                    options={COMPANY_SIZE_OPTIONS}
-                    placeholder="Seleziona dimensioni"
-                  />
-                  <FormSingleSelect
-                    key={`industry-${form.watch('industry') || 'default'}`}
-                    control={form.control}
-                    name="industry"
-                    label="Settore di Attività"
-                    options={INDUSTRY_SECTORS}
-                    placeholder="Seleziona settore"
-                  />
-                </div>
-                <FormTextarea control={form.control} name="companyDescription" label="Descrizione Azienda" placeholder="Descrivi la tua azienda, la mission, i valori e i tipi di progetti..." rows={5} />
-              </div>
-
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-primary border-b pb-2 mb-4">Informazioni di Contatto</h3>
-                <FormInput control={form.control} name="contactPerson" label="Persona di Riferimento" placeholder="Mario Rossi" />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormInput control={form.control} name="contactEmail" label="Email di Contatto Principale" placeholder="info@lamiaazienda.it" type="email"/>
-                    <FormInput control={form.control} name="contactPhone" label="Telefono di Contatto Principale" placeholder="+39 02 1234567" type="tel"/>
-                </div>
-              </div>
+                <TabsContent value="contacts" className="space-y-4">
+                  <FormInput control={form.control} name="contactPerson" label="Persona di Riferimento" placeholder="Mario Rossi" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormInput control={form.control} name="contactEmail" label="Email di Contatto Principale" placeholder="info@lamiaazienda.it" type="email"/>
+                      <FormInput control={form.control} name="contactPhone" label="Telefono di Contatto Principale" placeholder="+39 02 1234567" type="tel"/>
+                  </div>
+                </TabsContent>
+              </Tabs>
 
               <Button type="submit" className="w-full md:w-auto mt-6" size="lg" disabled={authLoading || form.formState.isSubmitting || isUploading}>
                 <Save className="mr-2 h-5 w-5" />

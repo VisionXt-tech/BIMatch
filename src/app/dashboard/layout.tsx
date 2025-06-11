@@ -4,11 +4,11 @@
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { ROUTES, ROLES } from '@/constants';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarFooter, SidebarSeparator, SidebarGroup } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, User, Briefcase, LayoutDashboard, FolderPlus, Building, Search, Users, Bell } from 'lucide-react'; 
+import { LogOut, User, Briefcase, LayoutDashboard, FolderPlus, Building, Search, Users, Bell } from 'lucide-react';
 import Link from 'next/link';
 
 interface DashboardLayoutProps {
@@ -19,7 +19,7 @@ const ProfessionalNavItems = [
   { href: ROUTES.DASHBOARD_PROFESSIONAL, label: 'Dashboard', icon: LayoutDashboard },
   { href: ROUTES.DASHBOARD_PROFESSIONAL_PROFILE, label: 'Il Mio Profilo', icon: User },
   { href: ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS, label: 'Progetti Disponibili', icon: Search },
-  { href: ROUTES.DASHBOARD_PROFESSIONAL_NOTIFICATIONS, label: 'Notifiche', icon: Bell }, 
+  { href: ROUTES.DASHBOARD_PROFESSIONAL_NOTIFICATIONS, label: 'Notifiche', icon: Bell },
 ];
 
 const CompanyNavItems = [
@@ -28,23 +28,20 @@ const CompanyNavItems = [
   { href: ROUTES.DASHBOARD_COMPANY_POST_PROJECT, label: 'Pubblica Progetto', icon: FolderPlus },
   { href: ROUTES.DASHBOARD_COMPANY_PROJECTS, label: 'I Miei Progetti', icon: Briefcase },
   { href: ROUTES.PROFESSIONALS_MARKETPLACE, label: 'Cerca Professionisti', icon: Users },
-  { href: ROUTES.DASHBOARD_COMPANY_NOTIFICATIONS, label: 'Notifiche', icon: Bell }, 
+  { href: ROUTES.DASHBOARD_COMPANY_NOTIFICATIONS, label: 'Notifiche', icon: Bell },
 ];
 
-const NAVBAR_HEIGHT_CSS_VAR_VALUE = "4rem"; 
+const NAVBAR_HEIGHT_CSS_VAR_VALUE = "4rem";
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, userProfile, loading, logout } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
 
   useEffect(() => {
     if (!loading && !user) {
       router.push(ROUTES.LOGIN);
     }
   }, [user, loading, router]);
-
-  const isProfilePage = pathname === ROUTES.DASHBOARD_COMPANY_PROFILE || pathname === ROUTES.DASHBOARD_PROFESSIONAL_PROFILE;
 
   if (loading || !user || !userProfile) {
     return (
@@ -60,6 +57,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     );
   }
 
+  // Sidebar is always disabled in this version
   const navItems = userProfile.role === ROLES.PROFESSIONAL ? ProfessionalNavItems : CompanyNavItems;
 
   const getInitials = (name: string | null | undefined) => {
@@ -77,19 +75,18 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   return (
-    <SidebarProvider defaultOpen forceFullWidthContent={isProfilePage}> 
-      <Sidebar 
-        collapsible="icon" 
+    <SidebarProvider defaultOpen={false} forceFullWidthContent={true}>
+      <Sidebar
+        collapsible="icon"
         className="border-r"
-        disableDisplay={isProfilePage}
+        disableDisplay={true} // Always disable sidebar display
       >
+        {/* Sidebar content is kept for potential future re-enablement but won't be visible */}
         <SidebarHeader
           className="px-4"
           style={{ paddingTop: `var(--sidebar-header-padding-top, ${NAVBAR_HEIGHT_CSS_VAR_VALUE})` }}
         >
-          {/* Logo and SidebarTrigger were removed */}
         </SidebarHeader>
-
         <SidebarContent>
           <SidebarMenu>
             {navItems.map((item) => (
@@ -107,9 +104,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             ))}
           </SidebarMenu>
         </SidebarContent>
-
         <SidebarSeparator />
-
         <SidebarFooter className="flex flex-col gap-2 p-2">
            <div className="flex items-center p-2 space-x-3 group-data-[state=collapsed]:justify-center group-data-[state=collapsed]:p-0 group-data-[state=collapsed]:space-x-0">
               <Avatar className="h-9 w-9 group-data-[state=collapsed]:h-8 group-data-[state=collapsed]:w-8">
@@ -137,4 +132,3 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     </SidebarProvider>
   );
 }
-

@@ -39,7 +39,7 @@ type SidebarContext = {
   setOpenMobile: (open: boolean) => void
   isMobile: boolean
   toggleSidebar: () => void
-  forceFullWidthContent: boolean // New property
+  forceFullWidthContent: boolean
 }
 
 const SidebarContext = React.createContext<SidebarContext | null>(null)
@@ -59,7 +59,7 @@ const SidebarProvider = React.forwardRef<
     defaultOpen?: boolean
     open?: boolean
     onOpenChange?: (open: boolean) => void
-    forceFullWidthContent?: boolean; // New prop
+    forceFullWidthContent?: boolean;
   }
 >(
   (
@@ -67,7 +67,7 @@ const SidebarProvider = React.forwardRef<
       defaultOpen = true,
       open: openProp,
       onOpenChange: setOpenProp,
-      forceFullWidthContent = false, // Default to false
+      forceFullWidthContent = false,
       className,
       style,
       children,
@@ -121,44 +121,34 @@ const SidebarProvider = React.forwardRef<
     React.useEffect(() => {
         if (typeof document === 'undefined') return;
         const root = document.documentElement;
-        
-        let currentSidebarActualWidth = "0rem";
-        let mainContentMarginLeft = "0rem";
-        let navbarContentPaddingLeft = PAGE_CONTENT_PADDING; 
+
+        let currentSidebarActualWidth = "0px"; // Always 0px if sidebar is fully disabled
+        let mainContentMarginLeft = "0px"; // Always 0px
+        let navbarContentPaddingLeft = PAGE_CONTENT_PADDING; // Standard padding if no sidebar
         let mainContentAreaMarginTop = NAVBAR_HEIGHT_CSS_VAR_VALUE;
         let sidebarHeaderPaddingTop = NAVBAR_HEIGHT_CSS_VAR_VALUE;
 
-        if (!isMobile) {
-            if (forceFullWidthContent) {
-                currentSidebarActualWidth = "0px";
-                mainContentMarginLeft = "0px";
-                navbarContentPaddingLeft = PAGE_CONTENT_PADDING; // Full width content, standard page padding for navbar
-            } else {
-                currentSidebarActualWidth = open ? SIDEBAR_WIDTH : SIDEBAR_WIDTH_ICON;
-                mainContentMarginLeft = currentSidebarActualWidth;
-                navbarContentPaddingLeft = `calc(${currentSidebarActualWidth} + ${PAGE_CONTENT_PADDING})`;
-            }
+        // Simplified: if forceFullWidthContent is true, sidebar is effectively gone for layout purposes
+        if (forceFullWidthContent) {
+            // Default to full width content values
+        } else if (!isMobile) { // Only apply sidebar logic if not mobile AND not forcing full width
+            currentSidebarActualWidth = open ? SIDEBAR_WIDTH : SIDEBAR_WIDTH_ICON;
+            mainContentMarginLeft = currentSidebarActualWidth;
+            navbarContentPaddingLeft = `calc(${currentSidebarActualWidth} + ${PAGE_CONTENT_PADDING})`;
         }
-        
+
+
         root.style.setProperty("--sidebar-actual-width", currentSidebarActualWidth);
         root.style.setProperty("--main-content-area-margin-left", mainContentMarginLeft);
         root.style.setProperty("--navbar-content-padding-left", navbarContentPaddingLeft);
         root.style.setProperty("--main-content-area-margin-top", mainContentAreaMarginTop);
         root.style.setProperty("--sidebar-header-padding-top", sidebarHeaderPaddingTop);
 
+        // Body classes are no longer needed if sidebar is always disabled or full-width
         const sidebarOpenClass = "body-sidebar-expanded";
         const sidebarClosedClass = "body-sidebar-collapsed";
-        if (isMobile || forceFullWidthContent) { // Also remove body classes if content is full width
-            document.body.classList.remove(sidebarOpenClass, sidebarClosedClass);
-        } else {
-            if (open) {
-            document.body.classList.add(sidebarOpenClass);
-            document.body.classList.remove(sidebarClosedClass);
-            } else {
-            document.body.classList.add(sidebarClosedClass);
-            document.body.classList.remove(sidebarOpenClass);
-            }
-        }
+        document.body.classList.remove(sidebarOpenClass, sidebarClosedClass);
+
 
         return () => {
             root.style.removeProperty("--sidebar-actual-width");
@@ -166,7 +156,6 @@ const SidebarProvider = React.forwardRef<
             root.style.removeProperty("--navbar-content-padding-left");
             root.style.removeProperty("--main-content-area-margin-top");
             root.style.removeProperty("--sidebar-header-padding-top");
-            document.body.classList.remove(sidebarOpenClass, sidebarClosedClass);
         };
     }, [open, isMobile, forceFullWidthContent]);
 
@@ -180,7 +169,7 @@ const SidebarProvider = React.forwardRef<
         openMobile,
         setOpenMobile,
         toggleSidebar,
-        forceFullWidthContent, // Pass down
+        forceFullWidthContent,
       }),
       [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar, forceFullWidthContent]
     )
@@ -218,7 +207,7 @@ const Sidebar = React.forwardRef<
     side?: "left" | "right"
     variant?: "sidebar" | "floating" | "inset"
     collapsible?: "offcanvas" | "icon" | "none"
-    disableDisplay?: boolean; // New prop
+    disableDisplay?: boolean;
   }
 >(
   (
@@ -226,16 +215,21 @@ const Sidebar = React.forwardRef<
       side = "left",
       variant = "sidebar",
       collapsible = "icon",
-      disableDisplay = false, // Default to false
+      disableDisplay = false,
       className,
       children,
       ...props
     },
     ref
   ) => {
-    const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+    const { isMobile, state, openMobile, setOpenMobile, forceFullWidthContent } = useSidebar()
 
-    if (isMobile) { // Mobile sheet logic remains the same
+    // If sidebar display is disabled by prop, or if content is forced to full width on desktop
+    if (disableDisplay || (forceFullWidthContent && !isMobile) ) {
+        return null;
+    }
+
+    if (isMobile) {
       return (
         <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
           <SheetContent
@@ -255,11 +249,6 @@ const Sidebar = React.forwardRef<
       )
     }
 
-    // For desktop: if disableDisplay is true, render nothing
-    if (disableDisplay && !isMobile) {
-        return null;
-    }
-
     if (collapsible === "none" && !isMobile) {
       return (
         <div
@@ -276,7 +265,7 @@ const Sidebar = React.forwardRef<
         </div>
       )
     }
-    
+
     return (
       <div
         ref={ref}
@@ -288,13 +277,13 @@ const Sidebar = React.forwardRef<
            className
         )}
         data-state={state}
-        data-collapsible={collapsible} 
+        data-collapsible={collapsible}
         data-variant={variant}
         data-side={side}
         {...props}
       >
         <div
-          data-sidebar="sidebar" 
+          data-sidebar="sidebar"
           className={cn(
             "flex h-full w-full flex-col bg-sidebar",
              variant === "floating" && "m-2 rounded-lg border border-sidebar-border shadow w-[calc(100%-1rem)]"
@@ -312,9 +301,9 @@ const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
   React.ComponentProps<typeof Button>
 >(({ className, onClick, ...props }, ref) => {
-  const { toggleSidebar, forceFullWidthContent, isMobile } = useSidebar()
+  const { toggleSidebar, forceFullWidthContent, isMobile, disableDisplay } = useSidebar() // Assuming disableDisplay comes from context if Sidebar component logic is changed
 
-  if (forceFullWidthContent && !isMobile) { // Don't render trigger if content is full-width on desktop
+  if (disableDisplay || (forceFullWidthContent && !isMobile)) {
     return null;
   }
 
@@ -342,9 +331,9 @@ const SidebarRail = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<"button">
 >(({ className, ...props }, ref) => {
-  const { toggleSidebar, forceFullWidthContent, isMobile } = useSidebar()
+  const { toggleSidebar, forceFullWidthContent, isMobile, disableDisplay } = useSidebar() // Assuming disableDisplay from context
 
-  if (forceFullWidthContent && !isMobile) { // Don't render rail if content is full-width on desktop
+  if (disableDisplay || (forceFullWidthContent && !isMobile)) {
     return null;
   }
 
@@ -381,9 +370,10 @@ const SidebarInset = React.forwardRef<
       ref={ref}
       className={cn(
         "relative flex min-h-svh flex-1 flex-col bg-background",
-        "transition-[margin-left] duration-200 ease-linear", 
-        (isMobile || forceFullWidthContent) ? "md:ml-0" : "md:ml-[var(--main-content-area-margin-left,0px)]"
-        ,className
+        "transition-[margin-left] duration-200 ease-linear",
+        // Always ml-0 if sidebar is disabled for all pages
+        (isMobile || forceFullWidthContent) ? "md:ml-0" : "md:ml-[var(--main-content-area-margin-left,0px)]",
+        className
       )}
       {...props}
     />
