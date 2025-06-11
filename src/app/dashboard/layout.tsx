@@ -4,7 +4,7 @@
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { ROUTES, ROLES } from '@/constants';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarFooter, SidebarSeparator, SidebarGroup } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -36,6 +36,7 @@ const NAVBAR_HEIGHT_CSS_VAR_VALUE = "4rem";
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, userProfile, loading, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -57,7 +58,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     );
   }
 
-  // Sidebar is always disabled in this version
   const navItems = userProfile.role === ROLES.PROFESSIONAL ? ProfessionalNavItems : CompanyNavItems;
 
   const getInitials = (name: string | null | undefined) => {
@@ -71,7 +71,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const handleLogout = async () => {
     await logout();
-    router.push(ROUTES.HOME);
+    // router.push(ROUTES.HOME); // AuthContext now handles redirect
   };
 
   return (
@@ -79,7 +79,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <Sidebar
         collapsible="icon"
         className="border-r"
-        disableDisplay={true} // Always disable sidebar display
+        disableDisplay={true} 
       >
         {/* Sidebar content is kept for potential future re-enablement but won't be visible */}
         <SidebarHeader
@@ -125,7 +125,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <SidebarInset
         style={{ marginTop: `var(--main-content-area-margin-top, ${NAVBAR_HEIGHT_CSS_VAR_VALUE})` }}
       >
-        <div className="px-4 md:px-6 lg:px-8 pt-6 pb-8">
+        <div className="px-4 md:px-6 lg:px-8 pt-6 pb-4"> {/* Changed pb-8 to pb-4 */}
          {children}
         </div>
       </SidebarInset>
