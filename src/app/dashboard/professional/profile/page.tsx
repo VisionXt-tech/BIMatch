@@ -20,7 +20,7 @@ import { useFirebase } from '@/contexts/FirebaseContext';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Removed Tabs
 
 
 const professionalProfileSchema = z.object({
@@ -53,9 +53,8 @@ const professionalProfileSchema = z.object({
 
 type ProfessionalProfileFormData = z.infer<typeof professionalProfileSchema>;
 
-// Function to map userProfile data to form data, ensuring all fields have a default
 const mapProfileToFormData = (profile?: ProfessionalProfile | null): ProfessionalProfileFormData => {
-  const p = profile || {}; // Use an empty object if profile is null/undefined
+  const p = profile || {}; 
   return {
     firstName: p.firstName || '',
     lastName: p.lastName || '',
@@ -88,7 +87,7 @@ export default function ProfessionalProfilePage() {
 
   const form = useForm<ProfessionalProfileFormData>({
     resolver: zodResolver(professionalProfileSchema),
-    defaultValues: mapProfileToFormData(), // Initialize with defaults
+    defaultValues: mapProfileToFormData(), 
   });
 
   useEffect(() => {
@@ -98,10 +97,9 @@ export default function ProfessionalProfilePage() {
       if (userProfile.photoURL) {
         setImagePreview(userProfile.photoURL);
       } else {
-        setImagePreview(null); // Ensure preview is cleared if no photoURL
+        setImagePreview(null); 
       }
     } else if (!authLoading && !userProfile) {
-      // If not loading and no profile, reset to empty defaults
       form.reset(mapProfileToFormData());
       setImagePreview(null);
     }
@@ -116,19 +114,19 @@ export default function ProfessionalProfilePage() {
       const file = event.target.files[0];
       if (!file.type.startsWith('image/')) {
           toast({ title: "Formato File Non Valido", description: "Seleziona un file immagine (es. JPG, PNG, WEBP).", variant: "destructive"});
-          if(event.target) event.target.value = ''; // Clear the input
+          if(event.target) event.target.value = ''; 
           setProfileImageFile(null);
           return;
       }
-      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+      if (file.size > 2 * 1024 * 1024) { 
           toast({ title: "File Troppo Grande", description: "L'immagine non deve superare i 2MB.", variant: "destructive"});
-          if(event.target) event.target.value = ''; // Clear the input
+          if(event.target) event.target.value = ''; 
           setProfileImageFile(null);
           return;
       }
       if (file.size === 0) {
         toast({ title: "File Vuoto", description: "Il file selezionato è vuoto e non può essere caricato.", variant: "destructive" });
-        if(event.target) event.target.value = ''; // Clear the input
+        if(event.target) event.target.value = ''; 
         setProfileImageFile(null);
         return;
       }
@@ -136,12 +134,11 @@ export default function ProfessionalProfilePage() {
       setImagePreview(URL.createObjectURL(file));
       setUploadProgress(null);
       setIsUploading(false);
-    } else { // No file selected or selection cancelled
+    } else { 
       setProfileImageFile(null);
-      // Revert to existing photoURL or null if none
       setImagePreview(userProfile?.photoURL || null);
       if (profileImageInputRef.current) {
-        profileImageInputRef.current.value = ""; // Clear the input value
+        profileImageInputRef.current.value = ""; 
       }
     }
   };
@@ -171,7 +168,7 @@ export default function ProfessionalProfilePage() {
                 : 0;
               setUploadProgress(progressPercentage);
             },
-            (error: FirebaseStorageError) => { // Use FirebaseStorageError type
+            (error: FirebaseStorageError) => { 
               console.error("Errore Caricamento Immagine su Firebase Storage:", error.code, error.message, error.serverResponse);
               let userFriendlyMessage = "Errore durante il caricamento dell'immagine.";
               switch (error.code) {
@@ -213,11 +210,9 @@ export default function ProfessionalProfilePage() {
           );
         });
       } catch (uploadError) {
-        // This catch block is for the new Promise error (already handled by toast inside)
-        // Ensure isUploading and uploadProgress are reset if the promise rejects
         setIsUploading(false);
         setUploadProgress(null);
-        return; // Stop further execution if upload failed
+        return; 
       }
     }
 
@@ -233,19 +228,14 @@ export default function ProfessionalProfilePage() {
     try {
       const updatedProfile = await updateUserProfile(user.uid, dataToUpdate);
       if (updatedProfile) {
-        // form.reset is handled by useEffect now, no need to call it here directly
-        // if(updatedProfile.photoURL) setImagePreview(updatedProfile.photoURL); // Also handled by useEffect
         toast({ title: "Profilo Aggiornato", description: "Le modifiche sono state salvate con successo." });
       }
-      setProfileImageFile(null); // Clear the selected file
+      setProfileImageFile(null); 
       if (profileImageInputRef.current) {
-        profileImageInputRef.current.value = ""; // Reset the hidden file input
+        profileImageInputRef.current.value = ""; 
       }
     } catch (error) {
-      // Error toast for updateUserProfile is handled within AuthContext
-      // but we ensure UI state is reset.
     } finally {
-       // Only reset these if an upload was attempted
       if (profileImageFile || isUploading) {
         setIsUploading(false);
         setUploadProgress(null);
@@ -263,165 +253,161 @@ export default function ProfessionalProfilePage() {
   };
 
 
-  if (authLoading && !userProfile) { // Show loading only if userProfile is not yet available
+  if (authLoading && !userProfile) { 
     return <div className="text-center py-10">Caricamento profilo...</div>;
   }
 
-  // This check should ideally not be hit if redirects are working correctly,
-  // but it's a safeguard.
   if (!user || !userProfile || userProfile.role !== 'professional') {
     return <div className="text-center py-10">Profilo non trovato o non autorizzato.</div>;
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-6 max-w-4xl mx-auto">
       <Card className="shadow-xl">
-        <CardHeader className="p-4">
-          <div className="flex items-center space-x-3">
-            <UserCircle2 className="h-6 w-6 text-primary" />
+        <CardHeader className="p-6 border-b">
+          <div className="flex items-center space-x-4">
+            <UserCircle2 className="h-8 w-8 text-primary" />
             <div>
-              <CardTitle className="text-lg font-bold">Il Mio Profilo Professionale</CardTitle>
-              <CardDescription className="text-xs">Mantieni aggiornate le tue informazioni per attrarre le migliori opportunità.</CardDescription>
+              <CardTitle className="text-2xl font-bold">Il Mio Profilo Professionale</CardTitle>
+              <CardDescription className="text-sm text-muted-foreground">Mantieni aggiornate le tue informazioni per attrarre le migliori opportunità.</CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-4 pt-0">
+        <CardContent className="p-6">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-             <FormItem>
-                <FormLabel className="text-xs">Immagine del Profilo</FormLabel>
-                <div className="flex items-center space-x-4 mt-1">
-                  <Avatar className="h-20 w-20">
-                    <AvatarImage src={imagePreview || undefined} alt={userProfile.displayName || 'User'} data-ai-hint="profile person" />
-                    <AvatarFallback className="text-2xl">{getInitials(userProfile.displayName)}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col space-y-1">
-                     <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleImagePickerClick}
-                      className="bg-accent text-accent-foreground hover:bg-accent/90 w-fit text-xs"
-                    >
-                      <Upload className="mr-2 h-3 w-3" />
-                      Scegli Immagine
-                    </Button>
-                    {profileImageFile && (
-                      <span className="text-xs text-muted-foreground">
-                        File: {profileImageFile.name}
-                      </span>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+             
+            <div className="space-y-2">
+                 <h3 className="text-lg font-semibold text-primary border-b pb-2 mb-4">Immagine del Profilo</h3>
+                <FormItem>
+                    <div className="flex items-center space-x-4">
+                    <Avatar className="h-24 w-24 border">
+                        <AvatarImage src={imagePreview || undefined} alt={userProfile.displayName || 'User'} data-ai-hint="profile person" />
+                        <AvatarFallback className="text-3xl">{getInitials(userProfile.displayName)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col space-y-2">
+                        <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleImagePickerClick}
+                        className="bg-accent text-accent-foreground hover:bg-accent/90 w-fit"
+                        >
+                        <Upload className="mr-2 h-4 w-4" />
+                        Carica / Modifica Immagine
+                        </Button>
+                        {profileImageFile && (
+                        <span className="text-sm text-muted-foreground">
+                            File: {profileImageFile.name}
+                        </span>
+                        )}
+                        <Input
+                            type="file"
+                            accept="image/jpeg, image/png, image/webp"
+                            onChange={handleFileChange}
+                            className="hidden" 
+                            ref={profileImageInputRef}
+                        />
+                        <FormDescription className="text-xs">Max 2MB (JPG, PNG, WEBP).</FormDescription>
+                    </div>
+                    </div>
+                    {isUploading && uploadProgress !== null && (
+                    <div className="mt-2">
+                        <Progress value={uploadProgress} className="w-full h-2" />
+                        <p className="text-xs text-muted-foreground mt-1">Caricamento: {Math.round(uploadProgress)}%</p>
+                    </div>
                     )}
-                    <Input
-                        type="file"
-                        accept="image/jpeg, image/png, image/webp"
-                        onChange={handleFileChange}
-                        className="hidden" 
-                        ref={profileImageInputRef}
-                      />
-                  </div>
-                </div>
-                {isUploading && uploadProgress !== null && (
-                  <div className="mt-2">
-                    <Progress value={uploadProgress} className="w-full h-1.5" />
-                    <p className="text-xs text-muted-foreground mt-0.5">Caricamento: {Math.round(uploadProgress)}%</p>
-                  </div>
-                )}
-                 {!isUploading && uploadProgress === null && profileImageFile && (
-                   <p className="text-xs text-green-600 mt-0.5">Nuova immagine selezionata. Salva per applicare.</p>
-                 )}
-                <FormDescription className="text-xs mt-0.5">Carica un&apos;immagine (max 2MB, es. JPG, PNG, WEBP).</FormDescription>
-                <FormMessage className="text-xs" />
-              </FormItem>
-
-              <Tabs defaultValue="info-personali" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-4">
-                  <TabsTrigger value="info-personali" className="text-xs h-8">Info Personali</TabsTrigger>
-                  <TabsTrigger value="competenze" className="text-xs h-8">Competenze</TabsTrigger>
-                  <TabsTrigger value="dettagli-link" className="text-xs h-8">Dettagli e Link</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="info-personali" className="space-y-3">
-                  <div className="grid md:grid-cols-2 gap-3">
-                     <FormInput control={form.control} name="firstName" label="Nome" placeholder="Mario" />
-                     <FormInput control={form.control} name="lastName" label="Cognome" placeholder="Rossi" />
-                  </div>
-                  <FormSingleSelect
-                    key={`location-${form.watch('location') || 'default'}`}
-                    control={form.control}
-                    name="location"
-                    label="Localizzazione (Regione Principale)"
-                    options={ITALIAN_REGIONS.map(r => ({ value: r, label: r }))}
-                    placeholder="Seleziona la tua regione principale"
-                  />
-                   <div className="grid md:grid-cols-2 gap-3">
-                    <FormSingleSelect
-                      key={`experienceLevel-${form.watch('experienceLevel') || 'default'}`}
-                      control={form.control}
-                      name="experienceLevel"
-                      label="Livello di Esperienza"
-                      options={EXPERIENCE_LEVEL_OPTIONS}
-                      placeholder="Seleziona il tuo livello"
-                    />
-                    <FormSingleSelect
-                      key={`availability-${form.watch('availability') || 'default'}`}
-                      control={form.control}
-                      name="availability"
-                      label="Disponibilità"
-                      options={AVAILABILITY_OPTIONS}
-                      placeholder="Seleziona la tua disponibilità"
-                    />
-                  </div>
-                   <FormTextarea control={form.control} name="bio" label="Breve Bio Professionale" placeholder="Descrivi la tua esperienza, specializzazioni e obiettivi..." rows={4} />
-                </TabsContent>
-
-                <TabsContent value="competenze" className="space-y-3">
-                  <FormMultiSelect
-                    control={form.control}
-                    name="bimSkills"
-                    label="Competenze BIM"
-                    options={BIM_SKILLS_OPTIONS}
-                    placeholder="Seleziona le tue competenze BIM principali"
-                  />
-                  <FormMultiSelect
-                    control={form.control}
-                    name="softwareProficiency"
-                    label="Software BIM Utilizzati"
-                    options={SOFTWARE_PROFICIENCY_OPTIONS}
-                    placeholder="Indica i software che conosci"
-                  />
-                </TabsContent>
-
-                <TabsContent value="dettagli-link" className="space-y-3">
-                   <FormItem>
-                    <FormLabel className="text-xs">Retribuzione Mensile Lorda (€) (Opzionale)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="Es. 2500"
-                        step="1"
-                        className="h-9 text-xs"
-                        {...form.register("monthlyRate", {
-                            setValueAs: (value) => {
-                              if (value === "" || value === null || value === undefined) return null;
-                              const strVal = String(value).trim();
-                              if (strVal === "") return null;
-                              const num = parseFloat(strVal);
-                              return isNaN(num) ? undefined : num;
-                            }
-                        })}
-                      />
-                    </FormControl>
+                    {!isUploading && uploadProgress === null && profileImageFile && (
+                    <p className="text-sm text-green-600 mt-1">Nuova immagine pronta. Salva per applicare.</p>
+                    )}
                     <FormMessage className="text-xs" />
-                  </FormItem>
-                  <FormInput control={form.control} name="portfolioUrl" label="Link al Portfolio (Opzionale)" placeholder="https://tuo.portfolio.com" />
-                  <FormInput control={form.control} name="cvUrl" label="Link al CV (Opzionale)" placeholder="Link a Google Drive, Dropbox, etc." description="Assicurati che il link sia accessibile." />
-                  <FormInput control={form.control} name="linkedInProfile" label="Profilo LinkedIn (Opzionale)" placeholder="https://linkedin.com/in/tuoprofilo" />
-                </TabsContent>
-              </Tabs>
+                </FormItem>
+              </div>
 
-              <Button type="submit" className="w-full md:w-auto mt-4" size="sm" disabled={authLoading || form.formState.isSubmitting || isUploading}>
-                <Save className="mr-2 h-4 w-4" />
-                {isUploading ? `Caricamento... ${uploadProgress !== null ? Math.round(uploadProgress) + '%' : ''}` : (form.formState.isSubmitting ? 'Salvataggio in corso...' : 'Salva Modifiche')}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-primary border-b pb-2 mb-4">Informazioni Personali e Disponibilità</h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                    <FormInput control={form.control} name="firstName" label="Nome" placeholder="Mario" />
+                    <FormInput control={form.control} name="lastName" label="Cognome" placeholder="Rossi" />
+                </div>
+                <FormSingleSelect
+                  key={`location-${form.watch('location') || 'default'}`}
+                  control={form.control}
+                  name="location"
+                  label="Localizzazione (Regione Principale)"
+                  options={ITALIAN_REGIONS.map(r => ({ value: r, label: r }))}
+                  placeholder="Seleziona la tua regione principale"
+                />
+                <div className="grid md:grid-cols-2 gap-4">
+                  <FormSingleSelect
+                    key={`experienceLevel-${form.watch('experienceLevel') || 'default'}`}
+                    control={form.control}
+                    name="experienceLevel"
+                    label="Livello di Esperienza"
+                    options={EXPERIENCE_LEVEL_OPTIONS}
+                    placeholder="Seleziona il tuo livello"
+                  />
+                  <FormSingleSelect
+                    key={`availability-${form.watch('availability') || 'default'}`}
+                    control={form.control}
+                    name="availability"
+                    label="Disponibilità"
+                    options={AVAILABILITY_OPTIONS}
+                    placeholder="Seleziona la tua disponibilità"
+                  />
+                </div>
+                <FormTextarea control={form.control} name="bio" label="Breve Bio Professionale" placeholder="Descrivi la tua esperienza, specializzazioni e obiettivi..." rows={5} />
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-primary border-b pb-2 mb-4">Competenze e Software</h3>
+                <FormMultiSelect
+                  control={form.control}
+                  name="bimSkills"
+                  label="Competenze BIM"
+                  options={BIM_SKILLS_OPTIONS}
+                  placeholder="Seleziona le tue competenze BIM principali"
+                />
+                <FormMultiSelect
+                  control={form.control}
+                  name="softwareProficiency"
+                  label="Software BIM Utilizzati"
+                  options={SOFTWARE_PROFICIENCY_OPTIONS}
+                  placeholder="Indica i software che conosci"
+                />
+              </div>
+
+              <div className="space-y-4">
+                 <h3 className="text-lg font-semibold text-primary border-b pb-2 mb-4">Dettagli Economici e Link Esterni</h3>
+                 <FormItem>
+                  <FormLabel className="text-xs">Retribuzione Mensile Lorda (€) (Opzionale)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="Es. 2500"
+                      step="1"
+                      className="h-9"
+                      {...form.register("monthlyRate", {
+                          setValueAs: (value) => {
+                            if (value === "" || value === null || value === undefined) return null;
+                            const strVal = String(value).trim();
+                            if (strVal === "") return null;
+                            const num = parseFloat(strVal);
+                            return isNaN(num) ? undefined : num;
+                          }
+                      })}
+                    />
+                  </FormControl>
+                  <FormMessage className="text-xs" />
+                </FormItem>
+                <FormInput control={form.control} name="portfolioUrl" label="Link al Portfolio (Opzionale)" placeholder="https://tuo.portfolio.com" />
+                <FormInput control={form.control} name="cvUrl" label="Link al CV (Opzionale)" placeholder="Link a Google Drive, Dropbox, etc." description="Assicurati che il link sia accessibile." />
+                <FormInput control={form.control} name="linkedInProfile" label="Profilo LinkedIn (Opzionale)" placeholder="https://linkedin.com/in/tuoprofilo" />
+              </div>
+              
+              <Button type="submit" className="w-full md:w-auto mt-6" size="lg" disabled={authLoading || form.formState.isSubmitting || isUploading}>
+                <Save className="mr-2 h-5 w-5" />
+                {isUploading ? `Caricamento Immagine... ${uploadProgress !== null ? Math.round(uploadProgress) + '%' : ''}` : (form.formState.isSubmitting ? 'Salvataggio Profilo...' : 'Salva Profilo Professionale')}
               </Button>
             </form>
           </Form>

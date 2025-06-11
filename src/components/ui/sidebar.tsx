@@ -28,9 +28,7 @@ const SIDEBAR_WIDTH_ICON = "3rem" // 48px
 const PAGE_CONTENT_PADDING = "1rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
-// This constant defines the expected height of the global Navbar.
-// It's used to set CSS variables that other components can consume for correct vertical offsetting.
-const NAVBAR_HEIGHT_CSS_VAR_VALUE = "4rem"; // Assumes Navbar is h-16 (64px)
+const NAVBAR_HEIGHT_CSS_VAR_VALUE = "4rem";
 
 
 type SidebarContext = {
@@ -41,6 +39,7 @@ type SidebarContext = {
   setOpenMobile: (open: boolean) => void
   isMobile: boolean
   toggleSidebar: () => void
+  forceFullWidthContent: boolean // New property
 }
 
 const SidebarContext = React.createContext<SidebarContext | null>(null)
@@ -60,6 +59,7 @@ const SidebarProvider = React.forwardRef<
     defaultOpen?: boolean
     open?: boolean
     onOpenChange?: (open: boolean) => void
+    forceFullWidthContent?: boolean; // New prop
   }
 >(
   (
@@ -67,6 +67,7 @@ const SidebarProvider = React.forwardRef<
       defaultOpen = true,
       open: openProp,
       onOpenChange: setOpenProp,
+      forceFullWidthContent = false, // Default to false
       className,
       style,
       children,
@@ -120,18 +121,23 @@ const SidebarProvider = React.forwardRef<
     React.useEffect(() => {
         if (typeof document === 'undefined') return;
         const root = document.documentElement;
+        
         let currentSidebarActualWidth = "0rem";
         let mainContentMarginLeft = "0rem";
-        let navbarContentPaddingLeft = PAGE_CONTENT_PADDING; // Default for non-dashboard or mobile
+        let navbarContentPaddingLeft = PAGE_CONTENT_PADDING; 
         let mainContentAreaMarginTop = NAVBAR_HEIGHT_CSS_VAR_VALUE;
         let sidebarHeaderPaddingTop = NAVBAR_HEIGHT_CSS_VAR_VALUE;
 
-
         if (!isMobile) {
-            currentSidebarActualWidth = open ? SIDEBAR_WIDTH : SIDEBAR_WIDTH_ICON;
-            mainContentMarginLeft = currentSidebarActualWidth;
-            // Navbar padding should be the sidebar width + the desired gap/padding for the content area
-            navbarContentPaddingLeft = `calc(${currentSidebarActualWidth} + ${PAGE_CONTENT_PADDING})`;
+            if (forceFullWidthContent) {
+                currentSidebarActualWidth = "0px";
+                mainContentMarginLeft = "0px";
+                navbarContentPaddingLeft = PAGE_CONTENT_PADDING; // Full width content, standard page padding for navbar
+            } else {
+                currentSidebarActualWidth = open ? SIDEBAR_WIDTH : SIDEBAR_WIDTH_ICON;
+                mainContentMarginLeft = currentSidebarActualWidth;
+                navbarContentPaddingLeft = `calc(${currentSidebarActualWidth} + ${PAGE_CONTENT_PADDING})`;
+            }
         }
         
         root.style.setProperty("--sidebar-actual-width", currentSidebarActualWidth);
@@ -140,10 +146,9 @@ const SidebarProvider = React.forwardRef<
         root.style.setProperty("--main-content-area-margin-top", mainContentAreaMarginTop);
         root.style.setProperty("--sidebar-header-padding-top", sidebarHeaderPaddingTop);
 
-
         const sidebarOpenClass = "body-sidebar-expanded";
         const sidebarClosedClass = "body-sidebar-collapsed";
-        if (isMobile) {
+        if (isMobile || forceFullWidthContent) { // Also remove body classes if content is full width
             document.body.classList.remove(sidebarOpenClass, sidebarClosedClass);
         } else {
             if (open) {
@@ -163,7 +168,7 @@ const SidebarProvider = React.forwardRef<
             root.style.removeProperty("--sidebar-header-padding-top");
             document.body.classList.remove(sidebarOpenClass, sidebarClosedClass);
         };
-    }, [open, isMobile]);
+    }, [open, isMobile, forceFullWidthContent]);
 
 
     const contextValue = React.useMemo<SidebarContext>(
@@ -175,8 +180,9 @@ const SidebarProvider = React.forwardRef<
         openMobile,
         setOpenMobile,
         toggleSidebar,
+        forceFullWidthContent, // Pass down
       }),
-      [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
+      [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar, forceFullWidthContent]
     )
 
     return (
@@ -212,6 +218,7 @@ const Sidebar = React.forwardRef<
     side?: "left" | "right"
     variant?: "sidebar" | "floating" | "inset"
     collapsible?: "offcanvas" | "icon" | "none"
+    disableDisplay?: boolean; // New prop
   }
 >(
   (
@@ -219,6 +226,7 @@ const Sidebar = React.forwardRef<
       side = "left",
       variant = "sidebar",
       collapsible = "icon",
+      disableDisplay = false, // Default to false
       className,
       children,
       ...props
@@ -227,24 +235,7 @@ const Sidebar = React.forwardRef<
   ) => {
     const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
 
-    if (collapsible === "none" && !isMobile) {
-      return (
-        <div
-          className={cn(
-            "flex h-full flex-col bg-sidebar text-sidebar-foreground fixed inset-y-0 z-10",
-            side === "left" ? "left-0 border-r" : "right-0 border-l",
-            "w-[var(--sidebar-width)]",
-            className
-          )}
-          ref={ref}
-          {...props}
-        >
-          {children}
-        </div>
-      )
-    }
-    
-    if (isMobile) {
+    if (isMobile) { // Mobile sheet logic remains the same
       return (
         <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
           <SheetContent
@@ -264,6 +255,28 @@ const Sidebar = React.forwardRef<
       )
     }
 
+    // For desktop: if disableDisplay is true, render nothing
+    if (disableDisplay && !isMobile) {
+        return null;
+    }
+
+    if (collapsible === "none" && !isMobile) {
+      return (
+        <div
+          className={cn(
+            "flex h-full flex-col bg-sidebar text-sidebar-foreground fixed inset-y-0 z-10",
+            side === "left" ? "left-0 border-r" : "right-0 border-l",
+            "w-[var(--sidebar-width)]",
+            className
+          )}
+          ref={ref}
+          {...props}
+        >
+          {children}
+        </div>
+      )
+    }
+    
     return (
       <div
         ref={ref}
@@ -281,7 +294,7 @@ const Sidebar = React.forwardRef<
         {...props}
       >
         <div
-          data-sidebar="sidebar" // Not a Tailwind group
+          data-sidebar="sidebar" 
           className={cn(
             "flex h-full w-full flex-col bg-sidebar",
              variant === "floating" && "m-2 rounded-lg border border-sidebar-border shadow w-[calc(100%-1rem)]"
@@ -299,7 +312,11 @@ const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
   React.ComponentProps<typeof Button>
 >(({ className, onClick, ...props }, ref) => {
-  const { toggleSidebar } = useSidebar()
+  const { toggleSidebar, forceFullWidthContent, isMobile } = useSidebar()
+
+  if (forceFullWidthContent && !isMobile) { // Don't render trigger if content is full-width on desktop
+    return null;
+  }
 
   return (
     <Button
@@ -325,7 +342,11 @@ const SidebarRail = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<"button">
 >(({ className, ...props }, ref) => {
-  const { toggleSidebar } = useSidebar()
+  const { toggleSidebar, forceFullWidthContent, isMobile } = useSidebar()
+
+  if (forceFullWidthContent && !isMobile) { // Don't render rail if content is full-width on desktop
+    return null;
+  }
 
   return (
     <button
@@ -354,13 +375,14 @@ const SidebarInset = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => {
+  const { forceFullWidthContent, isMobile } = useSidebar();
   return (
     <div
       ref={ref}
       className={cn(
         "relative flex min-h-svh flex-1 flex-col bg-background",
-        "transition-[margin-left] duration-200 ease-linear", // Ensure transition is applied
-        "md:ml-[var(--main-content-area-margin-left,0px)]" // Use CSS var for margin
+        "transition-[margin-left] duration-200 ease-linear", 
+        (isMobile || forceFullWidthContent) ? "md:ml-0" : "md:ml-[var(--main-content-area-margin-left,0px)]"
         ,className
       )}
       {...props}

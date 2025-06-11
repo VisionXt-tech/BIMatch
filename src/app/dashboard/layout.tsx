@@ -4,7 +4,7 @@
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { ROUTES, ROLES } from '@/constants';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarFooter, SidebarSeparator, SidebarGroup } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -28,21 +28,23 @@ const CompanyNavItems = [
   { href: ROUTES.DASHBOARD_COMPANY_POST_PROJECT, label: 'Pubblica Progetto', icon: FolderPlus },
   { href: ROUTES.DASHBOARD_COMPANY_PROJECTS, label: 'I Miei Progetti', icon: Briefcase },
   { href: ROUTES.PROFESSIONALS_MARKETPLACE, label: 'Cerca Professionisti', icon: Users },
-  { href: ROUTES.DASHBOARD_COMPANY_NOTIFICATIONS, label: 'Notifiche', icon: Bell }, // New Item for Company
+  { href: ROUTES.DASHBOARD_COMPANY_NOTIFICATIONS, label: 'Notifiche', icon: Bell }, 
 ];
 
-// These CSS variables are set by SidebarProvider and consumed by Navbar and SidebarInset
-const NAVBAR_HEIGHT_CSS_VAR_VALUE = "4rem"; // Assumes Navbar is h-16 (64px)
+const NAVBAR_HEIGHT_CSS_VAR_VALUE = "4rem"; 
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, userProfile, loading, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!loading && !user) {
       router.push(ROUTES.LOGIN);
     }
   }, [user, loading, router]);
+
+  const isProfilePage = pathname === ROUTES.DASHBOARD_COMPANY_PROFILE || pathname === ROUTES.DASHBOARD_PROFESSIONAL_PROFILE;
 
   if (loading || !user || !userProfile) {
     return (
@@ -75,8 +77,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   return (
-    <SidebarProvider defaultOpen> 
-      <Sidebar collapsible="icon" className="border-r">
+    <SidebarProvider defaultOpen forceFullWidthContent={isProfilePage}> 
+      <Sidebar 
+        collapsible="icon" 
+        className="border-r"
+        disableDisplay={isProfilePage}
+      >
         <SidebarHeader
           className="px-4"
           style={{ paddingTop: `var(--sidebar-header-padding-top, ${NAVBAR_HEIGHT_CSS_VAR_VALUE})` }}
@@ -124,7 +130,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <SidebarInset
         style={{ marginTop: `var(--main-content-area-margin-top, ${NAVBAR_HEIGHT_CSS_VAR_VALUE})` }}
       >
-        <div className="px-4 md:px-6 lg:px-8 pt-6 pb-8"> {/* Added pt-6 pb-8 for padding around content */}
+        <div className="px-4 md:px-6 lg:px-8 pt-6 pb-8">
          {children}
         </div>
       </SidebarInset>
