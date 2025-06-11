@@ -16,7 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Link from 'next/link';
-import { Users, ArrowLeft, ExternalLink, Mail, Info, WifiOff, Briefcase, Check, X, Hourglass, FileText, ListChecks, MessageSquare, CalendarDays, Calendar as CalendarIcon, AlertTriangle, Ban } from 'lucide-react';
+import { Users, ArrowLeft, ExternalLink, Mail, Info, WifiOff, Briefcase, Check, X, Hourglass, FileText, ListChecks, MessageSquare, CalendarDays, Calendar as CalendarIcon, AlertTriangle, Ban, ThumbsUp } from 'lucide-react';
 import { ROUTES, NOTIFICATION_TYPES, BIM_SKILLS_OPTIONS } from '@/constants';
 import { useToast } from '@/hooks/use-toast';
 import type { UserNotification } from '@/types/notification';
@@ -183,7 +183,7 @@ export default function CompanyCandidatesPage() {
     notificationType: UserNotification['type'],
     notificationTitle: string,
     notificationMessage: string,
-    notificationPayload?: Partial<Pick<UserNotification, 'interviewProposalMessage' | 'proposedInterviewDate' | 'applicationId'>>
+    notificationPayload?: Partial<Pick<UserNotification, 'interviewProposalMessage' | 'proposedInterviewDate' | 'applicationId' | 'professionalResponseReason' | 'professionalNewDateProposal'>>
   ) => {
     if (!db || !application.id || !application.projectTitle || !application.companyName) {
       toast({ title: "Errore", description: "Dati mancanti per aggiornare lo stato o inviare notifica.", variant: "destructive" });
@@ -217,7 +217,6 @@ export default function CompanyCandidatesPage() {
       
       toast({ title: "Stato Aggiornato", description: `Lo stato della candidatura di ${application.professionalName} è stato aggiornato. Notifica inviata.` });
 
-      // Re-fetch applications to get the latest data including the one just updated
       fetchProjectAndCandidates(); 
       
       if (isRejectModalOpen) setIsRejectModalOpen(false);
@@ -282,6 +281,24 @@ export default function CompanyCandidatesPage() {
         proposedInterviewDate: formattedDate, 
         applicationId: applicationForModal.id
       }
+    );
+  };
+
+  const handleConfirmCollaboration = async (application: EnrichedApplication) => {
+     if (!applicationForModal && !application) return; // Check both, application might be passed directly
+     const appToConfirm = applicationForModal || application;
+
+    const notificationTitle = `Collaborazione Confermata per "${appToConfirm.projectTitle}"!`;
+    const notificationMessage = `Congratulazioni! L'azienda ${appToConfirm.companyName} ha confermato la vostra collaborazione per il progetto "${appToConfirm.projectTitle}".`;
+    
+    await updateApplicationAndSendNotification(
+      appToConfirm,
+      'accettata', 
+      {}, // Nessun payload specifico per l'applicazione, solo lo stato
+      NOTIFICATION_TYPES.COLLABORATION_CONFIRMED,
+      notificationTitle,
+      notificationMessage,
+      { applicationId: appToConfirm.id }
     );
   };
   
@@ -365,6 +382,7 @@ export default function CompanyCandidatesPage() {
       case 'colloquio_ripianificato_prof':
          return 'bg-yellow-500 hover:bg-yellow-600 text-white';
       case 'accettata':
+         return 'bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 text-primary-foreground hover:opacity-90';
       case 'colloquio_accettato_prof':
          return 'bg-green-600 hover:bg-green-700 text-white';
       case 'in_revisione': return 'bg-blue-500 hover:bg-blue-600 text-white';
@@ -375,10 +393,9 @@ export default function CompanyCandidatesPage() {
     const statusMap: Record<ProjectApplication['status'], string> = {
         inviata: 'Inviata',
         in_revisione: 'In Revisione',
-        // 'preselezionata' era un vecchio stato, ora si usa 'colloquio_proposto'
         preselezionata: 'Colloquio Proposto (Obsoleto)', 
         rifiutata: 'Rifiutata',
-        accettata: 'Accettata', // Azienda ha finalizzato
+        accettata: 'Collaborazione Accettata',
         colloquio_proposto: 'Colloquio Proposto',
         colloquio_accettato_prof: 'Colloquio Accettato (Prof.)',
         colloquio_rifiutato_prof: 'Colloquio Rifiutato (Prof.)',
@@ -424,7 +441,10 @@ export default function CompanyCandidatesPage() {
                 </TableHeader>
                 <TableBody>
                   {applications.map((app) => (
-                    <TableRow key={app.id}>
+                    <TableRow 
+                      key={app.id} 
+                      className={cn(app.status === 'accettata' && 'bg-teal-500/10 hover:bg-teal-500/20')}
+                    >
                       <TableCell>
                         <div className="flex items-center space-x-3">
                           <Avatar className="h-9 w-9">
@@ -494,14 +514,25 @@ export default function CompanyCandidatesPage() {
                           </>
                         )}
                         
-                         {/* Se il professionista ha accettato, rifiutato o riproposto, l'azienda può solo rifiutare il candidato se cambia idea */}
-                        {(app.status === 'colloquio_proposto' || app.status === 'colloquio_accettato_prof' || app.status === 'colloquio_ripianificato_prof') && (
+                        {(app.status === 'colloquio_accettato_prof' || app.status === 'colloquio_ripianificato_prof') && (
+                             <Button 
+                                variant="default" 
+                                size="sm" 
+                                className="text-xs h-7 px-2 py-1 bg-green-600 hover:bg-green-700 text-white"
+                                onClick={() => handleConfirmCollaboration(app)}
+                                disabled={processingApplicationId === app.id}
+                            >
+                                {processingApplicationId === app.id ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <ThumbsUp className="mr-1.5 h-3 w-3" />} Conferma Collaborazione
+                            </Button>
+                        )}
+                         
+                        {(app.status === 'colloquio_proposto' || app.status === 'colloquio_accettato_prof' || app.status === 'colloquio_ripianificato_prof' || app.status === 'colloquio_rifiutato_prof') && (
                           <Button 
                               variant="destructive" 
                               size="sm" 
                               className="text-xs h-7 px-2 py-1"
                               onClick={() => handleOpenRejectDialog(app)} 
-                              disabled={processingApplicationId === app.id}
+                              disabled={processingApplicationId === app.id || app.status === 'accettata'}
                           >
                               {processingApplicationId === app.id ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <X className="mr-1.5 h-3 w-3" />} Rifiuta Candidato
                           </Button>

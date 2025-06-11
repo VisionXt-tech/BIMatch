@@ -5,7 +5,7 @@ export interface UserNotification {
   id: string; // Firestore document ID
   userId: string; // UID of the user (professional or company) to whom the notification belongs
   type: 
-    | 'APPLICATION_STATUS_UPDATED' // Generico, usato prima, ora più specifico
+    | 'APPLICATION_STATUS_UPDATED' 
     | 'NEW_PROJECT_MATCH' 
     | 'PROFILE_VIEW' 
     | 'GENERIC_INFO' 
@@ -14,6 +14,7 @@ export interface UserNotification {
     | 'INTERVIEW_ACCEPTED_BY_PRO' // Per azienda: professionista accetta colloquio
     | 'INTERVIEW_REJECTED_BY_PRO' // Per azienda: professionista rifiuta colloquio
     | 'INTERVIEW_RESCHEDULED_BY_PRO' // Per azienda: professionista propone nuova data
+    | 'COLLABORATION_CONFIRMED' // Per professionista: azienda conferma collaborazione
     | string; 
   title: string; 
   message: string; 

@@ -6,10 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ROUTES } from '@/constants';
-import { User, Search, Edit2, ListChecks, Bell, WifiOff, Loader2 } from 'lucide-react';
-import { useEffect, useState, useCallback } from 'react'; // Added useCallback
+import { User, Search, Edit2, ListChecks, Bell, WifiOff, Loader2, Star } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react'; 
 import { useFirebase } from '@/contexts/FirebaseContext';
-import { collection, query, where, getDocs, Timestamp, limit } from 'firebase/firestore'; // Added limit
+import { collection, query, where, getDocs, Timestamp, limit } from 'firebase/firestore'; 
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
@@ -19,11 +19,12 @@ export default function ProfessionalDashboardPage() {
 
   const [newProjectsCount, setNewProjectsCount] = useState<number | null>(null);
   const [userActiveApplicationsCount, setUserActiveApplicationsCount] = useState<number | null>(null);
-  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState<number | null>(null); // New state for notifications
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState<number | null>(null);
+  const [acceptedMatchesCount, setAcceptedMatchesCount] = useState<number | null>(null); // New state for accepted matches
   const [loadingCounts, setLoadingCounts] = useState(true);
   const [errorCounts, setErrorCounts] = useState<string | null>(null);
 
-  const fetchCounts = useCallback(async () => { // Wrapped in useCallback
+  const fetchCounts = useCallback(async () => { 
     if (authLoading || !user || !db || userProfile?.role !== 'professional') {
       if (!authLoading && (!user || userProfile?.role !== 'professional')) {
          setLoadingCounts(false); 
@@ -55,14 +56,19 @@ export default function ProfessionalDashboardPage() {
       
       const appliedProjectIds = new Set<string>();
       let activeApplicationsCount = 0;
+      let currentAcceptedMatchesCount = 0; // Count for accepted matches
       applicationsSnapshot.forEach(doc => {
           const appData = doc.data();
           appliedProjectIds.add(appData.projectId);
-          if (['inviata', 'in_revisione', 'preselezionata'].includes(appData.status)) {
+          if (['inviata', 'in_revisione', 'colloquio_proposto', 'colloquio_accettato_prof', 'colloquio_ripianificato_prof'].includes(appData.status)) {
               activeApplicationsCount++;
+          }
+          if (appData.status === 'accettata') {
+            currentAcceptedMatchesCount++;
           }
       });
       setUserActiveApplicationsCount(activeApplicationsCount);
+      setAcceptedMatchesCount(currentAcceptedMatchesCount);
 
       const currentNewProjectsCount = activeNonExpiredProjectIds.filter(projectId => !appliedProjectIds.has(projectId)).length;
       setNewProjectsCount(currentNewProjectsCount);
@@ -72,7 +78,6 @@ export default function ProfessionalDashboardPage() {
         collection(db, 'notifications'),
         where('userId', '==', user.uid),
         where('isRead', '==', false)
-        // limit(10) // Optional: limit for performance if many unread
       );
       const notificationsSnapshot = await getDocs(notificationsQuery);
       setUnreadNotificationsCount(notificationsSnapshot.size);
@@ -96,22 +101,22 @@ export default function ProfessionalDashboardPage() {
       setErrorCounts(specificError);
       setNewProjectsCount(0); 
       setUserActiveApplicationsCount(0);
-      setUnreadNotificationsCount(0); // Reset on error
+      setUnreadNotificationsCount(0); 
+      setAcceptedMatchesCount(0);
     } finally {
       setLoadingCounts(false);
     }
-  // }, [user, db, authLoading, userProfile]); // Original dependencies
-  }, [user, db, authLoading, userProfile, setNewProjectsCount, setUserActiveApplicationsCount, setUnreadNotificationsCount, setLoadingCounts, setErrorCounts]); // Added state setters to dependency array
+  }, [user, db, authLoading, userProfile, setNewProjectsCount, setUserActiveApplicationsCount, setUnreadNotificationsCount, setAcceptedMatchesCount, setLoadingCounts, setErrorCounts]); 
 
   useEffect(() => {
     fetchCounts();
-  }, [fetchCounts]); // Use fetchCounts from useCallback
+  }, [fetchCounts]); 
 
   if (authLoading) {
     return (
       <div className="space-y-4 w-full max-w-4xl mx-auto">
         <Card className="shadow-lg"><CardHeader className="p-4"><Skeleton className="h-8 w-3/4" /><Skeleton className="h-6 w-1/2 mt-1" /></CardHeader></Card>
-        <Card className="shadow-lg"><CardHeader className="p-4"><Skeleton className="h-7 w-1/3" /></CardHeader><CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">{[...Array(3)].map((_,i) => <Skeleton key={i} className="h-28 w-full" />)}</CardContent></Card>
+        <Card className="shadow-lg"><CardHeader className="p-4"><Skeleton className="h-7 w-1/3" /></CardHeader><CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">{[...Array(4)].map((_,i) => <Skeleton key={i} className="h-28 w-full" />)}</CardContent></Card>
         <Card className="shadow-lg"><CardHeader className="p-4"><Skeleton className="h-7 w-1/4" /></CardHeader><CardContent className="p-4"><Skeleton className="h-10 w-1/3" /></CardContent></Card>
       </div>
     );
@@ -155,7 +160,7 @@ export default function ProfessionalDashboardPage() {
             <CardTitle className="text-xl font-semibold">Le Tue Attività</CardTitle>
             <CardDescription className="text-sm">Monitora le tue interazioni e scopri nuove possibilità.</CardDescription>
         </CardHeader>
-        <CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3">
             <Button
               asChild
               size="lg"
@@ -177,7 +182,7 @@ export default function ProfessionalDashboardPage() {
                 loadingCounts ? "bg-secondary hover:bg-secondary/80" : 
                 (userActiveApplicationsCount && userActiveApplicationsCount > 0
                   ? "bg-green-600 hover:bg-green-700"
-                  : "bg-red-600 hover:bg-red-700")
+                  : "bg-blue-600 hover:bg-blue-700") // Changed to blue if 0 for less "negative" feel
               )}
             >
               <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS + "?filter=applied"}>
@@ -194,9 +199,29 @@ export default function ProfessionalDashboardPage() {
                 className={cn(
                     "w-full text-primary-foreground flex flex-col items-center justify-center h-28 p-3 text-center",
                     loadingCounts ? "bg-secondary hover:bg-secondary/80" :
+                    (acceptedMatchesCount && acceptedMatchesCount > 0 
+                        ? "bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 hover:opacity-90" 
+                        : "bg-muted-foreground hover:bg-muted-foreground/80") 
+                )}
+            >
+                <Link href={`${ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS}?filter=accepted`}>
+                    <Star className="h-6 w-6 mb-1 text-primary-foreground" />
+                    <span className="text-sm font-semibold">Le Mie Collaborazioni</span>
+                    {loadingCounts ? <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-primary-foreground/80" /> :
+                      <span className="text-xs text-primary-foreground/80 mt-0.5">{acceptedMatchesCount ?? 0} attive</span>
+                    }
+                </Link>
+            </Button>
+
+            <Button
+                asChild
+                size="lg"
+                className={cn(
+                    "w-full text-primary-foreground flex flex-col items-center justify-center h-28 p-3 text-center",
+                    loadingCounts ? "bg-secondary hover:bg-secondary/80" :
                     (unreadNotificationsCount && unreadNotificationsCount > 0 
-                        ? "bg-green-600 hover:bg-green-700" 
-                        : "bg-red-600 hover:bg-red-700")
+                        ? "bg-orange-500 hover:bg-orange-600" 
+                        : "bg-muted-foreground hover:bg-muted-foreground/80")
                 )}
             >
                 <Link href={ROUTES.DASHBOARD_PROFESSIONAL_NOTIFICATIONS}>
@@ -221,7 +246,7 @@ export default function ProfessionalDashboardPage() {
            </div>
            <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROFILE} passHref>
             <Button asChild variant="outline" size="sm" className="mt-2 sm:mt-0 self-start sm:self-center">
-                <span className="flex items-center"> {/* Changed from <a> to <span> */}
+                <span className="flex items-center"> 
                 <Edit2 className="mr-2 h-3 w-3" /> Aggiorna Profilo
                 </span>
             </Button>
@@ -231,3 +256,4 @@ export default function ProfessionalDashboardPage() {
     </div>
   );
 }
+

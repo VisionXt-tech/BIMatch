@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, ITALIAN_REGIONS, ROUTES } from '@/constants';
-import { Briefcase, MapPin, Percent, Search, Filter, Construction, Code2, WifiOff, Info, CheckCircle2, ListFilter, XCircle } from 'lucide-react'; // Added XCircle
+import { Briefcase, MapPin, Percent, Search, Filter, Construction, Code2, WifiOff, Info, CheckCircle2, ListFilter, XCircle, Star } from 'lucide-react'; // Added Star
 import Link from 'next/link';
 import Image from 'next/image';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -23,10 +23,10 @@ const getSkillLabel = (value: string) => BIM_SKILLS_OPTIONS.find(s => s.value ==
 const getSoftwareLabel = (value: string) => SOFTWARE_PROFICIENCY_OPTIONS.find(s => s.value === value)?.label || value;
 
 const ALL_ITEMS_FILTER_VALUE = "__ALL_ITEMS__";
-const APPLICATION_STATUS_APPLIED = "APPLIED"; // Applied and not rejected (includes accepted)
+const APPLICATION_STATUS_APPLIED = "APPLIED"; 
 const APPLICATION_STATUS_NOT_APPLIED = "NOT_APPLIED";
-const APPLICATION_STATUS_ACCEPTED = "ACCEPTED"; // Specifically accepted
-const APPLICATION_STATUS_REJECTED = "REJECTED"; // Specifically rejected
+const APPLICATION_STATUS_ACCEPTED = "ACCEPTED"; 
+const APPLICATION_STATUS_REJECTED = "REJECTED"; 
 
 const applicationStatusOptions = [
     { value: ALL_ITEMS_FILTER_VALUE, label: "Tutti gli stati candidatura" },
@@ -57,6 +57,9 @@ export default function AvailableProjectsPage() {
     const filterParam = searchParams.get('filter');
     if (filterParam === 'applied' && userProfile?.role === 'professional') {
       setFilters(prev => ({ ...prev, applicationStatus: APPLICATION_STATUS_APPLIED }));
+    }
+    if (filterParam === 'accepted' && userProfile?.role === 'professional') {
+      setFilters(prev => ({ ...prev, applicationStatus: APPLICATION_STATUS_ACCEPTED }));
     }
   }, [searchParams, userProfile, loadingApplications]);
 
@@ -240,10 +243,13 @@ export default function AvailableProjectsPage() {
 
 
                 return (
-                  <Card key={project.id} className="shadow-lg hover:shadow-xl transition-shadow duration-300 relative">
+                  <Card key={project.id} className={cn(
+                    "shadow-lg hover:shadow-xl transition-shadow duration-300 relative",
+                    currentApplicationStatus === 'accettata' && "border-2 border-teal-500"
+                  )}>
                     {currentApplicationStatus === 'accettata' ? (
-                        <Badge variant="default" className="absolute top-3 right-3 text-xs px-2 py-1 z-10 flex items-center gap-1 bg-green-700 hover:bg-green-700 text-white">
-                            <CheckCircle2 className="h-3.5 w-3.5" /> Collaborazione Accettata
+                        <Badge variant="default" className="absolute top-3 right-3 text-xs px-2 py-1 z-10 flex items-center gap-1 bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 text-primary-foreground hover:opacity-90">
+                            <Star className="h-3.5 w-3.5" /> Collaborazione Accettata
                         </Badge>
                     ) : currentApplicationStatus === 'rifiutata' ? (
                         <Badge variant="outline" className="absolute top-3 right-3 text-xs px-2 py-1 z-10 flex items-center gap-1 border-orange-500 text-orange-600 bg-orange-50 hover:bg-orange-100">
@@ -303,8 +309,8 @@ export default function AvailableProjectsPage() {
                             Pubblicato: {project.postedAt && (project.postedAt as Timestamp).toDate ? (project.postedAt as Timestamp).toDate().toLocaleDateString('it-IT') : 'Data non disponibile'}
                           </p>
                           {currentApplicationStatus === 'accettata' ? (
-                                <Button size="sm" disabled className="w-full bg-green-700 hover:bg-green-700 text-white cursor-default">
-                                    <CheckCircle2 className="mr-1.5 h-4 w-4"/> Collaborazione Accettata
+                                <Button size="sm" disabled className="w-full bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 text-primary-foreground cursor-default">
+                                    <Star className="mr-1.5 h-4 w-4"/> Collaborazione Accettata
                                 </Button>
                            ) : hasApplied ? (
                               currentApplicationStatus === 'rifiutata' ? (

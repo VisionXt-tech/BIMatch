@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ROUTES } from '@/constants';
-import { Building, Briefcase, Users, FolderPlus, Edit2, WifiOff, Loader2, Bell } from 'lucide-react'; // Added Bell
+import { Building, Briefcase, Users, FolderPlus, Edit2, WifiOff, Loader2, Bell, Star } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { collection, query, where, getDocs, Timestamp, type DocumentData } from 'firebase/firestore';
@@ -19,7 +19,8 @@ export default function CompanyDashboardPage() {
 
   const [activeProjectsCount, setActiveProjectsCount] = useState<number | null>(null);
   const [newCandidatesCount, setNewCandidatesCount] = useState<number | null>(null);
-  const [unreadCompanyNotificationsCount, setUnreadCompanyNotificationsCount] = useState<number | null>(null); // New state
+  const [unreadCompanyNotificationsCount, setUnreadCompanyNotificationsCount] = useState<number | null>(null);
+  const [acceptedMatchesCount, setAcceptedMatchesCount] = useState<number | null>(null); // New state for company's accepted matches
   const [loadingCounts, setLoadingCounts] = useState(true);
   const [errorCounts, setErrorCounts] = useState<string | null>(null);
 
@@ -41,11 +42,13 @@ export default function CompanyDashboardPage() {
       const projectsSnapshot = await getDocs(qProjects);
       setActiveProjectsCount(projectsSnapshot.size);
 
-      // 2. Fetch new candidates count
+      // 2. Fetch new candidates count & accepted matches count
       const companyProjectIds: string[] = [];
       projectsSnapshot.forEach(doc => companyProjectIds.push(doc.id));
 
       let candidates = 0;
+      let currentAcceptedMatches = 0;
+
       if (companyProjectIds.length > 0) {
         const MAX_PROJECTS_FOR_IN_QUERY = 30;
         const projectIdsChunks: string[][] = [];
@@ -57,18 +60,28 @@ export default function CompanyDashboardPage() {
         for (const chunk of projectIdsChunks) {
             if (chunk.length > 0) {
                 const applicationsRef = collection(db, 'projectApplications');
-                const qApplications = query(
+                const qNewApplications = query(
                     applicationsRef,
                     where('projectId', 'in', chunk),
                     where('status', '==', 'inviata') 
                 );
-                const applicationsSnapshot = await getDocs(qApplications);
-                totalNewCandidates += applicationsSnapshot.size;
+                const newApplicationsSnapshot = await getDocs(qNewApplications);
+                totalNewCandidates += newApplicationsSnapshot.size;
+
+                const qAcceptedApplications = query(
+                    applicationsRef,
+                    where('projectId', 'in', chunk),
+                    where('status', '==', 'accettata')
+                );
+                const acceptedApplicationsSnapshot = await getDocs(qAcceptedApplications);
+                currentAcceptedMatches += acceptedApplicationsSnapshot.size;
             }
         }
         candidates = totalNewCandidates;
       }
       setNewCandidatesCount(candidates);
+      setAcceptedMatchesCount(currentAcceptedMatches);
+
 
       // 3. Fetch unread company notifications count
       const notificationsRef = collection(db, 'notifications');
@@ -98,6 +111,7 @@ export default function CompanyDashboardPage() {
       setActiveProjectsCount(0);
       setNewCandidatesCount(0);
       setUnreadCompanyNotificationsCount(0);
+      setAcceptedMatchesCount(0);
     } finally {
       setLoadingCounts(false);
     }
@@ -170,7 +184,7 @@ export default function CompanyDashboardPage() {
                 className={cn(
                     "w-full flex flex-col items-center justify-center h-28 p-3 text-center text-primary-foreground",
                     loadingCounts ? "bg-secondary hover:bg-secondary/80" :
-                    activeProjectsCount && activeProjectsCount > 0 ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
+                    activeProjectsCount && activeProjectsCount > 0 ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700" 
                 )}
             >
                  <Link href={ROUTES.DASHBOARD_COMPANY_PROJECTS}>
@@ -187,7 +201,7 @@ export default function CompanyDashboardPage() {
                 className={cn(
                     "w-full flex flex-col items-center justify-center h-28 p-3 text-center text-primary-foreground",
                     loadingCounts ? "bg-secondary hover:bg-secondary/80" :
-                    newCandidatesCount && newCandidatesCount > 0 ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
+                    newCandidatesCount && newCandidatesCount > 0 ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"
                 )}
             >
                 <Link href={`${ROUTES.DASHBOARD_COMPANY_PROJECTS}?filter=candidates`}>
@@ -204,7 +218,27 @@ export default function CompanyDashboardPage() {
                 className={cn(
                     "w-full flex flex-col items-center justify-center h-28 p-3 text-center text-primary-foreground",
                     loadingCounts ? "bg-secondary hover:bg-secondary/80" :
-                    unreadCompanyNotificationsCount && unreadCompanyNotificationsCount > 0 ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
+                    (acceptedMatchesCount && acceptedMatchesCount > 0 
+                        ? "bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 hover:opacity-90" 
+                        : "bg-muted-foreground hover:bg-muted-foreground/80")
+                )}
+            >
+                {/* TODO: Adjust link when a dedicated "matches" page exists for companies */}
+                <Link href={`${ROUTES.DASHBOARD_COMPANY_PROJECTS}?filter=active_collaborations`}> 
+                    <Star className="h-6 w-6 mb-1 text-primary-foreground" />
+                    <span className="text-sm font-semibold">Collaborazioni Avviate</span>
+                     {loadingCounts ? <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-primary-foreground/80" /> :
+                        <span className="text-xs text-primary-foreground/80 mt-0.5">{acceptedMatchesCount ?? 0} attive</span>
+                    }
+                </Link>
+            </Button>
+            <Button 
+                asChild 
+                size="lg" 
+                className={cn(
+                    "w-full flex flex-col items-center justify-center h-28 p-3 text-center text-primary-foreground",
+                    loadingCounts ? "bg-secondary hover:bg-secondary/80" :
+                    unreadCompanyNotificationsCount && unreadCompanyNotificationsCount > 0 ? "bg-orange-500 hover:bg-orange-600" : "bg-muted-foreground hover:bg-muted-foreground/80"
                 )}
             >
                 <Link href={ROUTES.DASHBOARD_COMPANY_NOTIFICATIONS}>
