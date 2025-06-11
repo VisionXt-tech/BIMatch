@@ -309,16 +309,16 @@ export default function AvailableProjectsPage() {
                             Pubblicato: {project.postedAt && (project.postedAt as Timestamp).toDate ? (project.postedAt as Timestamp).toDate().toLocaleDateString('it-IT') : 'Data non disponibile'}
                           </p>
                           {currentApplicationStatus === 'accettata' ? (
-                                <Button size="sm" disabled className="w-full bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 text-primary-foreground cursor-default">
+                                <Button size="sm" disabled className="bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 text-primary-foreground cursor-default">
                                     <Star className="mr-1.5 h-4 w-4"/> Collaborazione Accettata
                                 </Button>
                            ) : hasApplied ? (
                               currentApplicationStatus === 'rifiutata' ? (
-                                <Button size="sm" asChild variant="outline" disabled className="w-full border-orange-500 text-orange-600 bg-orange-50 cursor-not-allowed">
+                                <Button size="sm" asChild variant="outline" disabled className="border-orange-500 text-orange-600 bg-orange-50 cursor-not-allowed">
                                     <span><XCircle className="mr-1.5 h-4 w-4"/> Rifiutata</span>
                                 </Button>
                               ) : (
-                                <Button size="sm" asChild className="w-full bg-green-600 hover:bg-green-700 text-white">
+                                <Button size="sm" asChild className="bg-green-600 hover:bg-green-700 text-white">
                                     <Link href={ROUTES.PROJECT_DETAILS(project.id!)}>
                                         <CheckCircle2 className="mr-1.5 h-4 w-4"/>Già Candidato
                                     </Link>
