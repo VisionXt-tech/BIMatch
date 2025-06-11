@@ -125,7 +125,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <SidebarInset
         style={{ marginTop: `var(--main-content-area-margin-top, ${NAVBAR_HEIGHT_CSS_VAR_VALUE})` }}
       >
-        <div className="px-4 md:px-6 lg:px-8 pt-6 pb-4"> {/* Changed pb-8 to pb-4 */}
+        <div className="px-4 md:px-6 lg:px-8 pt-6 pb-0"> {/* Changed pb-4 to pb-0 */}
          {children}
         </div>
       </SidebarInset>
