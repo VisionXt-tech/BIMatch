@@ -13,27 +13,27 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, User, LayoutDashboard, Briefcase, Building, Search, Menu } from 'lucide-react'; 
+import { LogOut, User, LayoutDashboard, Briefcase, Building, Search, Menu } from 'lucide-react';
 import Logo from './Logo';
 import { ROUTES, ROLES, ProfessionalNavItems, CompanyNavItems } from '@/constants';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet'; 
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 
-const DEFAULT_NAVBAR_PAGE_CONTENT_PADDING = '1rem'; 
-const DEFAULT_CONTAINER_MAX_WIDTH = 'none'; 
+const DEFAULT_NAVBAR_PAGE_CONTENT_PADDING = '1rem';
+const DEFAULT_CONTAINER_MAX_WIDTH = 'none';
 
 const initialNavStyle: React.CSSProperties = {
-  maxWidth: '1280px', 
+  maxWidth: '1280px',
   marginInline: 'auto',
   paddingLeft: DEFAULT_NAVBAR_PAGE_CONTENT_PADDING,
   paddingRight: DEFAULT_NAVBAR_PAGE_CONTENT_PADDING,
 };
 
 const dashboardNavStyle: React.CSSProperties = {
-  maxWidth: DEFAULT_CONTAINER_MAX_WIDTH, 
-  marginInline: 'auto', 
+  maxWidth: DEFAULT_CONTAINER_MAX_WIDTH,
+  marginInline: 'auto',
   paddingLeft: DEFAULT_NAVBAR_PAGE_CONTENT_PADDING,
   paddingRight: DEFAULT_NAVBAR_PAGE_CONTENT_PADDING,
 };
@@ -46,13 +46,24 @@ const Navbar = () => {
   const [mounted, setMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // State for the navigation style, initialized to the default non-dashboard style.
+  const [navStyleToApply, setNavStyleToApply] = useState<React.CSSProperties>(initialNavStyle);
+
   useEffect(() => {
     setMounted(true);
-  }, []);
+  }, []); // Runs once on mount to indicate client-side rendering is active.
 
-  // For style, use pathname directly. This assumes pathname is correctly passed/available during SSR for client components.
-  const isDashboardPageForStyle = pathname.startsWith(ROUTES.DASHBOARD);
-  const currentNavStyle = isDashboardPageForStyle ? dashboardNavStyle : initialNavStyle;
+  useEffect(() => {
+    // This effect updates the nav style after the component has mounted,
+    // based on the current client-side pathname.
+    // This ensures the style applied during SSR/initial client render is consistent (initialNavStyle),
+    // and any changes based on pathname happen client-side, avoiding hydration mismatch for the style.
+    if (mounted) {
+      const isDashboard = pathname.startsWith(ROUTES.DASHBOARD);
+      setNavStyleToApply(isDashboard ? dashboardNavStyle : initialNavStyle);
+    }
+  }, [mounted, pathname]); // Re-run if mounted status changes or if pathname changes (client-side navigation)
+
 
   // For conditional rendering of children, use mounted in conjunction with other conditions
   const isDashboardPageForContent = mounted && pathname.startsWith(ROUTES.DASHBOARD);
@@ -72,11 +83,11 @@ const Navbar = () => {
   };
 
   const dashboardLink = userProfile?.role === ROLES.PROFESSIONAL ? ROUTES.DASHBOARD_PROFESSIONAL : ROUTES.DASHBOARD_COMPANY;
-  
-  const activeRoleNavItems = userProfile?.role === ROLES.PROFESSIONAL 
-    ? ProfessionalNavItems 
-    : userProfile?.role === ROLES.COMPANY 
-    ? CompanyNavItems 
+
+  const activeRoleNavItems = userProfile?.role === ROLES.PROFESSIONAL
+    ? ProfessionalNavItems
+    : userProfile?.role === ROLES.COMPANY
+    ? CompanyNavItems
     : [];
 
   const NavLinks = ({ mobile = false }: { mobile?: boolean }) => (
@@ -93,7 +104,7 @@ const Navbar = () => {
             className={cn(
               "justify-start text-sm",
               pathname === item.href ? "font-semibold text-primary bg-accent/50" : "text-muted-foreground hover:text-foreground",
-              mobile ? "w-full" : "px-2 lg:px-3 h-9" 
+              mobile ? "w-full" : "px-2 lg:px-3 h-9"
             )}
             onClick={() => mobile && setIsMobileMenuOpen(false)}
           >
@@ -113,10 +124,10 @@ const Navbar = () => {
       <div className="w-full">
         <nav
           className="py-3 flex items-center"
-          style={currentNavStyle}
+          style={navStyleToApply} // Use the stateful style here
         >
           <Logo />
-          
+
           {mounted && (
             <div className="ml-auto flex items-center space-x-1 md:space-x-2">
               {userProfile?.role === ROLES.COMPANY && (
@@ -176,7 +187,7 @@ const Navbar = () => {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              ) : ( 
+              ) : (
                 <>
                   <Button variant="ghost" size="sm" asChild>
                     <Link href={ROUTES.LOGIN}>Accedi</Link>
