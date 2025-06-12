@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, ITALIAN_REGIONS, ROUTES } from '@/constants';
-import { Briefcase, MapPin, Percent, Search, Filter, Construction, Code2, WifiOff, Info, CheckCircle2, ListFilter, XCircle, Star } from 'lucide-react'; // Added Star
+import { Briefcase, MapPin, Percent, Search, Filter, Construction, Code2, WifiOff, Info, CheckCircle2, ListFilter, XCircle, Star, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -35,6 +35,8 @@ const applicationStatusOptions = [
     { value: APPLICATION_STATUS_ACCEPTED, label: "Solo Accettate" },
     { value: APPLICATION_STATUS_REJECTED, label: "Solo Rifiutate" },
 ];
+
+const MAX_ITEMS_PREVIEW = 2; // Max skills/software to show before "+N more"
 
 export default function AvailableProjectsPage() {
   const { db } = useFirebase();
@@ -159,43 +161,43 @@ export default function AvailableProjectsPage() {
   return (
     <div className="space-y-6">
       <Card className="shadow-lg">
-        <CardHeader>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <CardHeader className="pb-4 pt-5 px-4 md:px-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
             <div>
-              <CardTitle className="text-3xl font-bold">Progetti Disponibili</CardTitle>
-              <CardDescription>Esplora le opportunità BIM che corrispondono al tuo profilo.</CardDescription>
+              <CardTitle className="text-2xl font-bold">Progetti Disponibili</CardTitle>
+              <CardDescription className="text-base">Esplora le opportunità BIM che corrispondono al tuo profilo.</CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-            <Accordion type="single" collapsible className="w-full mb-6 border rounded-lg bg-muted/50 px-4">
+        <CardContent className="px-3 py-3 md:px-5">
+            <Accordion type="single" collapsible className="w-full mb-4 border rounded-lg bg-muted/50 px-3">
               <AccordionItem value="filters" className="border-b-0">
-                <AccordionTrigger className="text-lg font-semibold hover:no-underline py-4">
+                <AccordionTrigger className="text-md font-semibold hover:no-underline py-3">
                   <div className="flex items-center">
-                    <ListFilter className="mr-2 h-5 w-5 text-primary"/> Filtri Avanzati
+                    <ListFilter className="mr-2 h-4 w-4 text-primary"/> Filtri Avanzati
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="pb-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                <AccordionContent className="pb-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
                       <Select onValueChange={(value) => setFilters(prev => ({...prev, skill: value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value}))} value={filters.skill}>
-                          <SelectTrigger><SelectValue placeholder="Competenza BIM" /></SelectTrigger>
+                          <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Competenza BIM" /></SelectTrigger>
                           <SelectContent>
                               <SelectItem value={ALL_ITEMS_FILTER_VALUE}>Tutte le competenze</SelectItem>
-                              {BIM_SKILLS_OPTIONS.map(skill => <SelectItem key={skill.value} value={skill.value}>{skill.label}</SelectItem>)}
+                              {BIM_SKILLS_OPTIONS.map(skill => <SelectItem key={skill.value} value={skill.value} className="text-xs">{skill.label}</SelectItem>)}
                           </SelectContent>
                       </Select>
                       <Select onValueChange={(value) => setFilters(prev => ({...prev, software: value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value}))} value={filters.software}>
-                          <SelectTrigger><SelectValue placeholder="Software" /></SelectTrigger>
+                          <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Software" /></SelectTrigger>
                           <SelectContent>
                               <SelectItem value={ALL_ITEMS_FILTER_VALUE}>Tutti i software</SelectItem>
-                              {SOFTWARE_PROFICIENCY_OPTIONS.map(sw => <SelectItem key={sw.value} value={sw.value}>{sw.label}</SelectItem>)}
+                              {SOFTWARE_PROFICIENCY_OPTIONS.map(sw => <SelectItem key={sw.value} value={sw.value} className="text-xs">{sw.label}</SelectItem>)}
                           </SelectContent>
                       </Select>
                       <Select onValueChange={(value) => setFilters(prev => ({...prev, location: value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value}))} value={filters.location}>
-                          <SelectTrigger><SelectValue placeholder="Localizzazione" /></SelectTrigger>
+                          <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Localizzazione" /></SelectTrigger>
                           <SelectContent>
                                <SelectItem value={ALL_ITEMS_FILTER_VALUE}>Tutte le regioni</SelectItem>
-                              {ITALIAN_REGIONS.map(region => <SelectItem key={region} value={region}>{region}</SelectItem>)}
+                              {ITALIAN_REGIONS.map(region => <SelectItem key={region} value={region} className="text-xs">{region}</SelectItem>)}
                           </SelectContent>
                       </Select>
                       {userProfile?.role === 'professional' && (
@@ -204,9 +206,9 @@ export default function AvailableProjectsPage() {
                             value={filters.applicationStatus}
                             disabled={loadingApplications && authLoading}
                         >
-                            <SelectTrigger><SelectValue placeholder="Stato Candidatura" /></SelectTrigger>
+                            <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Stato Candidatura" /></SelectTrigger>
                             <SelectContent>
-                                {applicationStatusOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                                {applicationStatusOptions.map(opt => <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>)}
                             </SelectContent>
                         </Select>
                       )}
@@ -216,23 +218,35 @@ export default function AvailableProjectsPage() {
             </Accordion>
 
           {loading || (authLoading && loadingApplications && userProfile?.role === 'professional') ? (
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(3)].map((_, i) => (
-                  <Card key={i} className="shadow-lg relative">
-                    <CardHeader><Skeleton className="h-6 w-3/4" /><Skeleton className="h-4 w-1/2 mt-2" /></CardHeader>
-                    <CardContent className="space-y-3"><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-5/6" /><Skeleton className="h-8 w-1/3" /></CardContent>
-                    <CardFooter><Skeleton className="h-10 w-full" /></CardFooter>
+             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {[...Array(8)].map((_, i) => (
+                  <Card key={i} className="shadow-md relative flex flex-col h-full">
+                    <CardHeader className="p-3">
+                        <Skeleton className="h-5 w-3/4 mb-1" />
+                        <Skeleton className="h-3 w-1/2" />
+                    </CardHeader>
+                    <CardContent className="p-3 space-y-2 flex-grow">
+                        <Skeleton className="h-3 w-full" />
+                        <Skeleton className="h-3 w-5/6" />
+                        <div className="flex flex-wrap gap-1 pt-1">
+                           <Skeleton className="h-4 w-1/4 rounded-full" />
+                           <Skeleton className="h-4 w-1/3 rounded-full" />
+                        </div>
+                    </CardContent>
+                    <CardFooter className="p-3 border-t mt-auto">
+                        <Skeleton className="h-8 w-full" />
+                    </CardFooter>
                   </Card>
                 ))}
             </div>
           ) : error ? (
-            <div className="text-center py-16 border-2 border-dashed border-destructive/50 bg-destructive/5 rounded-lg">
-              <WifiOff className="mx-auto h-16 w-16 text-destructive mb-6" />
-              <p className="text-xl font-semibold mb-2 text-destructive">Errore di Caricamento</p>
-              <p className="text-muted-foreground">{error}</p>
+            <div className="text-center py-10 border-2 border-dashed border-destructive/50 bg-destructive/5 rounded-lg">
+              <WifiOff className="mx-auto h-12 w-12 text-destructive mb-3" />
+              <p className="text-lg font-semibold text-destructive mb-1">Errore di Caricamento</p>
+              <p className="text-muted-foreground text-sm">{error}</p>
             </div>
           ) : filteredProjects.length > 0 ? (
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {filteredProjects.map((project) => {
                 const applicationDetail = userProfile?.role === 'professional' && !loadingApplications 
                   ? userApplicationDetails.find(app => app.projectId === project.id!) 
@@ -241,107 +255,104 @@ export default function AvailableProjectsPage() {
                 const currentApplicationStatus = applicationDetail?.status;
                 const showStatusBadge = hasApplied || currentApplicationStatus === 'accettata' || currentApplicationStatus === 'rifiutata';
 
-
                 return (
                   <Card key={project.id} className={cn(
-                    "shadow-lg hover:shadow-xl transition-shadow duration-300 relative",
-                    currentApplicationStatus === 'accettata' && "border-2 border-teal-500"
+                    "shadow-md hover:shadow-lg transition-shadow duration-200 relative flex flex-col h-full",
+                    currentApplicationStatus === 'accettata' && "border-2 border-teal-500 bg-teal-500/5"
                   )}>
                     {currentApplicationStatus === 'accettata' ? (
-                        <Badge variant="default" className="absolute top-3 right-3 text-xs px-2 py-1 z-10 flex items-center gap-1 bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 text-primary-foreground hover:opacity-90">
-                            <Star className="h-3.5 w-3.5" /> Collaborazione Accettata
+                        <Badge variant="default" className="absolute top-2 right-2 text-xs px-1.5 py-0.5 z-10 flex items-center gap-1 bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 text-primary-foreground hover:opacity-90">
+                            <Star className="h-3 w-3" /> Accettata
                         </Badge>
                     ) : currentApplicationStatus === 'rifiutata' ? (
-                        <Badge variant="outline" className="absolute top-3 right-3 text-xs px-2 py-1 z-10 flex items-center gap-1 border-orange-500 text-orange-600 bg-orange-50 hover:bg-orange-100">
-                            <XCircle className="h-3.5 w-3.5" /> Rifiutata
+                        <Badge variant="outline" className="absolute top-2 right-2 text-xs px-1.5 py-0.5 z-10 flex items-center gap-1 border-orange-500 text-orange-600 bg-orange-50 hover:bg-orange-100">
+                            <XCircle className="h-3 w-3" /> Rifiutata
                         </Badge>
                     ) : hasApplied ? (
-                        <Badge variant="default" className="absolute top-3 right-3 text-xs px-2 py-1 z-10 flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white">
-                            <CheckCircle2 className="h-3.5 w-3.5" /> Candidato
+                        <Badge variant="default" className="absolute top-2 right-2 text-xs px-1.5 py-0.5 z-10 flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white">
+                            <CheckCircle2 className="h-3 w-3" /> Candidato
                         </Badge>
                     ) : null}
 
-                    <CardHeader className={cn(showStatusBadge ? "pr-24 md:pr-32" : "pr-3")}>
-                      <div className="flex items-start justify-between gap-2">
-                          <div>
-                              <CardTitle className="text-xl hover:text-primary transition-colors">
-                                  <Link href={ROUTES.PROJECT_DETAILS(project.id!)}>{project.title}</Link>
-                              </CardTitle>
-                              <div className="flex items-center text-sm text-muted-foreground mt-1.5">
-                                  {project.companyLogo ?
-                                      <Image data-ai-hint="company logo" src={project.companyLogo} alt={`${project.companyName} logo`} width={20} height={20} className="mr-2 rounded-sm border" />
-                                      : <Briefcase className="h-4 w-4 mr-2 flex-shrink-0"/>
-                                  }
-                                  <span>{project.companyName}</span>
-                                  <span className="mx-2">·</span>
-                                  <MapPin className="h-4 w-4 mr-1" />
-                                  <span>{project.location}</span>
-                              </div>
-                          </div>
+                    <CardHeader className={cn("p-3", showStatusBadge ? "pr-16 md:pr-20" : "")}>
+                      <CardTitle className="text-base font-semibold hover:text-primary transition-colors line-clamp-2 leading-tight">
+                          <Link href={ROUTES.PROJECT_DETAILS(project.id!)}>{project.title}</Link>
+                      </CardTitle>
+                      <div className="flex items-center text-xs text-muted-foreground mt-1">
+                          {project.companyLogo ?
+                              <Image data-ai-hint="company logo" src={project.companyLogo} alt={`${project.companyName} logo`} width={16} height={16} className="mr-1.5 rounded-sm border" />
+                              : <Briefcase className="h-3.5 w-3.5 mr-1.5 flex-shrink-0"/>
+                          }
+                          <span className="truncate" title={project.companyName}>{project.companyName}</span>
                       </div>
+                       <div className="flex items-center text-xs text-muted-foreground">
+                            <MapPin className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
+                            <span>{project.location}</span>
+                        </div>
                     </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-foreground/80 mb-4 line-clamp-2">{project.description}</p>
+                    <CardContent className="p-3 flex-grow space-y-2">
                       {project.requiredSkills && project.requiredSkills.length > 0 && (
-                        <div className="mb-3">
-                            <h4 className="text-xs font-semibold text-muted-foreground mb-1.5 flex items-center"><Construction className="h-3.5 w-3.5 mr-1.5 text-primary/80"/>Competenze Richieste:</h4>
-                            <div className="flex flex-wrap gap-2">
-                                {project.requiredSkills.slice(0,3).map(skillKey => (
-                                    <span key={skillKey} className="text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full">{getSkillLabel(skillKey)}</span>
+                        <div>
+                            <h4 className="text-xs font-medium text-muted-foreground mb-1 flex items-center"><Construction className="h-3 w-3 mr-1 text-primary/80"/>Competenze:</h4>
+                            <div className="flex flex-wrap gap-1">
+                                {project.requiredSkills.slice(0,MAX_ITEMS_PREVIEW).map(skillKey => (
+                                    <Badge key={skillKey} variant="secondary" className="text-xs px-1.5 py-0.5 bg-primary/10 text-primary border-primary/20">{getSkillLabel(skillKey)}</Badge>
                                 ))}
-                                {project.requiredSkills.length > 3 && <span className="text-xs text-muted-foreground self-center">+{project.requiredSkills.length - 3} altro/i</span>}
+                                {project.requiredSkills.length > MAX_ITEMS_PREVIEW && <Badge variant="outline" className="text-xs px-1.5 py-0.5">+{project.requiredSkills.length - MAX_ITEMS_PREVIEW}</Badge>}
                             </div>
                         </div>
                       )}
                        {project.requiredSoftware && project.requiredSoftware.length > 0 && (
-                          <div className="mb-4">
-                              <h4 className="text-xs font-semibold text-muted-foreground mb-1.5 flex items-center"><Code2 className="h-3.5 w-3.5 mr-1.5 text-primary/80"/>Software Richiesti:</h4>
-                              <div className="flex flex-wrap gap-2">
-                                  {project.requiredSoftware.slice(0,3).map(swKey => (
-                                      <span key={swKey} className="text-xs bg-secondary text-secondary-foreground px-2.5 py-1 rounded-full">{getSoftwareLabel(swKey)}</span>
+                          <div>
+                              <h4 className="text-xs font-medium text-muted-foreground mb-1 flex items-center"><Code2 className="h-3 w-3 mr-1 text-primary/80"/>Software:</h4>
+                              <div className="flex flex-wrap gap-1">
+                                  {project.requiredSoftware.slice(0,MAX_ITEMS_PREVIEW).map(swKey => (
+                                      <Badge key={swKey} variant="outline" className="text-xs px-1.5 py-0.5">{getSoftwareLabel(swKey)}</Badge>
                                   ))}
-                                  {project.requiredSoftware.length > 3 && <span className="text-xs text-muted-foreground self-center">+{project.requiredSoftware.length - 3} altro/i</span>}
+                                  {project.requiredSoftware.length > MAX_ITEMS_PREVIEW && <Badge variant="outline" className="text-xs px-1.5 py-0.5">+{project.requiredSoftware.length - MAX_ITEMS_PREVIEW}</Badge>}
                               </div>
                           </div>
                       )}
-                      <div className="flex justify-between items-center pt-3 border-t border-border">
-                          <p className="text-xs text-muted-foreground">
-                            Pubblicato: {project.postedAt && (project.postedAt as Timestamp).toDate ? (project.postedAt as Timestamp).toDate().toLocaleDateString('it-IT') : 'Data non disponibile'}
-                          </p>
-                          {currentApplicationStatus === 'accettata' ? (
-                                <Button size="sm" disabled className="bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 text-primary-foreground cursor-default">
-                                    <Star className="mr-1.5 h-4 w-4"/> Collaborazione Accettata
+                    </CardContent>
+                     <CardFooter className="p-3 border-t mt-auto">
+                         <div className="flex justify-between items-center w-full">
+                            <p className="text-xs text-muted-foreground">
+                                {project.postedAt && (project.postedAt as Timestamp).toDate ? (project.postedAt as Timestamp).toDate().toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'2-digit'}) : 'N/A'}
+                            </p>
+                            {currentApplicationStatus === 'accettata' ? (
+                                <Button size="sm" disabled className="text-xs h-7 px-2 py-1 bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 text-primary-foreground cursor-default">
+                                    <Star className="mr-1 h-3 w-3"/> Accettata
                                 </Button>
-                           ) : hasApplied ? (
-                              currentApplicationStatus === 'rifiutata' ? (
-                                <Button size="sm" asChild variant="outline" disabled className="border-orange-500 text-orange-600 bg-orange-50 cursor-not-allowed">
-                                    <span><XCircle className="mr-1.5 h-4 w-4"/> Rifiutata</span>
+                            ) : hasApplied ? (
+                                currentApplicationStatus === 'rifiutata' ? (
+                                <Button size="sm" asChild variant="outline" disabled className="text-xs h-7 px-2 py-1 border-orange-500 text-orange-600 bg-orange-50 cursor-not-allowed">
+                                    <span><XCircle className="mr-1 h-3 w-3"/> Rifiutata</span>
                                 </Button>
-                              ) : (
-                                <Button size="sm" asChild className="bg-green-600 hover:bg-green-700 text-white">
+                                ) : (
+                                <Button size="sm" asChild className="text-xs h-7 px-2 py-1 bg-green-600 hover:bg-green-700 text-white">
                                     <Link href={ROUTES.PROJECT_DETAILS(project.id!)}>
-                                        <CheckCircle2 className="mr-1.5 h-4 w-4"/>Già Candidato
+                                        <CheckCircle2 className="mr-1 h-3 w-3"/>Già Candidato
                                     </Link>
                                 </Button>
-                              )
-                          ) : (
-                              <Button size="sm" asChild className="w-full">
-                                  <Link href={ROUTES.PROJECT_DETAILS(project.id!)}>
-                                    Dettagli e Candidatura
-                                  </Link>
-                              </Button>
-                          )}
-                      </div>
-                    </CardContent>
+                                )
+                            ) : (
+                                <Button size="sm" asChild className="text-xs h-7 px-2 py-1">
+                                    <Link href={ROUTES.PROJECT_DETAILS(project.id!)}>
+                                        <ExternalLink className="mr-1 h-3 w-3"/>Dettagli
+                                    </Link>
+                                </Button>
+                            )}
+                         </div>
+                    </CardFooter>
                   </Card>
                 );
               })}
             </div>
           ) : (
-            <div className="text-center py-16 border-2 border-dashed border-border rounded-lg">
-              <Info className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <div className="text-center py-10 border-2 border-dashed border-border rounded-lg">
+              <Info className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
               <p className="text-lg font-semibold">Nessun progetto disponibile al momento.</p>
-              <p className="text-muted-foreground">Controlla più tardi o amplia i tuoi criteri di ricerca.</p>
+              <p className="text-muted-foreground text-sm">Controlla più tardi o amplia i tuoi criteri di ricerca.</p>
             </div>
           )}
         </CardContent>
@@ -350,3 +361,4 @@ export default function AvailableProjectsPage() {
   );
 }
 
+    
