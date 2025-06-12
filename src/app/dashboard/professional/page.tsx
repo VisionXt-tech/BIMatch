@@ -20,7 +20,7 @@ export default function ProfessionalDashboardPage() {
   const [newProjectsCount, setNewProjectsCount] = useState<number | null>(null);
   const [userActiveApplicationsCount, setUserActiveApplicationsCount] = useState<number | null>(null);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState<number | null>(null);
-  const [acceptedMatchesCount, setAcceptedMatchesCount] = useState<number | null>(null); // New state for accepted matches
+  const [acceptedMatchesCount, setAcceptedMatchesCount] = useState<number | null>(null); 
   const [loadingCounts, setLoadingCounts] = useState(true);
   const [errorCounts, setErrorCounts] = useState<string | null>(null);
 
@@ -35,7 +35,6 @@ export default function ProfessionalDashboardPage() {
     setLoadingCounts(true);
     setErrorCounts(null);
     try {
-      // 1. Fetch active, non-expired projects & applied project IDs
       const projectsRef = collection(db, 'projects');
       const now = new Date();
       const qProjects = query(projectsRef, where('status', '==', 'attivo'));
@@ -56,7 +55,7 @@ export default function ProfessionalDashboardPage() {
       
       const appliedProjectIds = new Set<string>();
       let activeApplicationsCount = 0;
-      let currentAcceptedMatchesCount = 0; // Count for accepted matches
+      let currentAcceptedMatchesCount = 0; 
       applicationsSnapshot.forEach(doc => {
           const appData = doc.data();
           appliedProjectIds.add(appData.projectId);
@@ -73,7 +72,6 @@ export default function ProfessionalDashboardPage() {
       const currentNewProjectsCount = activeNonExpiredProjectIds.filter(projectId => !appliedProjectIds.has(projectId)).length;
       setNewProjectsCount(currentNewProjectsCount);
 
-      // 3. Fetch unread notifications count
       const notificationsQuery = query(
         collection(db, 'notifications'),
         where('userId', '==', user.uid),
@@ -182,7 +180,7 @@ export default function ProfessionalDashboardPage() {
                 loadingCounts ? "bg-secondary hover:bg-secondary/80" : 
                 (userActiveApplicationsCount && userActiveApplicationsCount > 0
                   ? "bg-green-600 hover:bg-green-700"
-                  : "bg-blue-600 hover:bg-blue-700") // Changed to blue if 0 for less "negative" feel
+                  : "bg-blue-600 hover:bg-blue-700") 
               )}
             >
               <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS + "?filter=applied"}>
@@ -206,9 +204,9 @@ export default function ProfessionalDashboardPage() {
             >
                 <Link href={`${ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS}?filter=accepted`}>
                     <Star className="h-6 w-6 mb-1 text-primary-foreground" />
-                    <span className="text-sm font-semibold">Le Mie Collaborazioni</span>
+                    <span className="text-sm font-semibold">I Miei BIMatch</span>
                     {loadingCounts ? <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-primary-foreground/80" /> :
-                      <span className="text-xs text-primary-foreground/80 mt-0.5">{acceptedMatchesCount ?? 0} attive</span>
+                      <span className="text-xs text-primary-foreground/80 mt-0.5">{acceptedMatchesCount ?? 0} attivi</span>
                     }
                 </Link>
             </Button>
