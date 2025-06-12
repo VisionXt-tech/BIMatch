@@ -128,3 +128,28 @@ export const NOTIFICATION_TYPES = {
   COLLABORATION_CONFIRMED: 'COLLABORATION_CONFIRMED',
 };
 
+// Moved from dashboard/layout.tsx
+import { LogOut, User, Briefcase, LayoutDashboard, FolderPlus, Building, Search, Users, Bell, type LucideIcon } from 'lucide-react';
+
+interface NavItem {
+  href: string;
+  label: string;
+  icon: LucideIcon; // Using LucideIcon type
+}
+
+export const ProfessionalNavItems: NavItem[] = [
+  { href: ROUTES.DASHBOARD_PROFESSIONAL, label: 'Dashboard', icon: LayoutDashboard },
+  { href: ROUTES.DASHBOARD_PROFESSIONAL_PROFILE, label: 'Profilo', icon: User },
+  { href: ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS, label: 'Progetti', icon: Search },
+  { href: ROUTES.DASHBOARD_PROFESSIONAL_NOTIFICATIONS, label: 'Notifiche', icon: Bell },
+];
+
+export const CompanyNavItems: NavItem[] = [
+  { href: ROUTES.DASHBOARD_COMPANY, label: 'Dashboard', icon: LayoutDashboard },
+  { href: ROUTES.DASHBOARD_COMPANY_PROFILE, label: 'Profilo Azienda', icon: Building },
+  { href: ROUTES.DASHBOARD_COMPANY_POST_PROJECT, label: 'Pubblica', icon: FolderPlus },
+  { href: ROUTES.DASHBOARD_COMPANY_PROJECTS, label: 'Progetti', icon: Briefcase },
+  // { href: ROUTES.PROFESSIONALS_MARKETPLACE, label: 'Cerca Professionisti', icon: Users }, // Already in Navbar, maybe remove from here if dashboard specific
+  { href: ROUTES.DASHBOARD_COMPANY_NOTIFICATIONS, label: 'Notifiche', icon: Bell },
+];
+
