@@ -355,7 +355,7 @@ export default function ProfessionalProfilePage() {
 
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6">
       <Card className="shadow-xl">
         <CardHeader className="p-6 border-b">
           <div className="flex items-center space-x-4">
@@ -498,7 +498,7 @@ export default function ProfessionalProfilePage() {
                     form.getValues('uniCertificationUrl')
                   )}
                   {renderFileUploadSection(
-                    "Altre Certificazioni Rilevanti (es. Software Vendor)",
+                    "Altre Certificazioni Rilevanti (es. Software Professionale Autodesk)",
                     FileText,
                     otherCertPdfFile,
                     otherCertPdfUrl,
@@ -549,3 +549,5 @@ export default function ProfessionalProfilePage() {
     </div>
   );
 }
+
+    
