@@ -43,12 +43,15 @@ export interface ProfessionalProfile extends BaseUserProfile {
   softwareProficiency?: string[]; // Array of software IDs/names
   availability?: string; // e.g., "full-time", "part-time", "contract", "immediata"
   experienceLevel?: string; // e.g., "entry", "mid", "senior"
-  certifications?: string[];
+  certifications?: string[]; // DEPRECATED - keeping for potential data migration if needed, but new fields are below
   portfolioUrl?: string;
   cvUrl?: string; // Link to CV/Resume PDF in Firebase Storage
   monthlyRate?: number | null; // Changed from hourlyRate, allow null for Firestore
   linkedInProfile?: string;
   preferredProjectTypes?: string[];
+  alboRegistrationUrl?: string; // URL to PDF
+  uniCertificationUrl?: string; // URL to PDF
+  otherCertificationsUrl?: string; // URL to PDF or a general link
 }
 
 // Profile for Companies

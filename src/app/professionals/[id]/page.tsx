@@ -11,9 +11,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, MapPin, Briefcase, Laptop, DollarSign, Linkedin, ExternalLink, FileText, Settings, CalendarDays, UserCircle2, WifiOff } from 'lucide-react';
+import { ArrowLeft, MapPin, Briefcase, Laptop, DollarSign, Linkedin, ExternalLink, FileText, Settings, CalendarDays, UserCircle2, WifiOff, Award, BadgeCheck, Link as LinkIcon } from 'lucide-react';
 import { BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, AVAILABILITY_OPTIONS, EXPERIENCE_LEVEL_OPTIONS, ROUTES } from '@/constants';
-import Image from 'next/image'; // Keep Image import for AvatarImage
+import Image from 'next/image'; 
 import { cn } from '@/lib/utils';
 
 const getInitials = (name: string | null | undefined): string => {
@@ -105,7 +105,7 @@ export default function ProfessionalProfileViewPage() {
     return (
       <div className="text-center py-10">
         <p className="text-muted-foreground text-lg">Profilo non disponibile.</p>
-         <Button onClick={() => router.push(ROUTES.PROFESSIONALS_MARKETPLACE)} className="mt-4">
+         <Button onClick={() => router.push(ROUTES.PROFESSIONALS_MARKETPLACE)} className="mt-6">
           <ArrowLeft className="mr-2 h-4 w-4" /> Torna al Marketplace
         </Button>
       </div>
@@ -115,6 +115,8 @@ export default function ProfessionalProfileViewPage() {
   const experienceLabel = getLabelForValue(EXPERIENCE_LEVEL_OPTIONS, professional.experienceLevel);
   const availabilityLabel = getLabelForValue(AVAILABILITY_OPTIONS, professional.availability);
   const isImmediata = availabilityLabel === AVAILABILITY_OPTIONS.find(opt => opt.value === 'immediata')?.label;
+
+  const hasCertifications = professional.alboRegistrationUrl || professional.uniCertificationUrl || professional.otherCertificationsUrl;
 
   return (
     <div className="container mx-auto px-2 py-8 md:px-4">
@@ -134,7 +136,6 @@ export default function ProfessionalProfileViewPage() {
                     <MapPin className="h-5 w-5 mr-2 flex-shrink-0 text-primary/80" /> {professional.location}
                     </div>
                 )}
-                 {/* Potresti aggiungere qui un tagline/ruolo breve se disponibile */}
             </div>
         </CardHeader>
 
@@ -170,6 +171,37 @@ export default function ProfessionalProfileViewPage() {
                 </CardContent>
               </Card>
             )}
+
+            {hasCertifications && (
+              <Card className="shadow-sm border bg-background">
+                <CardHeader><CardTitle className="text-xl flex items-center text-foreground/90"><Award className="mr-3 h-6 w-6 text-primary"/> Certificazioni</CardTitle></CardHeader>
+                <CardContent className="space-y-3">
+                  {professional.alboRegistrationUrl && (
+                    <Button variant="outline" asChild className="w-full justify-start group hover:border-primary/50 hover:bg-primary/5">
+                      <Link href={professional.alboRegistrationUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/90">
+                        <FileText className="mr-2 h-4 w-4 group-hover:text-primary transition-colors" /> Iscrizione Albo Professionale
+                      </Link>
+                    </Button>
+                  )}
+                  {professional.uniCertificationUrl && (
+                    <Button variant="outline" asChild className="w-full justify-start group hover:border-primary/50 hover:bg-primary/5">
+                      <Link href={professional.uniCertificationUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/90">
+                        <BadgeCheck className="mr-2 h-4 w-4 group-hover:text-primary transition-colors" /> Certificazione UNI
+                      </Link>
+                    </Button>
+                  )}
+                  {professional.otherCertificationsUrl && (
+                    <Button variant="outline" asChild className="w-full justify-start group hover:border-primary/50 hover:bg-primary/5">
+                      <Link href={professional.otherCertificationsUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/90">
+                        <LinkIcon className="mr-2 h-4 w-4 group-hover:text-primary transition-colors" /> Altre Certificazioni
+                      </Link>
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+
           </div>
 
           <div className="space-y-6">
@@ -255,4 +287,3 @@ export default function ProfessionalProfileViewPage() {
     </div>
   );
 }
-
