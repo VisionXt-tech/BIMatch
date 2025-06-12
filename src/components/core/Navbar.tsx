@@ -13,27 +13,27 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, User, LayoutDashboard, Briefcase, Building, Search, Menu } from 'lucide-react'; // Added Menu
+import { LogOut, User, LayoutDashboard, Briefcase, Building, Search, Menu } from 'lucide-react'; 
 import Logo from './Logo';
 import { ROUTES, ROLES, ProfessionalNavItems, CompanyNavItems } from '@/constants';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet'; // For mobile menu
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet'; 
 
 const DEFAULT_NAVBAR_PAGE_CONTENT_PADDING = '1rem'; 
-const DEFAULT_CONTAINER_MAX_WIDTH = 'none'; // Changed to none for full width navbar in dashboard
+const DEFAULT_CONTAINER_MAX_WIDTH = 'none'; 
 
 const initialNavStyle: React.CSSProperties = {
-  maxWidth: '1280px', // Default max-width for non-dashboard pages
+  maxWidth: '1280px', 
   marginInline: 'auto',
   paddingLeft: DEFAULT_NAVBAR_PAGE_CONTENT_PADDING,
   paddingRight: DEFAULT_NAVBAR_PAGE_CONTENT_PADDING,
 };
 
 const dashboardNavStyle: React.CSSProperties = {
-  maxWidth: DEFAULT_CONTAINER_MAX_WIDTH, // Full width
-  marginInline: 'auto', // Still auto to center if screen is wider than max-width (though max-width is none)
+  maxWidth: DEFAULT_CONTAINER_MAX_WIDTH, 
+  marginInline: 'auto', 
   paddingLeft: DEFAULT_NAVBAR_PAGE_CONTENT_PADDING,
   paddingRight: DEFAULT_NAVBAR_PAGE_CONTENT_PADDING,
 };
@@ -46,12 +46,16 @@ const Navbar = () => {
   const [mounted, setMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const isDashboardPage = mounted && pathname.startsWith(ROUTES.DASHBOARD);
-  const currentNavStyle = isDashboardPage ? dashboardNavStyle : initialNavStyle;
-  
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // For style, use pathname directly. This assumes pathname is correctly passed/available during SSR for client components.
+  const isDashboardPageForStyle = pathname.startsWith(ROUTES.DASHBOARD);
+  const currentNavStyle = isDashboardPageForStyle ? dashboardNavStyle : initialNavStyle;
+
+  // For conditional rendering of children, use mounted in conjunction with other conditions
+  const isDashboardPageForContent = mounted && pathname.startsWith(ROUTES.DASHBOARD);
 
 
   const getInitials = (name: string | null | undefined) => {
@@ -78,7 +82,6 @@ const Navbar = () => {
   const NavLinks = ({ mobile = false }: { mobile?: boolean }) => (
     <>
       {activeRoleNavItems.map((item) => {
-        // For company, "Cerca Professionisti" is already a main nav item. Don't duplicate.
         if (userProfile?.role === ROLES.COMPANY && item.href === ROUTES.PROFESSIONALS_MARKETPLACE) {
           return null;
         }
@@ -90,7 +93,7 @@ const Navbar = () => {
             className={cn(
               "justify-start text-sm",
               pathname === item.href ? "font-semibold text-primary bg-accent/50" : "text-muted-foreground hover:text-foreground",
-              mobile ? "w-full" : "px-2 lg:px-3 h-9" // Smaller padding for desktop nav links
+              mobile ? "w-full" : "px-2 lg:px-3 h-9" 
             )}
             onClick={() => mobile && setIsMobileMenuOpen(false)}
           >
@@ -114,125 +117,125 @@ const Navbar = () => {
         >
           <Logo />
           
-          <div className="ml-auto flex items-center space-x-1 md:space-x-2">
-            {mounted && userProfile?.role === ROLES.COMPANY && (
-                 <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex">
-                    <Link href={ROUTES.PROFESSIONALS_MARKETPLACE}>
-                        <Search className="mr-2 h-4 w-4" />Cerca Professionisti
-                    </Link>
-                </Button>
-            )}
-
-            {/* Dashboard Navigation Links - Desktop */}
-            {mounted && user && userProfile && isDashboardPage && (
-              <div className="hidden md:flex items-center space-x-1">
-                <NavLinks />
-              </div>
-            )}
-
-            {!mounted || (mounted && loading) ? (
-              <div className="h-10 w-28 md:w-32 bg-muted rounded-md animate-pulse"></div>
-            ) : mounted && user && userProfile ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={userProfile.photoURL || user.photoURL || undefined} alt={userProfile.displayName || user.displayName || 'User'} />
-                      <AvatarFallback>{getInitials(userProfile.displayName || user.displayName)}</AvatarFallback>
-                    </Avatar>
+          {mounted && (
+            <div className="ml-auto flex items-center space-x-1 md:space-x-2">
+              {userProfile?.role === ROLES.COMPANY && (
+                   <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex">
+                      <Link href={ROUTES.PROFESSIONALS_MARKETPLACE}>
+                          <Search className="mr-2 h-4 w-4" />Cerca Professionisti
+                      </Link>
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{userProfile.displayName || user.displayName}</p>
-                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => router.push(dashboardLink)} className="md:hidden">
-                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                    <span>Dashboard</span>
-                  </DropdownMenuItem>
-                  {activeRoleNavItems.filter(item => item.href !== dashboardLink).map(item => (
-                     <DropdownMenuItem key={`dropdown-${item.href}`} onClick={() => router.push(item.href)} className="md:hidden">
-                       <item.icon className="mr-2 h-4 w-4" />
-                       <span>{item.label}</span>
-                     </DropdownMenuItem>
-                  ))}
-                   {userProfile.role === ROLES.COMPANY && (
-                     <DropdownMenuItem onClick={() => router.push(ROUTES.PROFESSIONALS_MARKETPLACE)} className="md:hidden">
-                       <Search className="mr-2 h-4 w-4" />
-                       <span>Cerca Professionisti</span>
-                     </DropdownMenuItem>
-                   )}
-                  <DropdownMenuSeparator className="md:hidden"/>
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Logout</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : mounted ? ( 
-              <>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href={ROUTES.LOGIN}>Accedi</Link>
-                </Button>
+              )}
+
+              {user && userProfile && isDashboardPageForContent && (
+                <div className="hidden md:flex items-center space-x-1">
+                  <NavLinks />
+                </div>
+              )}
+
+              {loading ? (
+                <div className="h-10 w-28 md:w-32 bg-muted rounded-md animate-pulse"></div>
+              ) : user && userProfile ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button size="sm">Registrati</Button>
+                    <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={userProfile.photoURL || user.photoURL || undefined} alt={userProfile.displayName || user.displayName || 'User'} />
+                        <AvatarFallback>{getInitials(userProfile.displayName || user.displayName)}</AvatarFallback>
+                      </Avatar>
+                    </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => router.push(ROUTES.REGISTER_PROFESSIONAL)}>
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Come Professionista</span>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{userProfile.displayName || user.displayName}</p>
+                        <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => router.push(dashboardLink)} className="md:hidden">
+                      <LayoutDashboard className="mr-2 h-4 w-4" />
+                      <span>Dashboard</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push(ROUTES.REGISTER_COMPANY)}>
-                      <Briefcase className="mr-2 h-4 w-4" />
-                      <span>Come Azienda</span>
+                    {activeRoleNavItems.filter(item => item.href !== dashboardLink).map(item => (
+                       <DropdownMenuItem key={`dropdown-${item.href}`} onClick={() => router.push(item.href)} className="md:hidden">
+                         <item.icon className="mr-2 h-4 w-4" />
+                         <span>{item.label}</span>
+                       </DropdownMenuItem>
+                    ))}
+                     {userProfile.role === ROLES.COMPANY && (
+                       <DropdownMenuItem onClick={() => router.push(ROUTES.PROFESSIONALS_MARKETPLACE)} className="md:hidden">
+                         <Search className="mr-2 h-4 w-4" />
+                         <span>Cerca Professionisti</span>
+                       </DropdownMenuItem>
+                     )}
+                    <DropdownMenuSeparator className="md:hidden"/>
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Logout</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </>
-            ) : null }
-
-            {/* Mobile Menu Trigger for Dashboard Nav */}
-            {mounted && user && userProfile && isDashboardPage && (
-              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="md:hidden">
-                    <Menu className="h-5 w-5" />
-                    <span className="sr-only">Apri menu navigazione</span>
+              ) : ( 
+                <>
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link href={ROUTES.LOGIN}>Accedi</Link>
                   </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[260px] p-4">
-                  <div className="mb-4">
-                    <Logo />
-                  </div>
-                  <div className="flex flex-col space-y-1">
-                    <NavLinks mobile={true} />
-                     {userProfile.role === ROLES.COMPANY && (
-                        <Button
-                            variant="ghost"
-                            asChild
-                            className={cn(
-                            "justify-start text-sm",
-                            pathname === ROUTES.PROFESSIONALS_MARKETPLACE ? "font-semibold text-primary bg-accent/50" : "text-muted-foreground hover:text-foreground",
-                            "w-full"
-                            )}
-                            onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                            <Link href={ROUTES.PROFESSIONALS_MARKETPLACE}>
-                                <Search className="mr-2 h-4 w-4" />
-                                <span>Cerca Professionisti</span>
-                            </Link>
-                        </Button>
-                     )}
-                  </div>
-                </SheetContent>
-              </Sheet>
-            )}
-          </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="sm">Registrati</Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => router.push(ROUTES.REGISTER_PROFESSIONAL)}>
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Come Professionista</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => router.push(ROUTES.REGISTER_COMPANY)}>
+                        <Briefcase className="mr-2 h-4 w-4" />
+                        <span>Come Azienda</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
+              ) }
+
+              {user && userProfile && isDashboardPageForContent && (
+                <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon" className="md:hidden">
+                      <Menu className="h-5 w-5" />
+                      <span className="sr-only">Apri menu navigazione</span>
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-[260px] p-4">
+                    <div className="mb-4">
+                      <Logo />
+                    </div>
+                    <div className="flex flex-col space-y-1">
+                      <NavLinks mobile={true} />
+                       {userProfile.role === ROLES.COMPANY && (
+                          <Button
+                              variant="ghost"
+                              asChild
+                              className={cn(
+                              "justify-start text-sm",
+                              pathname === ROUTES.PROFESSIONALS_MARKETPLACE ? "font-semibold text-primary bg-accent/50" : "text-muted-foreground hover:text-foreground",
+                              "w-full"
+                              )}
+                              onClick={() => setIsMobileMenuOpen(false)}
+                          >
+                              <Link href={ROUTES.PROFESSIONALS_MARKETPLACE}>
+                                  <Search className="mr-2 h-4 w-4" />
+                                  <span>Cerca Professionisti</span>
+                              </Link>
+                          </Button>
+                       )}
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              )}
+            </div>
+          )}
         </nav>
       </div>
     </header>
@@ -240,5 +243,3 @@ const Navbar = () => {
 };
 
 export default Navbar;
-
-    
