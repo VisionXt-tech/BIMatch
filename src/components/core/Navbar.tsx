@@ -90,12 +90,12 @@ const Navbar = () => {
             className={cn(
               "justify-start text-sm",
               pathname === item.href ? "font-semibold text-primary bg-accent/50" : "text-muted-foreground hover:text-foreground",
-              mobile ? "w-full" : ""
+              mobile ? "w-full" : "px-2 lg:px-3 h-9" // Smaller padding for desktop nav links
             )}
             onClick={() => mobile && setIsMobileMenuOpen(false)}
           >
             <Link href={item.href}>
-              <item.icon className={cn("h-4 w-4", mobile ? "mr-2" : "md:mr-2")} />
+              <item.icon className={cn("h-4 w-4", mobile ? "mr-2" : "md:mr-1 lg:mr-2")} />
               <span className={cn(mobile ? "" : "hidden md:inline")}>{item.label}</span>
             </Link>
           </Button>
@@ -113,21 +113,21 @@ const Navbar = () => {
           style={currentNavStyle}
         >
           <Logo />
-
-          {/* Dashboard Navigation Links - Desktop */}
-          {mounted && user && userProfile && isDashboardPage && (
-            <div className="hidden md:flex items-center space-x-1 ml-4">
-              <NavLinks />
-            </div>
-          )}
           
-          <div className="ml-auto flex items-center space-x-2 md:space-x-3">
+          <div className="ml-auto flex items-center space-x-1 md:space-x-2">
             {mounted && userProfile?.role === ROLES.COMPANY && (
                  <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex">
                     <Link href={ROUTES.PROFESSIONALS_MARKETPLACE}>
                         <Search className="mr-2 h-4 w-4" />Cerca Professionisti
                     </Link>
                 </Button>
+            )}
+
+            {/* Dashboard Navigation Links - Desktop */}
+            {mounted && user && userProfile && isDashboardPage && (
+              <div className="hidden md:flex items-center space-x-1">
+                <NavLinks />
+              </div>
             )}
 
             {!mounted || (mounted && loading) ? (
@@ -150,7 +150,6 @@ const Navbar = () => {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {/* Mobile Nav Links will be in Sheet, these are for Desktop Dropdown */}
                   <DropdownMenuItem onClick={() => router.push(dashboardLink)} className="md:hidden">
                     <LayoutDashboard className="mr-2 h-4 w-4" />
                     <span>Dashboard</span>
@@ -241,3 +240,5 @@ const Navbar = () => {
 };
 
 export default Navbar;
+
+    
