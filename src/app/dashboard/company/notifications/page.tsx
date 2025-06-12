@@ -6,12 +6,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { collection, query, where, orderBy, getDocs, doc, updateDoc, Timestamp } from 'firebase/firestore';
 import type { UserNotification } from '@/types/notification';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
-import { BellRing, CheckCheck, Eye, Info, ListChecks, Users, WifiOff } from 'lucide-react';
+import { BellRing, CheckCheck, Eye, Info, ListChecks, Users, WifiOff, ArrowLeft, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -70,6 +70,7 @@ export default function CompanyNotificationsPage() {
   const [groupedNotifications, setGroupedNotifications] = useState<Map<string, UserNotification[]>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedProjectGroupKey, setSelectedProjectGroupKey] = useState<string | null>(null);
 
   const fetchNotifications = useCallback(async () => {
     if (authLoading || !user || !userProfile || userProfile.role !== 'company' || !db) {
@@ -103,10 +104,10 @@ export default function CompanyNotificationsPage() {
     } catch (e: any) {
       console.error("Error fetching company notifications:", e);
       let specificErrorMessage = "Si è verificato un errore imprevisto durante il caricamento delle notifiche. Controlla la console del browser per maggiori dettagli.";
-      if (e.code) {
-        // ... (error handling as before)
-      } else if (e.message) {
-        // ... (error handling as before)
+      if (e.message?.includes('indexes?create_composite=')) {
+          specificErrorMessage = `Indice Firestore mancante per le notifiche. Controlla la console Firebase per crearlo (notifications, userId ASC, createdAt DESC).`;
+      } else if (e.message?.includes('offline')) {
+          specificErrorMessage = "Connessione persa. Controlla la tua rete.";
       }
       setError(specificErrorMessage);
     } finally {
@@ -143,54 +144,97 @@ export default function CompanyNotificationsPage() {
   
   const handleMarkAllAsRead = async () => {
     if (!db || !user) return;
-    let unreadNotificationsExist = false;
-    for (const notificationsInGroup of groupedNotifications.values()) {
-        if (notificationsInGroup.some(n => !n.isRead)) {
-            unreadNotificationsExist = true;
-            break;
-        }
-    }
-    if (!unreadNotificationsExist) return;
+
+    const notificationsToUpdate = selectedProjectGroupKey
+      ? groupedNotifications.get(selectedProjectGroupKey)?.filter(n => !n.isRead) || []
+      : Array.from(groupedNotifications.values()).flat().filter(n => !n.isRead);
+
+    if (notificationsToUpdate.length === 0) return;
 
     try {
       const batch = await import('firebase/firestore').then(m => m.writeBatch(db));
-      groupedNotifications.forEach(notificationsInGroup => {
-          notificationsInGroup.forEach(n => {
-              if (!n.isRead) {
-                  const notificationRef = doc(db, 'notifications', n.id);
-                  batch.update(notificationRef, { isRead: true });
-              }
-          });
+      notificationsToUpdate.forEach(n => {
+        const notificationRef = doc(db, 'notifications', n.id);
+        batch.update(notificationRef, { isRead: true });
       });
       await batch.commit();
+
       setGroupedNotifications(prevMap => {
         const newMap = new Map(prevMap);
-        newMap.forEach((notificationsInGroup, groupKey) => {
-          newMap.set(groupKey, notificationsInGroup.map(n => ({ ...n, isRead: true })));
-        });
+        if (selectedProjectGroupKey) {
+          const group = newMap.get(selectedProjectGroupKey);
+          if (group) {
+            newMap.set(selectedProjectGroupKey, group.map(n => ({ ...n, isRead: true })));
+          }
+        } else {
+          newMap.forEach((notificationsInGroup, groupKey) => {
+            newMap.set(groupKey, notificationsInGroup.map(n => ({ ...n, isRead: true })));
+          });
+        }
         return newMap;
       });
     } catch (error) {
         console.error("Error marking all notifications as read:", error);
     }
   };
+  
+  const ProjectNotificationGroupCard = ({ groupKey, notificationsInGroup, onClick }: { groupKey: string, notificationsInGroup: UserNotification[], onClick: () => void }) => {
+    const unreadCount = notificationsInGroup.filter(n => !n.isRead).length;
+    const hasUnreadNewApplication = notificationsInGroup.some(n => !n.isRead && n.type === NOTIFICATION_TYPES.NEW_APPLICATION_RECEIVED);
 
-  const anyUnreadNotifications = Array.from(groupedNotifications.values()).some(group => group.some(n => !n.isRead));
+    return (
+        <Card 
+            className="shadow-md hover:shadow-lg transition-shadow duration-200 cursor-pointer h-full flex flex-col"
+            onClick={onClick}
+        >
+            <CardHeader className="pb-2 pt-3 px-3">
+                <CardTitle className="text-md font-semibold text-primary truncate">{groupKey}</CardTitle>
+            </CardHeader>
+            <CardContent className="flex-grow px-3 py-1">
+                <p className="text-xs text-muted-foreground">
+                    {notificationsInGroup.length} notifiche totali
+                </p>
+                {unreadCount > 0 && (
+                    <Badge variant={hasUnreadNewApplication ? "default" : "secondary"} className={cn("mt-1.5 text-xs", hasUnreadNewApplication && "bg-blue-500 text-white hover:bg-blue-600")}>
+                        {unreadCount} {unreadCount === 1 ? "non letta" : "non lette"}
+                        {hasUnreadNewApplication && " (Nuova Candidatura!)"}
+                    </Badge>
+                )}
+            </CardContent>
+            <CardFooter className="px-3 pt-2 pb-3 border-t">
+                <Button variant="link" size="sm" className="p-0 h-auto text-xs text-primary">
+                    Vedi Notifiche <ArrowLeft className="h-3 w-3 ml-1 transform rotate-180"/>
+                </Button>
+            </CardFooter>
+        </Card>
+    );
+  };
+
+  const anyUnreadNotifications = selectedProjectGroupKey
+    ? (groupedNotifications.get(selectedProjectGroupKey) || []).some(n => !n.isRead)
+    : Array.from(groupedNotifications.values()).flat().some(n => !n.isRead);
 
   if (loading || authLoading) {
+     const SkeletonCard = () => (
+        <Card className="mb-4">
+            <CardHeader><Skeleton className="h-6 w-3/4" /></CardHeader>
+            <CardContent className="space-y-2">
+                {[...Array(1)].map((_, j) => (
+                    <Card key={`skel-item-${j}`} className="p-3"><div className="flex items-start space-x-3"><Skeleton className="h-5 w-5 rounded-full" /><div className="flex-grow space-y-1"><Skeleton className="h-4 w-2/3" /><Skeleton className="h-3 w-full" /><Skeleton className="h-3 w-1/5" /></div><Skeleton className="h-3 w-8" /></div></Card>
+                ))}
+            </CardContent>
+        </Card>
+    );
     return (
       <div className="space-y-4">
         <div className="flex justify-between items-center"><Skeleton className="h-8 w-1/3" /><Skeleton className="h-9 w-32" /></div>
-        {[...Array(2)].map((_, i) => (
-             <Card key={`skel-group-co-${i}`} className="mb-4">
-                <CardHeader><Skeleton className="h-6 w-1/2" /></CardHeader>
-                <CardContent className="space-y-2">
-                    {[...Array(2)].map((_, j) => (
-                        <Card key={`skel-item-co-${i}-${j}`} className="p-4"><div className="flex items-start space-x-3"><Skeleton className="h-6 w-6 rounded-full" /><div className="flex-grow space-y-1.5"><Skeleton className="h-4 w-3/4" /><Skeleton className="h-3 w-full" /><Skeleton className="h-3 w-1/4" /></div><Skeleton className="h-3 w-10" /></div></Card>
-                    ))}
-                </CardContent>
-            </Card>
-        ))}
+        {!selectedProjectGroupKey ? (
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[...Array(3)].map((_, i) => <Card key={`skel-grid-co-${i}`} className="h-40"><CardContent className="flex flex-col justify-between h-full p-4"><Skeleton className="h-5 w-3/4"/><Skeleton className="h-4 w-1/2"/><Skeleton className="h-6 w-1/3 self-end"/></CardContent></Card>)}
+            </div>
+        ) : (
+            <SkeletonCard />
+        )}
       </div>
     );
   }
@@ -208,12 +252,22 @@ export default function CompanyNotificationsPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <CardTitle className="text-2xl font-bold">Notifiche Aziendali</CardTitle>
-        {anyUnreadNotifications && (
-             <Button variant="outline" size="sm" onClick={handleMarkAllAsRead} className="self-start sm:self-center">
-                <CheckCheck className="mr-2 h-4 w-4" /> Segna tutte come lette
-            </Button>
-        )}
+        <CardTitle className="text-2xl font-bold">
+             {selectedProjectGroupKey ? `Notifiche per: ${selectedProjectGroupKey}` : "Notifiche Aziendali"}
+        </CardTitle>
+         <div className="flex gap-2 items-center self-start sm:self-center">
+            {selectedProjectGroupKey && (
+                <Button variant="outline" size="sm" onClick={() => setSelectedProjectGroupKey(null)}>
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Torna alla Panoramica
+                </Button>
+            )}
+            {anyUnreadNotifications && (
+                <Button variant="outline" size="sm" onClick={handleMarkAllAsRead}>
+                    <CheckCheck className="mr-2 h-4 w-4" /> 
+                    {selectedProjectGroupKey ? "Segna tutte come lette (questo progetto)" : "Segna tutte come lette"}
+                </Button>
+            )}
+        </div>
       </div>
 
       {groupedNotifications.size === 0 ? (
@@ -224,15 +278,23 @@ export default function CompanyNotificationsPage() {
             <p className="text-sm text-muted-foreground">Non hai ancora ricevuto notifiche.</p>
           </CardContent>
         </Card>
+      ) : !selectedProjectGroupKey ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from(groupedNotifications.entries()).map(([groupKey, notificationsInGroup]) => (
+                 <ProjectNotificationGroupCard 
+                    key={groupKey}
+                    groupKey={groupKey}
+                    notificationsInGroup={notificationsInGroup}
+                    onClick={() => setSelectedProjectGroupKey(groupKey)}
+                />
+            ))}
+        </div>
       ) : (
-        Array.from(groupedNotifications.entries()).map(([projectTitle, notificationsInGroup]) => (
-            <Card key={projectTitle} className="shadow-md overflow-hidden">
-                <CardHeader className={cn("p-4 border-b", projectTitle === DEFAULT_GROUP_TITLE ? "bg-muted/50" : "bg-secondary/50")}>
-                    <CardTitle className="text-lg font-semibold text-foreground/90">{projectTitle}</CardTitle>
-                </CardHeader>
+         groupedNotifications.get(selectedProjectGroupKey)?.length > 0 ? (
+            <Card className="shadow-md overflow-hidden">
                 <CardContent className="p-0">
                     <div className="space-y-0">
-                    {notificationsInGroup.map((notification) => {
+                    {(groupedNotifications.get(selectedProjectGroupKey) || []).map((notification) => {
                         const { cardClassName, iconClassName } = getNotificationCardStyle(notification);
                         return (
                         <div key={notification.id} className={cn("border-b last:border-b-0", cardClassName)}>
@@ -280,9 +342,13 @@ export default function CompanyNotificationsPage() {
                     </div>
                 </CardContent>
             </Card>
-        ))
+         ) : (
+             <Card className="shadow-sm"><CardContent className="py-10 text-center"><Info className="mx-auto h-12 w-12 text-muted-foreground mb-4" /><p className="text-lg font-semibold">Nessuna notifica per questo progetto.</p></CardContent></Card>
+         )
       )}
     </div>
   );
 }
+    
+
     
