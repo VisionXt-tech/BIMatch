@@ -19,20 +19,22 @@ import { ROUTES, ROLES, ProfessionalNavItems, CompanyNavItems } from '@/constant
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const DEFAULT_NAVBAR_PAGE_CONTENT_PADDING = '1rem';
 const DEFAULT_CONTAINER_MAX_WIDTH = 'none';
 
+// Style for non-dashboard pages or initial server render
 const initialNavStyle: React.CSSProperties = {
-  maxWidth: '1280px',
+  maxWidth: '1280px', // Default max width
   marginInline: 'auto',
   paddingLeft: DEFAULT_NAVBAR_PAGE_CONTENT_PADDING,
   paddingRight: DEFAULT_NAVBAR_PAGE_CONTENT_PADDING,
 };
 
+// Style for dashboard pages, applied client-side
 const dashboardNavStyle: React.CSSProperties = {
-  maxWidth: DEFAULT_CONTAINER_MAX_WIDTH,
+  maxWidth: DEFAULT_CONTAINER_MAX_WIDTH, // Full width for dashboard
   marginInline: 'auto',
   paddingLeft: DEFAULT_NAVBAR_PAGE_CONTENT_PADDING,
   paddingRight: DEFAULT_NAVBAR_PAGE_CONTENT_PADDING,
@@ -47,6 +49,7 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // State for the navigation style, initialized to the default non-dashboard style.
+  // This ensures server and initial client render match.
   const [navStyleToApply, setNavStyleToApply] = useState<React.CSSProperties>(initialNavStyle);
 
   useEffect(() => {
@@ -56,17 +59,11 @@ const Navbar = () => {
   useEffect(() => {
     // This effect updates the nav style after the component has mounted,
     // based on the current client-side pathname.
-    // This ensures the style applied during SSR/initial client render is consistent (initialNavStyle),
-    // and any changes based on pathname happen client-side, avoiding hydration mismatch for the style.
     if (mounted) {
       const isDashboard = pathname.startsWith(ROUTES.DASHBOARD);
       setNavStyleToApply(isDashboard ? dashboardNavStyle : initialNavStyle);
     }
   }, [mounted, pathname]); // Re-run if mounted status changes or if pathname changes (client-side navigation)
-
-
-  // For conditional rendering of children, use mounted in conjunction with other conditions
-  const isDashboardPageForContent = mounted && pathname.startsWith(ROUTES.DASHBOARD);
 
 
   const getInitials = (name: string | null | undefined) => {
@@ -118,16 +115,23 @@ const Navbar = () => {
     </>
   );
 
+  // This determines if dashboard-specific content (like NavLinks) should be SHOWN
+  // It depends on 'mounted' to ensure it's only evaluated client-side after mount.
+  const isDashboardPageForContent = mounted && pathname.startsWith(ROUTES.DASHBOARD);
+
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card">
       <div className="w-full">
         <nav
           className="py-3 flex items-center"
-          style={navStyleToApply} // Use the stateful style here
+          style={navStyleToApply} // Use the stateful style here, which defaults to initialNavStyle
         >
           <Logo />
 
+          {/* This entire block for right-hand side nav items is conditional on 'mounted'
+              to prevent it from being rendered on the server or during initial client render pass,
+              thus avoiding structural hydration mismatches. */}
           {mounted && (
             <div className="ml-auto flex items-center space-x-1 md:space-x-2">
               {userProfile?.role === ROLES.COMPANY && (
