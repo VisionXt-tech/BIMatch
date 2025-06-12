@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
-import { BellRing, CheckCheck, Eye, ListChecks, WifiOff, Info, MailReply, CalendarCheck, X, CalendarPlus, Send, Loader2, MessageSquare, Calendar as CalendarIcon } from 'lucide-react';
+import { BellRing, CheckCheck, Eye, ListChecks, WifiOff, Info, CalendarCheck, X, Send, Loader2, MessageSquare, Calendar as CalendarIcon, FileText, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, formatDistanceToNowStrict, parse } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -27,15 +27,52 @@ import * as z from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { ROUTES, NOTIFICATION_TYPES } from '@/constants';
 
-const getIconForNotificationType = (type: string, isRead: boolean) => {
+const getIconForNotificationType = (type: string, iconClassName: string) => {
   switch (type) {
     case NOTIFICATION_TYPES.APPLICATION_STATUS_UPDATED:
     case NOTIFICATION_TYPES.INTERVIEW_PROPOSED:
-      return <ListChecks className={cn("h-5 w-5", isRead ? "text-muted-foreground" : "text-primary")} />;
+    case NOTIFICATION_TYPES.COLLABORATION_CONFIRMED:
+      return <ListChecks className={cn("h-5 w-5", iconClassName)} />;
+    case NOTIFICATION_TYPES.NEW_PROJECT_MATCH: // Esempio, se vuoi un'icona diversa
+        return <FileText className={cn("h-5 w-5", iconClassName)} />;
     default:
-      return <BellRing className={cn("h-5 w-5", isRead ? "text-muted-foreground" : "text-primary")} />;
+      return <BellRing className={cn("h-5 w-5", iconClassName)} />;
   }
 };
+
+const getNotificationCardStyle = (notification: UserNotification) => {
+  let cardClassName = "shadow-sm hover:shadow-md transition-shadow duration-200";
+  let iconClassName = "text-muted-foreground";
+
+  if (!notification.isRead) {
+    cardClassName = cn(cardClassName, "bg-primary/5 border-primary/30");
+    iconClassName = "text-primary";
+  } else {
+     iconClassName = "text-muted-foreground/80"; // Slightly dimmer for read icons
+  }
+
+  // Sovrascrivi per tipi specifici, anche se lette, per dare un indizio visivo
+  switch (notification.type) {
+    case NOTIFICATION_TYPES.INTERVIEW_PROPOSED:
+    case NOTIFICATION_TYPES.INTERVIEW_RESCHEDULED_BY_PRO: // Anche se l'azienda lo vede, il colore indica azione potenziale
+      cardClassName = cn(cardClassName, !notification.isRead ? "bg-yellow-500/10 border-yellow-500/30" : "bg-yellow-500/5 border-yellow-500/20");
+      iconClassName = !notification.isRead ? "text-yellow-700" : "text-yellow-600";
+      break;
+    case NOTIFICATION_TYPES.COLLABORATION_CONFIRMED:
+    case NOTIFICATION_TYPES.INTERVIEW_ACCEPTED_BY_PRO:
+      cardClassName = cn(cardClassName, !notification.isRead ? "bg-green-500/10 border-green-500/30" : "bg-green-500/5 border-green-500/20");
+      iconClassName = !notification.isRead ? "text-green-700" : "text-green-600";
+      break;
+    case NOTIFICATION_TYPES.APPLICATION_STATUS_UPDATED:
+      if (notification.message.toLowerCase().includes('rifiutat') || notification.title.toLowerCase().includes('rifiutat')) {
+        cardClassName = cn(cardClassName, !notification.isRead ? "bg-destructive/10 border-destructive/30" : "bg-destructive/5 border-destructive/20");
+        iconClassName = !notification.isRead ? "text-destructive" : "text-destructive/80";
+      }
+      break;
+  }
+  return { cardClassName, iconClassName };
+};
+
 
 const professionalResponseFormSchema = z.object({
   responseReason: z.string().min(10, { message: "La motivazione deve contenere almeno 10 caratteri." }).max(1000, "La motivazione non può superare i 1000 caratteri.").optional(),
@@ -43,12 +80,14 @@ const professionalResponseFormSchema = z.object({
 });
 type ProfessionalResponseFormData = z.infer<typeof professionalResponseFormSchema>;
 
+const DEFAULT_GROUP_TITLE = "Altre Notifiche";
+
 export default function ProfessionalNotificationsPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
   const { db } = useFirebase();
   const { toast } = useToast();
 
-  const [notifications, setNotifications] = useState<UserNotification[]>([]);
+  const [groupedNotifications, setGroupedNotifications] = useState<Map<string, UserNotification[]>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -75,6 +114,7 @@ export default function ProfessionalNotificationsPage() {
     setLoading(true);
     setError(null);
     const fetchedAppDetails: Record<string, ProjectApplication> = {};
+    const newGroupedNotifications = new Map<string, UserNotification[]>();
 
     try {
         const notificationsQuery = query(
@@ -93,10 +133,20 @@ export default function ProfessionalNotificationsPage() {
                 applicationIdsToFetch.push(notification.applicationId);
             }
         });
-        setNotifications(fetchedNotifications);
+        
+        // Group notifications
+        fetchedNotifications.forEach(notification => {
+            const groupKey = notification.projectTitle || DEFAULT_GROUP_TITLE;
+            if (!newGroupedNotifications.has(groupKey)) {
+                newGroupedNotifications.set(groupKey, []);
+            }
+            newGroupedNotifications.get(groupKey)!.push(notification);
+        });
+        setGroupedNotifications(newGroupedNotifications);
+
 
         if (applicationIdsToFetch.length > 0) {
-            const MAX_QUERIES = 30; // Firestore 'in' query limit
+            const MAX_QUERIES = 30; 
             for (let i = 0; i < applicationIdsToFetch.length; i += MAX_QUERIES) {
                 const chunk = applicationIdsToFetch.slice(i, i + MAX_QUERIES);
                 if (chunk.length > 0) {
@@ -136,9 +186,19 @@ export default function ProfessionalNotificationsPage() {
     const notificationRef = doc(db, 'notifications', notificationId);
     try {
       await updateDoc(notificationRef, { isRead: true });
-      setNotifications(prev =>
-        prev.map(n => (n.id === notificationId ? { ...n, isRead: true } : n))
-      );
+      setGroupedNotifications(prevMap => {
+        const newMap = new Map(prevMap);
+        for (const [groupKey, notificationsInGroup] of newMap.entries()) {
+          const updatedNotifications = notificationsInGroup.map(n =>
+            n.id === notificationId ? { ...n, isRead: true } : n
+          );
+          if (updatedNotifications.some(n => n.id === notificationId && n.isRead)) {
+            newMap.set(groupKey, updatedNotifications);
+            break; 
+          }
+        }
+        return newMap;
+      });
     } catch (error) {
       console.error("Error marking notification as read:", error);
     }
@@ -146,17 +206,35 @@ export default function ProfessionalNotificationsPage() {
   
   const handleMarkAllAsRead = async () => {
     if (!db || !user) return;
-    const unreadNotifications = notifications.filter(n => !n.isRead);
-    if (unreadNotifications.length === 0) return;
+    
+    let unreadNotificationsExist = false;
+    for (const notificationsInGroup of groupedNotifications.values()) {
+        if (notificationsInGroup.some(n => !n.isRead)) {
+            unreadNotificationsExist = true;
+            break;
+        }
+    }
+    if (!unreadNotificationsExist) return;
 
     try {
       const batch = await import('firebase/firestore').then(m => m.writeBatch(db));
-      unreadNotifications.forEach(n => {
-        const notificationRef = doc(db, 'notifications', n.id);
-        batch.update(notificationRef, { isRead: true });
+      groupedNotifications.forEach(notificationsInGroup => {
+          notificationsInGroup.forEach(n => {
+              if (!n.isRead) {
+                  const notificationRef = doc(db, 'notifications', n.id);
+                  batch.update(notificationRef, { isRead: true });
+              }
+          });
       });
       await batch.commit();
-      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+
+      setGroupedNotifications(prevMap => {
+        const newMap = new Map(prevMap);
+        newMap.forEach((notificationsInGroup, groupKey) => {
+          newMap.set(groupKey, notificationsInGroup.map(n => ({ ...n, isRead: true })));
+        });
+        return newMap;
+      });
     } catch (error) {
         console.error("Error marking all notifications as read:", error);
     }
@@ -190,8 +268,8 @@ export default function ProfessionalNotificationsPage() {
       updatePayload = { 
         status: newStatus, 
         updatedAt: serverTimestamp(),
-        professionalNewDateProposal: formData.newProposedDate ? Timestamp.fromDate(formData.newProposedDate) : null, // Può accettare con una nuova data
-        professionalResponseReason: formData.responseReason || undefined, // O con un messaggio
+        professionalNewDateProposal: formData.newProposedDate ? Timestamp.fromDate(formData.newProposedDate) : null,
+        professionalResponseReason: formData.responseReason || undefined,
       };
       companyNotificationType = NOTIFICATION_TYPES.INTERVIEW_ACCEPTED_BY_PRO;
       let acceptanceMessage = `Il professionista ${userProfile.displayName} ha ACCETTATO la tua proposta di colloquio per il progetto "${activeNotification.projectTitle}".`;
@@ -216,13 +294,13 @@ export default function ProfessionalNotificationsPage() {
       companyNotificationType = NOTIFICATION_TYPES.INTERVIEW_REJECTED_BY_PRO;
       companyNotificationMessage = `Il professionista ${userProfile.displayName} ha RIFIUTATO la tua proposta di colloquio per "${activeNotification.projectTitle}". Motivazione: "${formData.responseReason}".`;
       companyNotificationPayload = { professionalResponseReason: formData.responseReason };
-    } else if (activeActionType === 'reschedule') { // Ora 'reschedule' è implicito se 'accept' ha una nuova data
+    } else if (activeActionType === 'reschedule') { 
       if (!formData.newProposedDate) {
         professionalResponseForm.setError("newProposedDate", { type: "manual", message: "Devi proporre una nuova data." });
         setProcessingResponse(false);
         return;
       }
-      newStatus = 'colloquio_ripianificato_prof'; // Questo stato viene usato se si accetta con riprogrammazione
+      newStatus = 'colloquio_ripianificato_prof'; 
       const formattedNewDate = format(formData.newProposedDate, "PPP HH:mm", { locale: it });
       updatePayload = { 
         status: newStatus, 
@@ -230,7 +308,7 @@ export default function ProfessionalNotificationsPage() {
         professionalResponseReason: formData.responseReason || undefined, 
         updatedAt: serverTimestamp() 
       };
-      companyNotificationType = NOTIFICATION_TYPES.INTERVIEW_RESCHEDULED_BY_PRO; // O INTERVIEW_ACCEPTED_BY_PRO con dettagli
+      companyNotificationType = NOTIFICATION_TYPES.INTERVIEW_RESCHEDULED_BY_PRO; 
       companyNotificationMessage = `Il professionista ${userProfile.displayName} ha ACCETTATO la proposta di colloquio per "${activeNotification.projectTitle}" ma ha proposto una NUOVA DATA/ORA: ${formattedNewDate}.${formData.responseReason ? ` Messaggio: "${formData.responseReason}".` : ''}`;
       companyNotificationPayload = { professionalNewDateProposal: formattedNewDate, professionalResponseReason: formData.responseReason || undefined };
     } else {
@@ -272,16 +350,16 @@ export default function ProfessionalNotificationsPage() {
       professionalResponseForm.reset();
       if(activeNotification.id && !activeNotification.isRead) handleMarkAsRead(activeNotification.id);
       
-      // Aggiorna lo stato locale dell'applicazione per riflettere immediatamente il cambiamento
       setApplicationDetailsForNotifications(prev => ({
         ...prev,
         [activeNotification.applicationId!]: {
           ...(prev[activeNotification.applicationId!] || {}),
           status: newStatus,
-          ...updatePayload // includi altri campi aggiornati come professionalResponseReason
+          ...updatePayload 
         } as ProjectApplication
       }));
 
+      fetchNotificationsAndRelatedApplications(); // Refetch to update grouped notifications correctly
 
     } catch (error: any) {
       console.error("Error submitting professional response:", error);
@@ -308,11 +386,9 @@ export default function ProfessionalNotificationsPage() {
         try {
             originalProposalDate = parse(originalProposalDateStr, "PPP", new Date(), { locale: it });
             if (isNaN(originalProposalDate.getTime())) { 
-                console.warn("Failed to parse original proposal date string:", originalProposalDateStr);
                 originalProposalDate = null; 
             }
         } catch (e) {
-            console.error("Error parsing date for modal display:", e);
             originalProposalDate = null;
         }
     }
@@ -399,73 +475,25 @@ export default function ProfessionalNotificationsPage() {
         </>
       );
     }
-    if (responseActionType === 'reschedule') { // Questo caso ora è gestito da "accept" con data alternativa.
-      return (
-        <>
-          <DialogDescription className="mb-4 text-sm">
-            Stai proponendo una nuova data per il colloquio per <strong>&quot;{selectedNotificationForResponse.projectTitle}&quot;</strong>.
-            <br/>Proposta originale dall&apos;azienda: <em>&quot;{originalProposalMessage}&quot;</em> {originalProposalDate && ` per il ${format(originalProposalDate, "PPP", {locale:it})}`}.
-          </DialogDescription>
-          <FormField
-            control={professionalResponseForm.control}
-            name="newProposedDate"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Nuova Data e Ora Proposte</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
-                        {field.value ? format(field.value, "PPP HH:mm", { locale: it }) : <span>Scegli data e ora</span>}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))} initialFocus locale={it} />
-                    <div className="p-2 border-t">
-                        <input 
-                            type="time" 
-                            className="w-full p-1 border rounded text-sm"
-                            defaultValue={field.value ? format(field.value, "HH:mm") : "09:00"}
-                            onChange={(e) => {
-                                const [hours, minutes] = e.target.value.split(':').map(Number);
-                                const currentSelectedDate = field.value || new Date();
-                                currentSelectedDate.setHours(hours, minutes);
-                                field.onChange(new Date(currentSelectedDate)); 
-                            }}
-                        />
-                    </div>
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={professionalResponseForm.control}
-            name="responseReason"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Messaggio Aggiuntivo (Opzionale)</FormLabel>
-                <FormControl><Textarea placeholder="Es. Questa data funzionerebbe meglio per me..." rows={2} {...field} /></FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </>
-      );
-    }
+    // 'reschedule' is handled by 'accept' with a new date
     return null; 
   };
 
+  const anyUnreadNotifications = Array.from(groupedNotifications.values()).some(group => group.some(n => !n.isRead));
 
   if (loading || authLoading) {
     return (
       <div className="space-y-4">
         <div className="flex justify-between items-center"><Skeleton className="h-8 w-1/3" /><Skeleton className="h-9 w-32" /></div>
-        {[...Array(5)].map((_, i) => (
-          <Card key={i} className="p-4"><div className="flex items-start space-x-3"><Skeleton className="h-6 w-6 rounded-full" /><div className="flex-grow space-y-1.5"><Skeleton className="h-4 w-3/4" /><Skeleton className="h-3 w-full" /><Skeleton className="h-3 w-1/4" /></div><Skeleton className="h-3 w-10" /></div></Card>
+        {[...Array(3)].map((_, i) => (
+            <Card key={`skel-group-${i}`} className="mb-4">
+                <CardHeader><Skeleton className="h-6 w-1/2" /></CardHeader>
+                <CardContent className="space-y-2">
+                    {[...Array(2)].map((_, j) => (
+                        <Card key={`skel-item-${i}-${j}`} className="p-4"><div className="flex items-start space-x-3"><Skeleton className="h-6 w-6 rounded-full" /><div className="flex-grow space-y-1.5"><Skeleton className="h-4 w-3/4" /><Skeleton className="h-3 w-full" /><Skeleton className="h-3 w-1/4" /></div><Skeleton className="h-3 w-10" /></div></Card>
+                    ))}
+                </CardContent>
+            </Card>
         ))}
       </div>
     );
@@ -485,57 +513,64 @@ export default function ProfessionalNotificationsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <CardTitle className="text-2xl font-bold">Le Tue Notifiche</CardTitle>
-        {notifications.some(n => !n.isRead) && (
+        {anyUnreadNotifications && (
              <Button variant="outline" size="sm" onClick={handleMarkAllAsRead} className="self-start sm:self-center">
                 <CheckCheck className="mr-2 h-4 w-4" /> Segna tutte come lette
             </Button>
         )}
       </div>
 
-      {notifications.length === 0 ? (
+      {groupedNotifications.size === 0 ? (
         <Card className="shadow-sm"><CardContent className="py-10 text-center"><Info className="mx-auto h-12 w-12 text-muted-foreground mb-4" /><p className="text-lg font-semibold">Nessuna notifica.</p><p className="text-sm text-muted-foreground">Non hai ancora ricevuto notifiche.</p></CardContent></Card>
       ) : (
-        <div className="space-y-3">
-          {notifications.map((notification) => {
-            const associatedApplication = notification.applicationId ? applicationDetailsForNotifications[notification.applicationId] : null;
-            const showResponseButtons = notification.type === NOTIFICATION_TYPES.INTERVIEW_PROPOSED &&
-                                        notification.applicationId &&
-                                        associatedApplication?.status === 'colloquio_proposto';
-            return (
-            <Card key={notification.id} className={cn("shadow-sm hover:shadow-md transition-shadow", !notification.isRead && "bg-primary/5 border-primary/20")}>
-              <CardContent className="p-4">
-                <div className="flex items-start space-x-3">
-                  <div className="flex-shrink-0 mt-0.5">{getIconForNotificationType(notification.type, notification.isRead)}</div>
-                  <div className="flex-grow">
-                    <div className="flex justify-between items-start">
-                        <h4 className={cn("font-semibold text-sm mb-0.5", !notification.isRead && "text-primary")}>{notification.title || "Nuova Notifica"}</h4>
-                        <p className="text-xs text-muted-foreground whitespace-nowrap">{notification.createdAt && (notification.createdAt as Timestamp).toDate ? formatDistanceToNowStrict((notification.createdAt as Timestamp).toDate(), { addSuffix: true, locale: it }) : 'N/A'}</p>
-                    </div>
-                    <p className={cn("text-xs text-muted-foreground whitespace-pre-line", !notification.isRead && "text-foreground/80")}>{notification.message}</p>
-                    
-                    {showResponseButtons && (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        <Button size="sm" className="text-xs bg-green-600 hover:bg-green-700 h-7 px-2 py-1" onClick={() => handleOpenResponseModal(notification, 'accept')} disabled={processingResponse}><CalendarCheck className="mr-1.5 h-3.5 w-3.5"/> Accetta / Riproposta</Button>
-                        <Button size="sm" variant="destructive" className="text-xs h-7 px-2 py-1" onClick={() => handleOpenResponseModal(notification, 'reject')} disabled={processingResponse}><X className="mr-1.5 h-3.5 w-3.5"/> Rifiuta</Button>
-                        {/* Il pulsante "Proponi Altra Data" è ora integrato in "Accetta / Riproposta" */}
-                      </div>
-                    )}
+        Array.from(groupedNotifications.entries()).map(([projectTitle, notificationsInGroup]) => (
+            <Card key={projectTitle} className="shadow-md overflow-hidden">
+                <CardHeader className={cn("p-4 border-b", projectTitle === DEFAULT_GROUP_TITLE ? "bg-muted/50" : "bg-secondary/50")}>
+                    <CardTitle className="text-lg font-semibold text-foreground/90">{projectTitle}</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                    <div className="space-y-0">
+                    {notificationsInGroup.map((notification) => {
+                        const { cardClassName, iconClassName } = getNotificationCardStyle(notification);
+                        const associatedApplication = notification.applicationId ? applicationDetailsForNotifications[notification.applicationId] : null;
+                        const showResponseButtons = notification.type === NOTIFICATION_TYPES.INTERVIEW_PROPOSED &&
+                                                    notification.applicationId &&
+                                                    associatedApplication?.status === 'colloquio_proposto';
+                        return (
+                        <div key={notification.id} className={cn("border-b last:border-b-0", cardClassName)}>
+                            <div className="p-4 flex items-start space-x-3">
+                            <div className="flex-shrink-0 mt-0.5">{getIconForNotificationType(notification.type, iconClassName)}</div>
+                            <div className="flex-grow">
+                                <div className="flex justify-between items-start">
+                                    <h4 className={cn("font-semibold text-sm mb-0.5", !notification.isRead && "text-primary")}>{notification.title || "Nuova Notifica"}</h4>
+                                    <p className="text-xs text-muted-foreground whitespace-nowrap">{notification.createdAt && (notification.createdAt as Timestamp).toDate ? formatDistanceToNowStrict((notification.createdAt as Timestamp).toDate(), { addSuffix: true, locale: it }) : 'N/A'}</p>
+                                </div>
+                                <p className={cn("text-xs text-muted-foreground whitespace-pre-line", !notification.isRead && "text-foreground/80")}>{notification.message}</p>
+                                
+                                {showResponseButtons && (
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                    <Button size="sm" className="text-xs bg-green-600 hover:bg-green-700 h-7 px-2 py-1" onClick={() => handleOpenResponseModal(notification, 'accept')} disabled={processingResponse}><CalendarCheck className="mr-1.5 h-3.5 w-3.5"/> Accetta / Riproposta</Button>
+                                    <Button size="sm" variant="destructive" className="text-xs h-7 px-2 py-1" onClick={() => handleOpenResponseModal(notification, 'reject')} disabled={processingResponse}><X className="mr-1.5 h-3.5 w-3.5"/> Rifiuta</Button>
+                                </div>
+                                )}
 
-                    {notification.linkTo && !showResponseButtons && (
-                      <div className="mt-2">
-                        <Button variant="outline" size="sm" asChild onClick={() => !notification.isRead && handleMarkAsRead(notification.id)} className={cn("text-xs h-7 px-2 py-1", !notification.isRead && "border-primary/50 text-primary hover:bg-primary/10 hover:text-primary")}>
-                          <Link href={notification.linkTo}><Eye className="mr-1.5 h-3.5 w-3.5" /> Vedi Dettagli</Link>
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                  {!notification.isRead && (<Badge variant="default" className="h-2 w-2 p-0 rounded-full bg-primary" aria-label="Non letta"></Badge>)}
-                </div>
-              </CardContent>
+                                {notification.linkTo && !showResponseButtons && (
+                                <div className="mt-2">
+                                    <Button variant="outline" size="sm" asChild onClick={() => !notification.isRead && handleMarkAsRead(notification.id)} className={cn("text-xs h-7 px-2 py-1", !notification.isRead && "border-primary/50 text-primary hover:bg-primary/10 hover:text-primary")}>
+                                    <Link href={notification.linkTo}><Eye className="mr-1.5 h-3.5 w-3.5" /> Vedi Dettagli</Link>
+                                    </Button>
+                                </div>
+                                )}
+                            </div>
+                            {!notification.isRead && (<Badge variant="default" className="h-2 w-2 p-0 rounded-full bg-primary shrink-0" aria-label="Non letta"></Badge>)}
+                            </div>
+                        </div>
+                        );
+                    })}
+                    </div>
+                </CardContent>
             </Card>
-          );
-        })}
-        </div>
+        ))
       )}
 
       <Dialog open={isResponseModalOpen} onOpenChange={(isOpen) => {
@@ -577,4 +612,4 @@ export default function ProfessionalNotificationsPage() {
     </div>
   );
 }
-
+    

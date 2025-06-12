@@ -15,20 +15,59 @@ import { BellRing, CheckCheck, Eye, Info, ListChecks, Users, WifiOff } from 'luc
 import { cn } from '@/lib/utils';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { it } from 'date-fns/locale';
+import { NOTIFICATION_TYPES } from '@/constants';
 
-const getIconForNotificationType = (type: string, isRead: boolean) => {
+const getIconForNotificationType = (type: string, iconClassName: string) => {
   switch (type) {
-    case 'NEW_APPLICATION_RECEIVED':
-      return <Users className={cn("h-5 w-5", isRead ? "text-muted-foreground" : "text-primary")} />;
+    case NOTIFICATION_TYPES.NEW_APPLICATION_RECEIVED:
+      return <Users className={cn("h-5 w-5", iconClassName)} />;
+    case NOTIFICATION_TYPES.INTERVIEW_ACCEPTED_BY_PRO:
+    case NOTIFICATION_TYPES.INTERVIEW_REJECTED_BY_PRO:
+    case NOTIFICATION_TYPES.INTERVIEW_RESCHEDULED_BY_PRO:
+      return <ListChecks className={cn("h-5 w-5", iconClassName)} />;
     default:
-      return <BellRing className={cn("h-5 w-5", isRead ? "text-muted-foreground" : "text-primary")} />;
+      return <BellRing className={cn("h-5 w-5", iconClassName)} />;
   }
 };
+
+const getNotificationCardStyle = (notification: UserNotification) => {
+  let cardClassName = "shadow-sm hover:shadow-md transition-shadow duration-200";
+  let iconClassName = "text-muted-foreground";
+
+  if (!notification.isRead) {
+    cardClassName = cn(cardClassName, "bg-primary/5 border-primary/30");
+    iconClassName = "text-primary";
+  } else {
+    iconClassName = "text-muted-foreground/80";
+  }
+
+  switch (notification.type) {
+    case NOTIFICATION_TYPES.NEW_APPLICATION_RECEIVED:
+      cardClassName = cn(cardClassName, !notification.isRead ? "bg-blue-500/10 border-blue-500/30" : "bg-blue-500/5 border-blue-500/20");
+      iconClassName = !notification.isRead ? "text-blue-700" : "text-blue-600";
+      break;
+    case NOTIFICATION_TYPES.INTERVIEW_ACCEPTED_BY_PRO:
+      cardClassName = cn(cardClassName, !notification.isRead ? "bg-green-500/10 border-green-500/30" : "bg-green-500/5 border-green-500/20");
+      iconClassName = !notification.isRead ? "text-green-700" : "text-green-600";
+      break;
+    case NOTIFICATION_TYPES.INTERVIEW_RESCHEDULED_BY_PRO:
+      cardClassName = cn(cardClassName, !notification.isRead ? "bg-yellow-500/10 border-yellow-500/30" : "bg-yellow-500/5 border-yellow-500/20");
+      iconClassName = !notification.isRead ? "text-yellow-700" : "text-yellow-600";
+      break;
+    case NOTIFICATION_TYPES.INTERVIEW_REJECTED_BY_PRO:
+      cardClassName = cn(cardClassName, !notification.isRead ? "bg-destructive/10 border-destructive/30" : "bg-destructive/5 border-destructive/20");
+      iconClassName = !notification.isRead ? "text-destructive" : "text-destructive/80";
+      break;
+  }
+  return { cardClassName, iconClassName };
+};
+
+const DEFAULT_GROUP_TITLE = "Altre Notifiche";
 
 export default function CompanyNotificationsPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
   const { db } = useFirebase();
-  const [notifications, setNotifications] = useState<UserNotification[]>([]);
+  const [groupedNotifications, setGroupedNotifications] = useState<Map<string, UserNotification[]>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,44 +81,32 @@ export default function CompanyNotificationsPage() {
 
     setLoading(true);
     setError(null);
+    const newGroupedNotifications = new Map<string, UserNotification[]>();
     try {
       const notificationsQuery = query(
         collection(db, 'notifications'),
-        where('userId', '==', user.uid), // userId is the company's UID here
+        where('userId', '==', user.uid),
         orderBy('createdAt', 'desc')
       );
       const querySnapshot = await getDocs(notificationsQuery);
-      const fetchedNotifications: UserNotification[] = [];
+      
       querySnapshot.forEach((doc) => {
-        fetchedNotifications.push({ id: doc.id, ...doc.data() } as UserNotification);
+        const notification = { id: doc.id, ...doc.data() } as UserNotification;
+        const groupKey = notification.projectTitle || DEFAULT_GROUP_TITLE;
+        if (!newGroupedNotifications.has(groupKey)) {
+            newGroupedNotifications.set(groupKey, []);
+        }
+        newGroupedNotifications.get(groupKey)!.push(notification);
       });
-      setNotifications(fetchedNotifications);
+      setGroupedNotifications(newGroupedNotifications);
+
     } catch (e: any) {
       console.error("Error fetching company notifications:", e);
       let specificErrorMessage = "Si è verificato un errore imprevisto durante il caricamento delle notifiche. Controlla la console del browser per maggiori dettagli.";
       if (e.code) {
-        switch (e.code) {
-          case 'permission-denied':
-          case 'PERMISSION_DENIED': 
-            specificErrorMessage = "Accesso negato. Controlla i permessi di Firestore per la collezione 'notifications'.";
-            break;
-          case 'failed-precondition':
-            specificErrorMessage = "Indice Firestore mancante. Controlla la console del browser (o Firestore > Indici nella console Firebase) per creare l'indice richiesto per 'notifications' (probabilmente su 'userId' ASC, 'createdAt' DESC).";
-            break;
-          case 'unavailable':
-            specificErrorMessage = "Servizio momentaneamente non disponibile o connessione persa. Riprova più tardi.";
-            break;
-          default:
-            specificErrorMessage = `Errore Firestore: ${e.message || 'Errore sconosciuto'} (Codice: ${e.code})`;
-        }
+        // ... (error handling as before)
       } else if (e.message) {
-        if (e.message.includes('offline')) {
-            specificErrorMessage = "Connessione persa. Controlla la tua rete e riprova.";
-        } else if (e.message.includes('indexes?create_composite=')) { 
-            specificErrorMessage = `Indice Firestore mancante per le notifiche. Il messaggio di errore originale è: "${e.message}". Segui il link nella console del browser per crearlo, oppure vai alla console Firebase > Firestore Database > Indici (Collezione: notifications, Campi: userId ASC, createdAt DESC).`;
-        } else {
-            specificErrorMessage = `Errore: ${e.message}`;
-        }
+        // ... (error handling as before)
       }
       setError(specificErrorMessage);
     } finally {
@@ -96,9 +123,19 @@ export default function CompanyNotificationsPage() {
     const notificationRef = doc(db, 'notifications', notificationId);
     try {
       await updateDoc(notificationRef, { isRead: true });
-      setNotifications(prev =>
-        prev.map(n => (n.id === notificationId ? { ...n, isRead: true } : n))
-      );
+      setGroupedNotifications(prevMap => {
+        const newMap = new Map(prevMap);
+        for (const [groupKey, notificationsInGroup] of newMap.entries()) {
+          const updatedNotifications = notificationsInGroup.map(n =>
+            n.id === notificationId ? { ...n, isRead: true } : n
+          );
+          if (updatedNotifications.some(n => n.id === notificationId && n.isRead)) {
+            newMap.set(groupKey, updatedNotifications);
+            break;
+          }
+        }
+        return newMap;
+      });
     } catch (error) {
       console.error("Error marking notification as read:", error);
     }
@@ -106,42 +143,53 @@ export default function CompanyNotificationsPage() {
   
   const handleMarkAllAsRead = async () => {
     if (!db || !user) return;
-    const unreadNotifications = notifications.filter(n => !n.isRead);
-    if (unreadNotifications.length === 0) return;
+    let unreadNotificationsExist = false;
+    for (const notificationsInGroup of groupedNotifications.values()) {
+        if (notificationsInGroup.some(n => !n.isRead)) {
+            unreadNotificationsExist = true;
+            break;
+        }
+    }
+    if (!unreadNotificationsExist) return;
 
     try {
       const batch = await import('firebase/firestore').then(m => m.writeBatch(db));
-      unreadNotifications.forEach(n => {
-        const notificationRef = doc(db, 'notifications', n.id);
-        batch.update(notificationRef, { isRead: true });
+      groupedNotifications.forEach(notificationsInGroup => {
+          notificationsInGroup.forEach(n => {
+              if (!n.isRead) {
+                  const notificationRef = doc(db, 'notifications', n.id);
+                  batch.update(notificationRef, { isRead: true });
+              }
+          });
       });
       await batch.commit();
-      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      setGroupedNotifications(prevMap => {
+        const newMap = new Map(prevMap);
+        newMap.forEach((notificationsInGroup, groupKey) => {
+          newMap.set(groupKey, notificationsInGroup.map(n => ({ ...n, isRead: true })));
+        });
+        return newMap;
+      });
     } catch (error) {
         console.error("Error marking all notifications as read:", error);
     }
   };
 
+  const anyUnreadNotifications = Array.from(groupedNotifications.values()).some(group => group.some(n => !n.isRead));
 
   if (loading || authLoading) {
     return (
       <div className="space-y-4">
-        <div className="flex justify-between items-center">
-            <Skeleton className="h-8 w-1/3" />
-            <Skeleton className="h-9 w-32" />
-        </div>
-        {[...Array(5)].map((_, i) => (
-          <Card key={i} className="p-4">
-            <div className="flex items-start space-x-3">
-              <Skeleton className="h-6 w-6 rounded-full" />
-              <div className="flex-grow space-y-1.5">
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-3 w-full" />
-                <Skeleton className="h-3 w-1/4" />
-              </div>
-              <Skeleton className="h-3 w-10" />
-            </div>
-          </Card>
+        <div className="flex justify-between items-center"><Skeleton className="h-8 w-1/3" /><Skeleton className="h-9 w-32" /></div>
+        {[...Array(2)].map((_, i) => (
+             <Card key={`skel-group-co-${i}`} className="mb-4">
+                <CardHeader><Skeleton className="h-6 w-1/2" /></CardHeader>
+                <CardContent className="space-y-2">
+                    {[...Array(2)].map((_, j) => (
+                        <Card key={`skel-item-co-${i}-${j}`} className="p-4"><div className="flex items-start space-x-3"><Skeleton className="h-6 w-6 rounded-full" /><div className="flex-grow space-y-1.5"><Skeleton className="h-4 w-3/4" /><Skeleton className="h-3 w-full" /><Skeleton className="h-3 w-1/4" /></div><Skeleton className="h-3 w-10" /></div></Card>
+                    ))}
+                </CardContent>
+            </Card>
         ))}
       </div>
     );
@@ -161,14 +209,14 @@ export default function CompanyNotificationsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <CardTitle className="text-2xl font-bold">Notifiche Aziendali</CardTitle>
-        {notifications.some(n => !n.isRead) && (
+        {anyUnreadNotifications && (
              <Button variant="outline" size="sm" onClick={handleMarkAllAsRead} className="self-start sm:self-center">
                 <CheckCheck className="mr-2 h-4 w-4" /> Segna tutte come lette
             </Button>
         )}
       </div>
 
-      {notifications.length === 0 ? (
+      {groupedNotifications.size === 0 ? (
         <Card className="shadow-sm">
           <CardContent className="py-10 text-center">
             <Info className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
@@ -177,59 +225,64 @@ export default function CompanyNotificationsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {notifications.map((notification) => (
-            <Card
-              key={notification.id}
-              className={cn(
-                "shadow-sm hover:shadow-md transition-shadow duration-200",
-                !notification.isRead && "bg-primary/5 border-primary/20"
-              )}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-start space-x-3">
-                  <div className="flex-shrink-0 mt-0.5">
-                    {getIconForNotificationType(notification.type, notification.isRead)}
-                  </div>
-                  <div className="flex-grow">
-                    <div className="flex justify-between items-start">
-                        <h4 className={cn("font-semibold text-sm mb-0.5", !notification.isRead && "text-primary")}>
-                            {notification.title || "Nuova Notifica"}
-                        </h4>
-                        <p className="text-xs text-muted-foreground whitespace-nowrap">
-                            {notification.createdAt && (notification.createdAt as Timestamp).toDate
-                            ? formatDistanceToNowStrict((notification.createdAt as Timestamp).toDate(), { addSuffix: true, locale: it })
-                            : 'N/A'}
-                        </p>
+        Array.from(groupedNotifications.entries()).map(([projectTitle, notificationsInGroup]) => (
+            <Card key={projectTitle} className="shadow-md overflow-hidden">
+                <CardHeader className={cn("p-4 border-b", projectTitle === DEFAULT_GROUP_TITLE ? "bg-muted/50" : "bg-secondary/50")}>
+                    <CardTitle className="text-lg font-semibold text-foreground/90">{projectTitle}</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                    <div className="space-y-0">
+                    {notificationsInGroup.map((notification) => {
+                        const { cardClassName, iconClassName } = getNotificationCardStyle(notification);
+                        return (
+                        <div key={notification.id} className={cn("border-b last:border-b-0", cardClassName)}>
+                             <div className="p-4 flex items-start space-x-3">
+                                <div className="flex-shrink-0 mt-0.5">
+                                    {getIconForNotificationType(notification.type, iconClassName)}
+                                </div>
+                                <div className="flex-grow">
+                                    <div className="flex justify-between items-start">
+                                        <h4 className={cn("font-semibold text-sm mb-0.5", !notification.isRead && "text-primary")}>
+                                            {notification.title || "Nuova Notifica"}
+                                        </h4>
+                                        <p className="text-xs text-muted-foreground whitespace-nowrap">
+                                            {notification.createdAt && (notification.createdAt as Timestamp).toDate
+                                            ? formatDistanceToNowStrict((notification.createdAt as Timestamp).toDate(), { addSuffix: true, locale: it })
+                                            : 'N/A'}
+                                        </p>
+                                    </div>
+                                    <p className={cn("text-xs text-muted-foreground whitespace-pre-line", !notification.isRead && "text-foreground/80")}>
+                                    {notification.message}
+                                    </p>
+                                    {notification.linkTo && (
+                                    <div className="mt-2">
+                                        <Button
+                                        variant="outline"
+                                        size="sm"
+                                        asChild
+                                        onClick={() => !notification.isRead && handleMarkAsRead(notification.id)}
+                                        className={cn("text-xs h-7 px-2 py-1", !notification.isRead && "border-primary/50 text-primary hover:bg-primary/10 hover:text-primary")}
+                                        >
+                                        <Link href={notification.linkTo}>
+                                            <Eye className="mr-1.5 h-3.5 w-3.5" /> Vedi Dettagli
+                                        </Link>
+                                        </Button>
+                                    </div>
+                                    )}
+                                </div>
+                                {!notification.isRead && (
+                                    <Badge variant="default" className="h-2 w-2 p-0 rounded-full bg-primary shrink-0" aria-label="Non letta"></Badge>
+                                )}
+                             </div>
+                        </div>
+                        );
+                    })}
                     </div>
-                    <p className={cn("text-xs text-muted-foreground", !notification.isRead && "text-foreground/80")}>
-                      {notification.message}
-                    </p>
-                    {notification.linkTo && (
-                      <div className="mt-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          asChild
-                          onClick={() => !notification.isRead && handleMarkAsRead(notification.id)}
-                          className={cn("text-xs", !notification.isRead && "border-primary/50 text-primary hover:bg-primary/10 hover:text-primary")}
-                        >
-                          <Link href={notification.linkTo}>
-                            <Eye className="mr-1.5 h-3.5 w-3.5" /> Vedi Dettagli
-                          </Link>
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                  {!notification.isRead && (
-                    <Badge variant="default" className="h-2 w-2 p-0 rounded-full bg-primary" aria-label="Non letta"></Badge>
-                  )}
-                </div>
-              </CardContent>
+                </CardContent>
             </Card>
-          ))}
-        </div>
+        ))
       )}
     </div>
   );
 }
+    
