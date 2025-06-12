@@ -36,7 +36,7 @@ const applicationStatusOptions = [
     { value: APPLICATION_STATUS_REJECTED, label: "Solo Rifiutate" },
 ];
 
-const MAX_ITEMS_PREVIEW = 2; // Max skills/software to show before "+N more"
+const MAX_ITEMS_PREVIEW = 2; 
 
 export default function AvailableProjectsPage() {
   const { db } = useFirebase();
@@ -253,28 +253,13 @@ export default function AvailableProjectsPage() {
                   : undefined;
                 const hasApplied = !!applicationDetail;
                 const currentApplicationStatus = applicationDetail?.status;
-                const showStatusBadge = hasApplied || currentApplicationStatus === 'accettata' || currentApplicationStatus === 'rifiutata';
 
                 return (
                   <Card key={project.id} className={cn(
                     "shadow-md hover:shadow-lg transition-shadow duration-200 relative flex flex-col h-full",
                     currentApplicationStatus === 'accettata' && "border-2 border-teal-500 bg-teal-500/5"
                   )}>
-                    {currentApplicationStatus === 'accettata' ? (
-                        <Badge variant="default" className="absolute top-2 right-2 text-xs px-1.5 py-0.5 z-10 flex items-center gap-1 bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 text-primary-foreground hover:opacity-90">
-                            <Star className="h-3 w-3" /> Accettata
-                        </Badge>
-                    ) : currentApplicationStatus === 'rifiutata' ? (
-                        <Badge variant="outline" className="absolute top-2 right-2 text-xs px-1.5 py-0.5 z-10 flex items-center gap-1 border-orange-500 text-orange-600 bg-orange-50 hover:bg-orange-100">
-                            <XCircle className="h-3 w-3" /> Rifiutata
-                        </Badge>
-                    ) : hasApplied ? (
-                        <Badge variant="default" className="absolute top-2 right-2 text-xs px-1.5 py-0.5 z-10 flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white">
-                            <CheckCircle2 className="h-3 w-3" /> Candidato
-                        </Badge>
-                    ) : null}
-
-                    <CardHeader className={cn("p-3", showStatusBadge ? "pr-16 md:pr-20" : "")}>
+                    <CardHeader className="p-3">
                       <CardTitle className="text-base font-semibold hover:text-primary transition-colors line-clamp-2 leading-tight">
                           <Link href={ROUTES.PROJECT_DETAILS(project.id!)}>{project.title}</Link>
                       </CardTitle>
