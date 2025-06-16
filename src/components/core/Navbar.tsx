@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, User, LayoutDashboard, Briefcase, Building, Search, Menu } from 'lucide-react';
+import { LogOut, User, LayoutDashboard, Briefcase, Building, Search, Menu, HelpCircle } from 'lucide-react'; // Aggiunta HelpCircle
 import Logo from './Logo';
 import { ROUTES, ROLES, ProfessionalNavItems, CompanyNavItems } from '@/constants';
 import { usePathname, useRouter } from 'next/navigation';
@@ -45,12 +45,13 @@ const Navbar = () => {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
   const [navStyleToApply, setNavStyleToApply] = useState<React.CSSProperties>(initialNavStyle);
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
+  
   useEffect(() => {
     if (mounted) {
       const isDashboard = pathname.startsWith(ROUTES.DASHBOARD);
@@ -116,7 +117,7 @@ const Navbar = () => {
       <div className="w-full">
         <nav
           className="py-3 flex items-center"
-          style={navStyleToApply}
+          style={navStyleToApply} 
         >
           <Logo />
           
@@ -193,6 +194,14 @@ const Navbar = () => {
                 </>
               ) : (
                 <>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => alert('Contenuto "Come Funziona?" da implementare')} // Placeholder
+                    className="hidden md:inline-flex"
+                  >
+                    <HelpCircle className="mr-1 h-4 w-4"/> Come Funziona?
+                  </Button>
                   <Button variant="ghost" size="sm" asChild>
                     <Link href={ROUTES.LOGIN}>Accedi</Link>
                   </Button>

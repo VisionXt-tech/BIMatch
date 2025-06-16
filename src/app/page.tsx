@@ -1,10 +1,11 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ROUTES } from "@/constants";
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, HelpCircle } from 'lucide-react'; // Aggiunta HelpCircle per il nuovo pulsante
 
 const initialTalentWords = ["Talenti", "Professionisti", "Esperti", "Innovatori", "Specialisti", "Consulenti"];
 
@@ -59,7 +60,7 @@ export default function HomePage() {
           La piattaforma N°1 in Italia per professionisti BIM e aziende. Trova opportunità o i migliori talenti.
         </p>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-5 w-full">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-5 w-full mb-6">
           <Button
             asChild
             size="lg"
@@ -77,8 +78,8 @@ export default function HomePage() {
           <Button
             asChild
             size="lg"
-            variant="default" // Changed to default for primary solid style
-            className="text-base md:text-lg py-3 px-6 md:py-4 md:px-8 transform hover:scale-[1.03] transition-transform duration-300 shadow-md rounded-lg w-full sm:w-auto group" // Removed specific border/text color, hover:bg-primary/90 will be applied by variant="default"
+            variant="default"
+            className="text-base md:text-lg py-3 px-6 md:py-4 md:px-8 transform hover:scale-[1.03] transition-transform duration-300 shadow-md rounded-lg w-full sm:w-auto group"
           >
             <Link href={ROUTES.LOGIN}>
               Sei un'Azienda?
@@ -86,6 +87,16 @@ export default function HomePage() {
             </Link>
           </Button>
         </div>
+
+        <Button
+            size="lg"
+            variant="outline"
+            className="text-base md:text-lg py-3 px-6 md:py-4 md:px-8 transform hover:scale-[1.03] transition-transform duration-300 shadow-md rounded-lg w-full sm:w-auto group border-primary/70 hover:bg-primary/5 text-primary/90"
+            onClick={() => alert('Contenuto "Come Funziona?" da implementare')} // Placeholder action
+          >
+            <HelpCircle className="mr-2 h-5 w-5 text-primary/80 group-hover:text-primary transition-colors" /> Come Funziona BIMatch?
+        </Button>
+
          <p className="mt-10 text-sm md:text-base text-primary opacity-70">
           Entra in BIMatch: dove le competenze incontrano le opportunità.
         </p>
