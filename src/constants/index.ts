@@ -20,6 +20,7 @@ export const ROUTES = {
   PROFESSIONAL_PROFILE_VIEW: (id: string) => `/professionals/${id}`, 
   TERMS_OF_SERVICE: '/terms-of-service',
   PRIVACY_POLICY: '/privacy-policy',
+  HOW_IT_WORKS: '/how-it-works', // New route
 };
 
 export const ROLES = {

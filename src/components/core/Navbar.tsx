@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, User, LayoutDashboard, Briefcase, Building, Search, Menu, HelpCircle } from 'lucide-react'; // Aggiunta HelpCircle
+import { LogOut, User, LayoutDashboard, Briefcase, Building, Search, Menu, HelpCircle } from 'lucide-react';
 import Logo from './Logo';
 import { ROUTES, ROLES, ProfessionalNavItems, CompanyNavItems } from '@/constants';
 import { usePathname, useRouter } from 'next/navigation';
@@ -136,19 +136,22 @@ const Navbar = () => {
                   <NavLinks />
                 </div>
               )}
+              
+              {/* Pulsante "Vai alla Dashboard" visibile nella home e altre pagine se loggato */}
+              {user && userProfile && !isDashboardPageForContent && (
+                <Button variant="outline" size="sm" asChild className="hidden md:inline-flex">
+                  <Link href={dashboardLink}>
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    Vai alla Dashboard
+                  </Link>
+                </Button>
+              )}
+
 
               {loading ? (
                 <div className="h-10 w-28 md:w-32 bg-muted rounded-md animate-pulse"></div>
               ) : user && userProfile ? (
                 <>
-                  {!isDashboardPageForContent && (
-                    <Button variant="outline" size="sm" asChild className="hidden md:inline-flex">
-                      <Link href={dashboardLink}>
-                        <LayoutDashboard className="mr-2 h-4 w-4" />
-                        Vai alla Dashboard
-                      </Link>
-                    </Button>
-                  )}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="relative h-10 w-10 rounded-full">
@@ -166,6 +169,7 @@ const Navbar = () => {
                         </div>
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
+                      {/* Opzione per tornare alla dashboard se non si è già lì */}
                       {!isDashboardPageForContent && (
                          <DropdownMenuItem onClick={() => router.push(dashboardLink)}>
                            <LayoutDashboard className="mr-2 h-4 w-4" />
@@ -197,10 +201,12 @@ const Navbar = () => {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    onClick={() => alert('Contenuto "Come Funziona?" da implementare')} // Placeholder
+                    asChild
                     className="hidden md:inline-flex"
                   >
-                    <HelpCircle className="mr-1 h-4 w-4"/> Come Funziona?
+                    <Link href={ROUTES.HOW_IT_WORKS}>
+                      <HelpCircle className="mr-1 h-4 w-4"/> Come Funziona?
+                    </Link>
                   </Button>
                   <Button variant="ghost" size="sm" asChild>
                     <Link href={ROUTES.LOGIN}>Accedi</Link>
@@ -254,6 +260,21 @@ const Navbar = () => {
                               </Link>
                           </Button>
                        )}
+                        <Button
+                            variant="ghost"
+                            asChild
+                            className={cn(
+                            "justify-start text-sm",
+                            pathname === ROUTES.HOW_IT_WORKS ? "font-semibold text-primary bg-accent/50" : "text-muted-foreground hover:text-foreground",
+                            "w-full"
+                            )}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                            <Link href={ROUTES.HOW_IT_WORKS}>
+                                <HelpCircle className="mr-2 h-4 w-4" />
+                                <span>Come Funziona?</span>
+                            </Link>
+                        </Button>
                     </div>
                   </SheetContent>
                 </Sheet>

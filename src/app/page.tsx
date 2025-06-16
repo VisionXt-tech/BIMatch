@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ROUTES } from "@/constants";
-import { ArrowRight, HelpCircle } from 'lucide-react'; // Aggiunta HelpCircle per il nuovo pulsante
+import { ArrowRight, HelpCircle } from 'lucide-react';
 
 const initialTalentWords = ["Talenti", "Professionisti", "Esperti", "Innovatori", "Specialisti", "Consulenti"];
 
@@ -93,12 +93,14 @@ export default function HomePage() {
         </p>
 
         <Button
+            asChild
             size="default" 
             variant="outline"
             className="mt-8 transform hover:scale-[1.03] transition-transform duration-300 shadow-md rounded-lg w-full sm:w-auto group border-primary/70 hover:bg-primary/5 text-primary/90 hover:text-primary"
-            onClick={() => alert('Contenuto "Come Funziona?" da implementare')}
           >
-            <HelpCircle className="mr-2 h-4 w-4 text-primary/80 group-hover:text-primary transition-colors" /> Come Funziona BIMatch?
+            <Link href={ROUTES.HOW_IT_WORKS}>
+              <HelpCircle className="mr-2 h-4 w-4 text-primary/80 group-hover:text-primary transition-colors" /> Come Funziona BIMatch?
+            </Link>
         </Button>
       </div>
     </div>
