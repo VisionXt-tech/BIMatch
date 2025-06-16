@@ -118,7 +118,7 @@ export default function HowItWorksPage() {
               icon={FileText}
               title="2. Ricevi e Valuta Candidature"
               description="Accedi a profili dettagliati, messaggi di presentazione personalizzati e gestisci l'intero processo di selezione in modo efficiente."
-              imageSrc="https://placehold.co/600x400.png"
+              imageSrc="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxFdmFsdWF0ZXxlbnwwfHx8fDE3NTAwODkzMTh8MA&ixlib=rb-4.1.0&q=80&w=1080"
               imageHint="candidate review"
             />
             <StepCard
