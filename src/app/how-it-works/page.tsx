@@ -112,7 +112,7 @@ export default function HowItWorksPage() {
               title="1. Pubblica i Tuoi Progetti BIM"
               description="Descrivi le tue esigenze, le competenze richieste e i dettagli del contratto in pochi semplici passaggi. Raggiungi un pubblico mirato."
               imageSrc="https://placehold.co/600x400.png"
-              imageHint="project posting"
+              imageHint="Pubblication"
             />
             <StepCard
               icon={FileText}
@@ -201,4 +201,3 @@ export default function HowItWorksPage() {
   );
 }
 
-    
