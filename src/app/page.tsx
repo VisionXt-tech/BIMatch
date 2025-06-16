@@ -87,19 +87,19 @@ export default function HomePage() {
             </Link>
           </Button>
         </div>
+        
+         <p className="mt-10 text-sm md:text-base text-primary opacity-70">
+          Entra in BIMatch: dove le competenze incontrano le opportunità.
+        </p>
 
         <Button
             size="lg"
             variant="outline"
-            className="text-base md:text-lg py-3 px-6 md:py-4 md:px-8 transform hover:scale-[1.03] transition-transform duration-300 shadow-md rounded-lg w-full sm:w-auto group border-primary/70 hover:bg-primary/5 text-primary/90"
+            className="mt-8 text-base md:text-lg py-3 px-6 md:py-4 md:px-8 transform hover:scale-[1.03] transition-transform duration-300 shadow-md rounded-lg w-full sm:w-auto group border-primary/70 hover:bg-primary/5 text-primary/90"
             onClick={() => alert('Contenuto "Come Funziona?" da implementare')} // Placeholder action
           >
             <HelpCircle className="mr-2 h-5 w-5 text-primary/80 group-hover:text-primary transition-colors" /> Come Funziona BIMatch?
         </Button>
-
-         <p className="mt-10 text-sm md:text-base text-primary opacity-70">
-          Entra in BIMatch: dove le competenze incontrano le opportunità.
-        </p>
       </div>
     </div>
   );
