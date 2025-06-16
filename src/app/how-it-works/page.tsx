@@ -125,7 +125,7 @@ export default function HowItWorksPage() {
               icon={Building}
               title="3. Connettiti con i Migliori"
               description="Proponi colloqui, gestisci le offerte e trova i professionisti BIM ideali per portare innovazione e competenza nel tuo team."
-              imageSrc="https://placehold.co/600x400.png"
+              imageSrc="https://images.unsplash.com/photo-1655993810480-c15dccf9b3a0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxDb25uZWN0fGVufDB8fHx8MTc1MDA4OTM1MXww&ixlib=rb-4.1.0&q=80&w=1080"
               imageHint="team building"
             />
           </div>
