@@ -7,7 +7,7 @@ import { ROUTES } from "@/constants";
 import { ArrowRight, UserPlus, Search, Users, Briefcase, FileText, Building, Zap, Brain, MapPin, ChevronDown, Lightbulb } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { Badge } from "@/components/ui/badge"; // Added import for Badge
+import { Badge } from "@/components/ui/badge";
 
 const StepCard = ({ icon: Icon, title, description, imageSrc, imageHint }: { icon: React.ElementType, title: string, description: string, imageSrc: string, imageHint: string }) => (
   <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col h-full bg-card/80 backdrop-blur-sm border-border/50">
@@ -77,7 +77,7 @@ export default function HowItWorksPage() {
               icon={UserPlus}
               title="1. Registrati e Crea il Profilo"
               description="Mostra le tue competenze, esperienze e software. Un profilo dettagliato è il tuo biglietto da visita per attrarre le migliori offerte."
-              imageSrc="https://placehold.co/600x400.png"
+              imageSrc="https://images.unsplash.com/photo-1556155092-490a1ba16284?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxTaWdudXB8ZW58MHx8fHwxNzUwMDg4OTUyfDA&ixlib=rb-4.1.0&q=80&w=1080"
               imageHint="profile creation"
             />
             <StepCard
@@ -200,3 +200,5 @@ export default function HowItWorksPage() {
     </div>
   );
 }
+
+    
