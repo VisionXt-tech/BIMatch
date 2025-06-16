@@ -9,32 +9,30 @@ const getLabel = (options: { value: string; label: string }[], value?: string): 
   return options.find(opt => opt.value === value)?.label || value;
 };
 
-// Define a specific type for the props passed to generateMetadata
-type GenerateMetadataProps = {
-  params: { [key: string]: string }; // Standard, even if empty for this route
-  searchParams: { [key: string]: string | string[] | undefined }; // Standard
+// Define a specific type for the props passed to generateMetadata for this static route
+type ProfessionalsLayoutMetadataProps = {
+  params: Record<string, never>; // Explicitly state params is an empty object for this static route
+  searchParams: { [key: string]: string | string[] | undefined };
 };
 
 export async function generateMetadata(
-  { params, searchParams }: GenerateMetadataProps,
+  { searchParams }: ProfessionalsLayoutMetadataProps, // `params` is implicitly passed by Next.js but we don't use it here.
+                                                    // The type helps signal its expected structure.
   parent: ResolvingMetadata
 ): Promise<Metadata> {
   let title = "Marketplace Professionisti BIM | BIMatch";
   let description = "Trova professionisti BIM qualificati, manager BIM, e specialisti in Italia su BIMatch. Filtra per competenze, località, e livello di esperienza.";
 
-  // Directly access specific searchParam values.
-  // Ensure searchParams itself is treated as an object.
   const skillQuery = searchParams?.skill;
   const locationQuery = searchParams?.location;
   const experienceQuery = searchParams?.experience;
 
-  // Convert to string or undefined, ensuring only primitives are worked with.
   const skillFilterValue = typeof skillQuery === 'string' ? skillQuery : undefined;
   const locationFilterValue = typeof locationQuery === 'string' ? locationQuery : undefined;
   const experienceFilterValue = typeof experienceQuery === 'string' ? experienceQuery : undefined;
 
   const skillLabel = getLabel(BIM_SKILLS_OPTIONS, skillFilterValue);
-  const locationLabel = locationFilterValue; // ITALIAN_REGIONS are strings, can be used directly if they are labels
+  const locationLabel = locationFilterValue; 
   const experienceDisplayValue = getLabel(EXPERIENCE_LEVEL_OPTIONS, experienceFilterValue);
 
 
@@ -51,11 +49,7 @@ export async function generateMetadata(
     title = `Professionisti BIM con esperienza ${experienceDisplayValue} | BIMatch`;
     description = `Cerca professionisti BIM con livello di esperienza ${experienceDisplayValue} su BIMatch.`;
   }
-
-  // Avoid logging the raw searchParams object or complex objects derived from it.
-  // Example of safe logging:
-  // console.log(`Generating metadata - Skill: ${skillFilterValue}, Location: ${locationFilterValue}`);
-
+  
   return {
     title,
     description,
