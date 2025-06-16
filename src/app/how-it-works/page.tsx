@@ -7,6 +7,7 @@ import { ROUTES } from "@/constants";
 import { ArrowRight, UserPlus, Search, Users, Briefcase, FileText, Building, Zap, Brain, MapPin, ChevronDown, Lightbulb } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { Badge } from "@/components/ui/badge"; // Added import for Badge
 
 const StepCard = ({ icon: Icon, title, description, imageSrc, imageHint }: { icon: React.ElementType, title: string, description: string, imageSrc: string, imageHint: string }) => (
   <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col h-full bg-card/80 backdrop-blur-sm border-border/50">
