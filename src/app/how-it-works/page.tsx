@@ -148,13 +148,7 @@ export default function HowItWorksPage() {
       <section className="py-20 md:py-28 text-center bg-transparent relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 Sbg-grid-pattern"></div>
         <div className="container mx-auto px-4 relative z-10">
-          <Badge 
-            variant="outline" 
-            className="mb-4 py-2 px-5 text-base font-semibold bg-gradient-to-r from-teal-500 to-sky-500 text-primary-foreground border-none shadow-xl animate-fadeIn tracking-wide"
-            style={{ animationDelay: '0.1s' }}
-          >
-            Il Tuo Ecosistema BIM
-          </Badge>
+          
           <h1 
             className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-primary mb-6 animate-fadeIn"
             style={{ animationDelay: '0.2s' }}
