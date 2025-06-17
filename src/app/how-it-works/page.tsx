@@ -91,7 +91,7 @@ export default function HowItWorksPage() {
               icon={Users}
               title="3. Fatti Notare e Collabora"
               description="Ricevi proposte di colloquio, gestisci le comunicazioni e avvia nuove, stimolanti collaborazioni con aziende leader del settore."
-              imageSrc="https://placehold.co/600x400.png"
+              imageSrc="https://images.unsplash.com/photo-1496115965489-21be7e6e59a0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxjb2xsYWJvcmF0aW9ufGVufDB8fHx8MTc1MDE0OTc3N3ww&ixlib=rb-4.1.0&q=80&w=1080"
               imageHint="collaboration handshake"
             />
           </div>
