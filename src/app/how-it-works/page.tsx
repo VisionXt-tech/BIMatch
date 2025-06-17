@@ -4,30 +4,31 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ROUTES } from "@/constants";
-import { ArrowRight, UserPlus, Search, Users, Briefcase, FileText, Building, Zap, Brain, MapPin, ChevronDown, Lightbulb, CheckCircle, MessageSquare, Link as LinkIcon } from "lucide-react";
+import { ArrowRight, UserPlus, Search, Users, Briefcase, FileText, Building, Zap, Brain, MapPin, ChevronDown, Lightbulb, CheckCircle, MessageSquare, Link as LinkIcon, Sparkles as SparklesIcon, ChevronRight, FolderPlus, Send, ClipboardList, CalendarCheck } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import React from "react"; // Import React
 
 const StepCard = ({ icon: Icon, title, description, imageSrc, imageHint, index }: { icon: React.ElementType, title: string, description: string, imageSrc: string, imageHint: string, index: number }) => (
   <Card 
-    className="shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col h-full bg-card/80 backdrop-blur-sm border border-border/30 group transform hover:-translate-y-1 rounded-xl overflow-hidden animate-fadeIn"
+    className="shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col h-full bg-card/80 backdrop-blur-sm border-2 border-transparent hover:border-primary/30 group transform hover:-translate-y-1 hover:scale-[1.02] rounded-xl overflow-hidden animate-fadeIn"
     style={{ animationDelay: `${index * 0.15}s` }}
   >
     <div className="relative aspect-[16/9] overflow-hidden">
       <Image src={imageSrc} alt={title} layout="fill" objectFit="cover" className="group-hover:scale-105 transition-transform duration-500" data-ai-hint={imageHint}/>
-      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+       <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
+         <div className="flex items-center text-primary-foreground mb-1">
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-full mr-3 shadow-md">
+                <Icon className="h-5 w-5 text-white" />
+            </div>
+            <CardTitle className="text-lg font-semibold drop-shadow-md">{title}</CardTitle>
+         </div>
+       </div>
     </div>
-    <CardHeader className="pb-2 pt-4 px-5">
-      <div className="flex items-center text-primary mb-1">
-        <div className="bg-primary/10 p-2 rounded-full mr-3">
-            <Icon className="h-5 w-5 text-primary" />
-        </div>
-        <CardTitle className="text-lg font-semibold text-foreground/90">{title}</CardTitle>
-      </div>
-    </CardHeader>
-    <CardContent className="flex-grow px-5 pb-5">
+    <CardContent className="flex-grow px-5 pb-5 pt-4">
       <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
     </CardContent>
   </Card>
@@ -35,14 +36,14 @@ const StepCard = ({ icon: Icon, title, description, imageSrc, imageHint, index }
 
 const BenefitItem = ({ icon: Icon, title, description, index }: { icon: React.ElementType, title: string, description: string, index: number }) => (
   <div 
-    className="flex flex-col items-start p-6 bg-card rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-border/30 animate-fadeIn"
+    className="flex flex-col items-start p-5 md:p-6 bg-card rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1.5 border border-border/30 animate-fadeIn"
     style={{ animationDelay: `${index * 0.1}s` }}
   >
-    <div className="flex-shrink-0 mb-3 bg-primary/10 p-3 rounded-full">
-      <Icon className="h-7 w-7 text-primary" />
+    <div className="flex-shrink-0 mb-3.5 bg-primary/10 p-3.5 rounded-full">
+      <Icon className="h-8 w-8 text-primary" />
     </div>
     <div>
-      <h4 className="font-semibold text-lg text-foreground/90 mb-1">{title}</h4>
+      <h4 className="font-semibold text-lg text-foreground/90 mb-1.5">{title}</h4>
       <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
     </div>
   </div>
@@ -66,7 +67,7 @@ export default function HowItWorksPage() {
       imageHint: "project search"
     },
     {
-      icon: MessageSquare, // Changed from Users
+      icon: MessageSquare,
       title: "3. Interagisci e Collabora",
       description: "Ricevi proposte di colloquio, gestisci le comunicazioni e avvia nuove, stimolanti collaborazioni con aziende leader del settore.",
       imageSrc: "https://images.unsplash.com/photo-1496115965489-21be7e6e59a0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxjb2xsYWJvcmF0aW9ufGVufDB8fHx8MTc1MDE0OTc3N3ww&ixlib=rb-4.1.0&q=80&w=1080",
@@ -90,7 +91,7 @@ export default function HowItWorksPage() {
       imageHint: "candidate review"
     },
     {
-      icon: Users, // Changed from Building
+      icon: Users,
       title: "3. Connettiti con i Talenti",
       description: "Proponi colloqui, gestisci le offerte e trova i professionisti BIM ideali per portare innovazione e competenza nel tuo team.",
       imageSrc: "https://images.unsplash.com/photo-1655993810480-c15dccf9b3a0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxDb25uZWN0fGVufDB8fHx8MTc1MDA4OTM1MXww&ixlib=rb-4.1.0&q=80&w=1080",
@@ -131,6 +132,15 @@ export default function HowItWorksPage() {
     }
   ];
 
+  const flowSteps = [
+    { icon: UserPlus, title: "1. Registrazione", description: "Professionisti e aziende si iscrivono e creano i loro account personalizzati." },
+    { icon: FileText, title: "2. Profilo / Progetto", description: "I professionisti arricchiscono il profilo, le aziende pubblicano progetti chiari e dettagliati." },
+    { icon: Search, title: "3. Ricerca Mirata", description: "Si cercano attivamente opportunità o talenti utilizzando filtri specifici e parole chiave." },
+    { icon: Send, title: "4. Candidatura / Selezione", description: "I professionisti inviano candidature mirate, le aziende valutano i profili più idonei." },
+    { icon: MessageSquare, title: "5. Colloquio", description: "Si organizzano e svolgono colloqui per approfondire la conoscenza reciproca." },
+    { icon: SparklesIcon, title: "6. BIMatch!", description: "La collaborazione inizia: un nuovo successo per entrambe le parti!" }
+  ];
+
 
   return (
     <div className="bg-gradient-to-br from-background via-sky-50 to-teal-50 min-h-screen animate-fadeIn">
@@ -140,7 +150,7 @@ export default function HowItWorksPage() {
         <div className="container mx-auto px-4 relative z-10">
           <Badge 
             variant="outline" 
-            className="mb-4 py-1.5 px-4 text-sm font-medium bg-gradient-to-r from-teal-500 to-sky-500 text-primary-foreground border-none shadow-md animate-fadeIn"
+            className="mb-4 py-2 px-5 text-base font-semibold bg-gradient-to-r from-teal-500 to-sky-500 text-primary-foreground border-none shadow-xl animate-fadeIn tracking-wide"
             style={{ animationDelay: '0.1s' }}
           >
             Il Tuo Ecosistema BIM
@@ -149,7 +159,7 @@ export default function HowItWorksPage() {
             className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-primary mb-6 animate-fadeIn"
             style={{ animationDelay: '0.2s' }}
           >
-            BIMatch: <span className="bg-gradient-to-r from-teal-600 via-cyan-500 to-sky-600 bg-clip-text text-transparent">Semplice, Veloce, Efficace.</span>
+            BIMatch: <span className="bg-gradient-to-r from-teal-600 via-cyan-500 to-sky-600 bg-clip-text text-transparent animate-custom-pulse" style={{animationDuration: '3s'}}>Semplice, Veloce, Efficace.</span>
           </h1>
           <p 
             className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-10 animate-fadeIn"
@@ -164,7 +174,7 @@ export default function HowItWorksPage() {
             <Button 
               size="lg" 
               asChild 
-              className="group bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl transform hover:scale-105 transition-all duration-300 px-8 py-3 text-base rounded-lg"
+              className="group bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl transform hover:scale-105 transition-all duration-300 px-10 py-3.5 text-lg rounded-lg"
             >
               <Link href={ROUTES.REGISTER_PROFESSIONAL}>
                 Inizia Ora la Tua Avventura BIM <ArrowRight className="ml-2.5 h-5 w-5 group-hover:translate-x-1.5 transition-transform" />
@@ -180,18 +190,61 @@ export default function HowItWorksPage() {
         </div>
       </section>
 
+      {/* Diagramma di Flusso BIMatch */}
+      <section className="py-16 md:py-24 bg-muted/40">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12 md:mb-16">
+            <Badge variant="default" className="text-base py-2 px-6 mb-4 font-semibold bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 text-primary-foreground border-none shadow-lg tracking-wide animate-fadeIn" style={{animationDelay: '0.1s'}}>
+              Il Percorso per un BIMatch di Successo
+            </Badge>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight animate-fadeIn" style={{animationDelay: '0.2s'}}>Dalla Registrazione alla Collaborazione</h2>
+            <p className="text-md md:text-lg text-muted-foreground mt-4 max-w-2xl mx-auto animate-fadeIn" style={{animationDelay: '0.3s'}}>
+              Un viaggio intuitivo che connette professionisti e aziende, passo dopo passo, verso il successo condiviso nel mondo BIM.
+            </p>
+          </div>
+
+          <div className="flex flex-col md:flex-row md:flex-wrap justify-center items-start md:items-stretch gap-y-8 md:gap-x-4 lg:gap-x-0">
+            {flowSteps.map((step, index) => (
+              <React.Fragment key={step.title}>
+                <div 
+                    className="flex flex-col items-center text-center w-full md:w-1/2 lg:w-1/3 xl:w-auto lg:flex-1 px-2 animate-fadeIn" 
+                    style={{ animationDelay: `${0.1 * (index + 1)}s` }}
+                >
+                  <div className={cn("flex flex-col items-center p-5 bg-card rounded-xl shadow-lg h-full transition-all duration-300 hover:shadow-2xl hover:-translate-y-1", step.title.includes("BIMatch!") && "border-2 border-teal-500")}>
+                    <div className={cn("p-4 rounded-full mb-4", step.title.includes("BIMatch!") ? "bg-gradient-to-br from-teal-400 to-sky-500 shadow-xl" : "bg-primary/10")}>
+                      <step.icon className={cn("h-10 w-10", step.title.includes("BIMatch!") ? "text-white" : "text-primary")} />
+                    </div>
+                    <h4 className={cn("font-semibold text-lg mb-1.5", step.title.includes("BIMatch!") && "text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-sky-600")}>{step.title}</h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
+                  </div>
+                </div>
+
+                {index < flowSteps.length - 1 && (
+                  <div className="flex items-center justify-center h-full px-0 md:px-1 lg:px-2 w-full md:w-auto animate-fadeIn" style={{animationDelay: `${0.1 * (index + 1) + 0.05}s`}}>
+                    <ChevronRight className="h-9 w-9 text-primary/30 hidden lg:block rtl:rotate-180" />
+                    <ChevronDown className="h-9 w-9 text-primary/30 lg:hidden my-2 md:my-0" />
+                  </div>
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
+      </section>
+
+
       {/* For Professionals Section */}
       <section className="py-16 md:py-24 bg-background">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12 md:mb-16">
             <Badge 
                 variant="default" 
-                className="text-base py-2 px-6 mb-4 font-semibold bg-gradient-to-r from-teal-500 to-sky-500 text-primary-foreground border-none shadow-lg tracking-wide"
+                className="text-base py-2 px-6 mb-4 font-semibold bg-gradient-to-r from-teal-500 to-sky-500 text-primary-foreground border-none shadow-lg tracking-wide animate-fadeIn"
+                style={{ animationDelay: '0.1s' }}
             >
                 Per i Professionisti BIM
             </Badge>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight">Trova il Progetto Perfetto <br className="hidden sm:block"/> e Fai Brillare le Tue Competenze</h2>
-            <p className="text-md md:text-lg text-muted-foreground mt-4 max-w-2xl mx-auto">Dai slancio alla tua carriera connettendoti con opportunità su misura, valorizzando la tua expertise nel mondo del Building Information Modeling.</p>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight animate-fadeIn" style={{animationDelay: '0.2s'}}>Trova il Progetto Perfetto <br className="hidden sm:block"/> e Fai Brillare le Tue Competenze</h2>
+            <p className="text-md md:text-lg text-muted-foreground mt-4 max-w-2xl mx-auto animate-fadeIn" style={{animationDelay: '0.3s'}}>Dai slancio alla tua carriera connettendoti con opportunità su misura, valorizzando la tua expertise nel mondo del Building Information Modeling.</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {professionalSteps.map((step, index) => (
@@ -207,12 +260,13 @@ export default function HowItWorksPage() {
           <div className="text-center mb-12 md:mb-16">
              <Badge 
                 variant="default" 
-                className="text-base py-2 px-6 mb-4 font-semibold bg-gradient-to-r from-sky-500 to-indigo-500 text-primary-foreground border-none shadow-lg tracking-wide"
+                className="text-base py-2 px-6 mb-4 font-semibold bg-gradient-to-r from-sky-500 to-indigo-500 text-primary-foreground border-none shadow-lg tracking-wide animate-fadeIn"
+                style={{ animationDelay: '0.1s' }}
             >
                 Per Aziende e Studi Tecnici
             </Badge>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight">Trova i Talenti BIM Ideali <br className="hidden sm:block"/> per i Tuoi Progetti</h2>
-            <p className="text-md md:text-lg text-muted-foreground mt-4 max-w-2xl mx-auto">Accedi a un network di professionisti altamente qualificati, pronti a contribuire al successo e all'innovazione delle tue iniziative BIM.</p>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight animate-fadeIn" style={{animationDelay: '0.2s'}}>Trova i Talenti BIM Ideali <br className="hidden sm:block"/> per i Tuoi Progetti</h2>
+            <p className="text-md md:text-lg text-muted-foreground mt-4 max-w-2xl mx-auto animate-fadeIn" style={{animationDelay: '0.3s'}}>Accedi a un network di professionisti altamente qualificati, pronti a contribuire al successo e all'innovazione delle tue iniziative BIM.</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {companySteps.map((step, index) => (
@@ -228,12 +282,13 @@ export default function HowItWorksPage() {
           <div className="text-center mb-12 md:mb-16">
              <Badge 
                 variant="default" 
-                className="text-base py-2 px-6 mb-4 font-semibold bg-gradient-to-r from-indigo-500 to-purple-500 text-primary-foreground border-none shadow-lg tracking-wide"
+                className="text-base py-2 px-6 mb-4 font-semibold bg-gradient-to-r from-indigo-500 to-purple-500 text-primary-foreground border-none shadow-lg tracking-wide animate-fadeIn"
+                style={{ animationDelay: '0.1s' }}
             >
                 I Vantaggi Esclusivi di BIMatch
             </Badge>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight">Perché Scegliere la Nostra Piattaforma?</h2>
-            <p className="text-md md:text-lg text-muted-foreground mt-4 max-w-2xl mx-auto">BIMatch è progettato per offrirti un'esperienza mirata, efficiente e ricca di opportunità, trasformando il modo in cui professionisti e aziende si connettono nel settore BIM.</p>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight animate-fadeIn" style={{animationDelay: '0.2s'}}>Perché Scegliere la Nostra Piattaforma?</h2>
+            <p className="text-md md:text-lg text-muted-foreground mt-4 max-w-2xl mx-auto animate-fadeIn" style={{animationDelay: '0.3s'}}>BIMatch è progettato per offrirti un'esperienza mirata, efficiente e ricca di opportunità, trasformando il modo in cui professionisti e aziende si connettono nel settore BIM.</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {benefits.map((benefit, index) => (
@@ -266,7 +321,7 @@ export default function HowItWorksPage() {
             <Button 
                 asChild 
                 size="lg" 
-                className="bg-teal-600 hover:bg-teal-700 text-white shadow-xl transform hover:scale-105 transition-all duration-300 px-8 py-3 text-base rounded-lg group w-full sm:w-auto"
+                className="bg-teal-600 hover:bg-teal-700 text-white shadow-xl transform hover:scale-105 transition-all duration-300 px-8 py-3.5 text-lg rounded-lg group w-full sm:w-auto"
             >
               <Link href={ROUTES.REGISTER_PROFESSIONAL}>
                 <UserPlus className="mr-2.5 h-5 w-5" /> Sono un Professionista
@@ -276,7 +331,7 @@ export default function HowItWorksPage() {
                 asChild 
                 size="lg" 
                 variant="outline" 
-                className="border-primary text-primary hover:bg-primary/5 hover:text-primary shadow-xl transform hover:scale-105 transition-all duration-300 px-8 py-3 text-base rounded-lg group w-full sm:w-auto"
+                className="border-primary text-primary hover:bg-primary/5 hover:text-primary shadow-xl transform hover:scale-105 transition-all duration-300 px-8 py-3.5 text-lg rounded-lg group w-full sm:w-auto"
             >
               <Link href={ROUTES.REGISTER_COMPANY}>
                 <Building className="mr-2.5 h-5 w-5" /> Sono un'Azienda
@@ -284,27 +339,10 @@ export default function HowItWorksPage() {
             </Button>
           </div>
           <p className="mt-12 text-sm text-primary/70 animate-fadeIn" style={{ animationDelay: '0.4s' }}>
-            Dubbi? <Link href="#faq" className="font-semibold underline hover:text-primary">Consulta le FAQ</Link> o <Link href="#contact" className="font-semibold underline hover:text-primary">contattaci</Link>.
+            Dubbi? <Link href="/faq" className="font-semibold underline hover:text-primary">Consulta le FAQ</Link> o <Link href="/contact" className="font-semibold underline hover:text-primary">contattaci</Link>.
           </p>
         </div>
       </section>
     </div>
   );
 }
-
-// CSS in a <style jsx global> tag could be used for more complex animations if needed,
-// but for now, Tailwind's animate-fadeIn and animation-delay should provide a good start.
-// Example for a custom grid pattern (if desired, place in globals.css or use inline style):
-// .bg-grid-pattern { background-image: linear-gradient(to right, theme('colors.border / 0.2') 1px, transparent 1px), linear-gradient(to bottom, theme('colors.border / 0.2') 1px, transparent 1px); background-size: 20px 20px; }
-// For the above to work, ensure 'border' color is defined in your tailwind.config.js theme.
-// And `opacity-10` is a placeholder for a low opacity.
-// Or directly:
-// <div style={{ backgroundImage: 'linear-gradient(to right, rgba(var(--border-rgb), 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(var(--border-rgb), 0.05) 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
-// Assuming --border-rgb is defined (e.g., 210 20% 88% -> 204 208 217 without HSL). Tailwind handles HSL to RGB.
-// For simplicity with CDATA, I'll avoid adding new global CSS now.
-// I've added `animate-fadeIn` and `style={{ animationDelay: '...' }}` to various elements.
-// The className `animate-fadeIn` assumes you have this defined in your `tailwind.config.js` or `globals.css`.
-// If not, it might look like:
-// @keyframes fadeIn { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
-// .animate-fadeIn { animation: fadeIn 0.5s ease-out forwards; }
-// I'll assume `animate-fadeIn` from the existing `tailwind.config.ts` will work.
