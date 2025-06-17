@@ -333,7 +333,7 @@ export default function HowItWorksPage() {
             </Button>
           </div>
           <p className="mt-12 text-sm text-primary/70 animate-fadeIn" style={{ animationDelay: '0.4s' }}>
-            Dubbi? <Link href="/faq" className="font-semibold underline hover:text-primary">Consulta le FAQ</Link> o <Link href="/contact" className="font-semibold underline hover:text-primary">contattaci</Link>.
+            Dubbi? <Link href={ROUTES.FAQ} className="font-semibold underline hover:text-primary">Consulta le FAQ</Link> o <Link href="/contact" className="font-semibold underline hover:text-primary">contattaci</Link>.
           </p>
         </div>
       </section>

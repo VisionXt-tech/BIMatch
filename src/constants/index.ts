@@ -20,7 +20,8 @@ export const ROUTES = {
   PROFESSIONAL_PROFILE_VIEW: (id: string) => `/professionals/${id}`, 
   TERMS_OF_SERVICE: '/terms-of-service',
   PRIVACY_POLICY: '/privacy-policy',
-  HOW_IT_WORKS: '/how-it-works', // New route
+  HOW_IT_WORKS: '/how-it-works',
+  FAQ: '/faq', // New FAQ route
 };
 
 export const ROLES = {
@@ -130,7 +131,7 @@ export const NOTIFICATION_TYPES = {
 };
 
 // Moved from dashboard/layout.tsx
-import { LogOut, User, Briefcase, LayoutDashboard, FolderPlus, Building, Search, Users, Bell, type LucideIcon } from 'lucide-react';
+import { LogOut, User, Briefcase, LayoutDashboard, FolderPlus, Building, Search, Users, Bell, type LucideIcon, HelpCircle as FaqIcon } from 'lucide-react';
 
 interface NavItem {
   href: string;
@@ -153,4 +154,3 @@ export const CompanyNavItems: NavItem[] = [
   // { href: ROUTES.PROFESSIONALS_MARKETPLACE, label: 'Cerca Professionisti', icon: Users }, // Already in Navbar, maybe remove from here if dashboard specific
   { href: ROUTES.DASHBOARD_COMPANY_NOTIFICATIONS, label: 'Notifiche', icon: Bell },
 ];
-
