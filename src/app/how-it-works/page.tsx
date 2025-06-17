@@ -84,7 +84,7 @@ export default function HowItWorksPage() {
               icon={Search}
               title="2. Esplora Progetti e Candidati"
               description="Filtra le offerte per località, competenze e tipo di contratto. Invia la tua candidatura con un messaggio personalizzato e mirato."
-              imageSrc="https://placehold.co/600x400.png"
+              imageSrc="https://images.unsplash.com/photo-1524850011238-e3d235c7d4c9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxleHBsb3JlfGVufDB8fHx8MTc1MDE0OTYxNHww&ixlib=rb-4.1.0&q=80&w=1080"
               imageHint="project search"
             />
             <StepCard
