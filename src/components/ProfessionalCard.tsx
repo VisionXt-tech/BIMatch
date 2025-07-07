@@ -6,8 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ROUTES, BIM_SKILLS_OPTIONS, EXPERIENCE_LEVEL_OPTIONS, AVAILABILITY_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS } from '@/constants';
-import { MapPin, User, Clock, Construction, Code2 } from 'lucide-react';
+import { MapPin, User, Clock, Construction, Code2, Award, BadgeCheck, FileText } from 'lucide-react';
 import Image from 'next/image';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ProfessionalCardProps {
   professional: ProfessionalMarketplaceProfile;
@@ -25,6 +26,7 @@ const getInitials = (name: string | null | undefined) => {
 const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional }) => {
   const experienceLabel = EXPERIENCE_LEVEL_OPTIONS.find(opt => opt.value === professional.experienceLevel)?.label;
   const availabilityLabel = AVAILABILITY_OPTIONS.find(opt => opt.value === professional.availability)?.label;
+  const hasCertifications = professional.alboRegistrationUrl || professional.uniCertificationUrl || professional.otherCertificationsUrl;
 
   return (
     <Card className="flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300">
@@ -37,13 +39,55 @@ const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional }) => 
           <CardTitle className="text-xl font-semibold hover:text-primary transition-colors">
             <Link href={ROUTES.PROFESSIONAL_PROFILE_VIEW(professional.id)}>{professional.displayName}</Link>
           </CardTitle>
-          {professional.location && (
-            <CardDescription className="flex items-center text-sm text-muted-foreground mt-1">
-              <MapPin className="h-4 w-4 mr-1.5 flex-shrink-0" /> {professional.location}
-            </CardDescription>
-          )}
+          <div className="flex items-center justify-between">
+            {professional.location ? (
+                <CardDescription className="flex items-center text-sm text-muted-foreground mt-1">
+                <MapPin className="h-4 w-4 mr-1.5 flex-shrink-0" /> {professional.location}
+                </CardDescription>
+            ) : <div/>}
+             {hasCertifications && (
+                <div className="flex items-center space-x-1.5 mt-1">
+                    {professional.alboRegistrationUrl && (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                            <Badge variant="secondary" className="p-1 bg-blue-100/80 text-blue-800 border-blue-300/50 cursor-help">
+                                <Award className="h-3.5 w-3.5" />
+                            </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                            <p>Iscrizione Albo presente</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    )}
+                    {professional.uniCertificationUrl && (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                            <Badge variant="secondary" className="p-1 bg-green-100/80 text-green-800 border-green-300/50 cursor-help">
+                                <BadgeCheck className="h-3.5 w-3.5" />
+                            </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                            <p>Certificazione UNI presente</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    )}
+                    {professional.otherCertificationsUrl && (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                            <Badge variant="secondary" className="p-1 bg-gray-100 text-gray-800 border-gray-300/50 cursor-help">
+                                <FileText className="h-3.5 w-3.5" />
+                            </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                            <p>Altre certificazioni presenti</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    )}
+                </div>
+            )}
+          </div>
           {professional.tagline && (
-            <p className="text-xs text-muted-foreground mt-1 italic line-clamp-2">{professional.tagline}</p>
+            <p className="text-xs text-muted-foreground mt-1.5 italic line-clamp-2">{professional.tagline}</p>
           )}
         </div>
       </CardHeader>
@@ -81,10 +125,9 @@ const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional }) => 
             <h4 className="text-xs font-semibold text-muted-foreground mb-1.5 flex items-center"><Code2 className="h-3.5 w-3.5 mr-1.5 text-primary"/>Software Chiave:</h4>
             <div className="flex flex-wrap gap-1.5">
               {professional.keySoftware.map(swKey => {
-                // Try to find in SOFTWARE_PROFICIENCY_OPTIONS first, then BIM_SKILLS_OPTIONS as fallback
                 const softwareOption = SOFTWARE_PROFICIENCY_OPTIONS.find(s => s.value === swKey);
                 const skillOption = BIM_SKILLS_OPTIONS.find(s => s.value === swKey);
-                const softwareLabel = softwareOption?.label || skillOption?.label || swKey; // Fallback to swKey if not found
+                const softwareLabel = softwareOption?.label || skillOption?.label || swKey; 
 
                 return (
                   <Badge key={swKey} variant="outline" className="text-xs px-2 py-0.5">

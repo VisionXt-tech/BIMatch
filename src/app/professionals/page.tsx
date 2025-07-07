@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 
 const ALL_ITEMS_FILTER_VALUE = "__ALL_ITEMS__";
@@ -31,6 +32,9 @@ const mapFirestoreDocToMarketplaceProfile = (docData: FullProfessionalProfile): 
     availability: docData.availability || undefined,
     tagline: docData.bio ? (docData.bio.length > 150 ? docData.bio.substring(0, 147) + "..." : docData.bio) : undefined,
     keySoftware: docData.softwareProficiency ? docData.softwareProficiency.slice(0, 3) : [], // Take top 3 for card
+    alboRegistrationUrl: docData.alboRegistrationUrl,
+    uniCertificationUrl: docData.uniCertificationUrl,
+    otherCertificationsUrl: docData.otherCertificationsUrl,
   };
 };
 
@@ -218,11 +222,13 @@ export default function ProfessionalsMarketplacePage() {
               <p className="text-muted-foreground">Riprova più tardi o contatta il supporto se il problema persiste.</p>
             </div>
           ) : filteredProfessionals.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredProfessionals.map((prof) => (
-                <ProfessionalCard key={prof.id} professional={prof} />
-              ))}
-            </div>
+            <TooltipProvider delayDuration={200}>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredProfessionals.map((prof) => (
+                  <ProfessionalCard key={prof.id} professional={prof} />
+                ))}
+              </div>
+            </TooltipProvider>
           ) : (
             <div className="text-center py-16 border-2 border-dashed rounded-lg">
               <Users className="mx-auto h-16 w-16 text-muted-foreground mb-6" />
@@ -235,4 +241,3 @@ export default function ProfessionalsMarketplacePage() {
     </div>
   );
 }
-

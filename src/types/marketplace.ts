@@ -10,4 +10,7 @@ export interface ProfessionalMarketplaceProfile {
   // Add other fields that might be useful for a quick overview card
   // For example, a few key software proficiencies or certifications
   keySoftware?: string[]; // Few top software
+  alboRegistrationUrl?: string;
+  uniCertificationUrl?: string;
+  otherCertificationsUrl?: string;
 }
