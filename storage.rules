@@ -1,53 +1,42 @@
 
 rules_version = '2';
 
-// Service configuration for Cloud Storage
 service firebase.storage {
-  // The {bucket} wildcard specifies ALL buckets for your project
   match /b/{bucket}/o {
-
-    // --- Helper Functions ---
-    // Checks if the uploaded file is an image
-    function isImage(request) {
-      return request.resource.contentType.matches('image/.*');
+    
+    // Regola generale: nega la lettura e la scrittura a tutti per default
+    // per evitare accessi non autorizzati a percorsi non specificati.
+    match /{allPaths=**} {
+      allow read, write: if false;
     }
 
-    // Checks if the uploaded file is a PDF
-    function isPdf(request) {
-      return request.resource.contentType == 'application/pdf';
-    }
-
-    // --- Profile Images ---
-    // Allow authenticated users to write images to their own directory.
-    // Files are publicly readable by anyone with the URL.
-    match /profileImages/{userId}/{imageId} {
-      allow read;
+    // Logo Aziendali: Chiunque può leggerli (per visualizzarli pubblicamente).
+    // Solo l'utente autenticato (azienda) può scrivere (caricare/aggiornare)
+    // il proprio logo, e solo se il file è un'immagine e di dimensioni contenute.
+    match /companyLogos/{userId}/{fileName} {
+      allow read: if true;
       allow write: if request.auth != null && request.auth.uid == userId
-                    && isImage(request)
-                    && request.resource.size < 2 * 1024 * 1024; // Max 2MB
+                   && request.resource.size < 2 * 1024 * 1024 // Max 2MB
+                   && request.resource.contentType.matches('image/.*');
     }
 
-    // --- Company Logos ---
-    // Allow authenticated users to write images to their own directory.
-    match /companyLogos/{userId}/{logoId} {
-      allow read;
+    // Immagini Profilo Professionisti: Chiunque può leggerle.
+    // Solo l'utente autenticato (professionista) può scrivere la propria immagine.
+    match /profileImages/{userId}/{fileName} {
+      allow read: if true;
       allow write: if request.auth != null && request.auth.uid == userId
-                    && isImage(request)
-                    && request.resource.size < 2 * 1024 * 1024; // Max 2MB
+                   && request.resource.size < 2 * 1024 * 1024 // Max 2MB
+                   && request.resource.contentType.matches('image/.*');
     }
 
-    // --- Professional Certifications (PDFs) ---
-    // The {certType} can be 'albo', 'uni', 'other', etc.
-    match /professionalCertifications/{certType}/{userId}/{certId} {
-      allow read;
-      allow write: if request.auth != null && request.auth.uid == userId
-                    && isPdf(request)
-                    && request.resource.size < 5 * 1024 * 1024; // Max 5MB
+    // Certificazioni PDF dei Professionisti:
+    // Solo l'utente autenticato (professionista) può scrivere i propri PDF.
+    // Chiunque può leggerli, poiché i link sono condivisi nei profili pubblici.
+    match /professionalCertifications/{path=**}/{userId}/{fileName} {
+       allow read: if true;
+       allow write: if request.auth != null && request.auth.uid == userId
+                    && request.resource.size < 5 * 1024 * 1024 // Max 5MB
+                    && request.resource.contentType == 'application/pdf';
     }
-
-    // --- Default deny ---
-    // It's a good practice to explicitly deny access to other paths if not defined.
-    // However, Firebase Storage rules are deny-by-default, so this is implicit.
-    // Any path not matched by the rules above will be denied.
   }
 }
