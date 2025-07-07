@@ -1,0 +1,53 @@
+
+rules_version = '2';
+
+// Service configuration for Cloud Storage
+service firebase.storage {
+  // The {bucket} wildcard specifies ALL buckets for your project
+  match /b/{bucket}/o {
+
+    // --- Helper Functions ---
+    // Checks if the uploaded file is an image
+    function isImage(request) {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    // Checks if the uploaded file is a PDF
+    function isPdf(request) {
+      return request.resource.contentType == 'application/pdf';
+    }
+
+    // --- Profile Images ---
+    // Allow authenticated users to write images to their own directory.
+    // Files are publicly readable by anyone with the URL.
+    match /profileImages/{userId}/{imageId} {
+      allow read;
+      allow write: if request.auth != null && request.auth.uid == userId
+                    && isImage(request)
+                    && request.resource.size < 2 * 1024 * 1024; // Max 2MB
+    }
+
+    // --- Company Logos ---
+    // Allow authenticated users to write images to their own directory.
+    match /companyLogos/{userId}/{logoId} {
+      allow read;
+      allow write: if request.auth != null && request.auth.uid == userId
+                    && isImage(request)
+                    && request.resource.size < 2 * 1024 * 1024; // Max 2MB
+    }
+
+    // --- Professional Certifications (PDFs) ---
+    // The {certType} can be 'albo', 'uni', 'other', etc.
+    match /professionalCertifications/{certType}/{userId}/{certId} {
+      allow read;
+      allow write: if request.auth != null && request.auth.uid == userId
+                    && isPdf(request)
+                    && request.resource.size < 5 * 1024 * 1024; // Max 5MB
+    }
+
+    // --- Default deny ---
+    // It's a good practice to explicitly deny access to other paths if not defined.
+    // However, Firebase Storage rules are deny-by-default, so this is implicit.
+    // Any path not matched by the rules above will be denied.
+  }
+}
