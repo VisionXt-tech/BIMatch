@@ -312,12 +312,10 @@ export default function ProfessionalProfilePage() {
     urlState: string | null,
     progressState: number | null,
     inputRef: React.RefObject<HTMLInputElement>,
-    handleChange: (event: React.ChangeEvent<HTMLInputElement>) => void,
-    clearFileState: () => void,
-    existingUrlFromForm: string | undefined
+    handleChange: (event: React.ChangeEvent<HTMLInputElement>) => void
   ) => {
     const IconComponent = icon;
-    const currentUrl = fileState ? null : (urlState || existingUrlFromForm);
+    const currentUrl = fileState ? null : urlState;
     const isUploadingThisFile = progressState !== null && progressState < 100;
 
     return (
@@ -346,9 +344,9 @@ export default function ProfessionalProfilePage() {
           </div>
         )}
         {!isUploadingThisFile && progressState === 100 && fileState && (
-           <p className="text-xs text-green-600 mt-1">Nuovo file "{fileState.name}" pronto per il salvataggio.</p>
+           <p className="text-xs text-green-600 mt-1">Nuovo file "{fileState.name}" pronto. Clicca "Salva Profilo" per completare.</p>
         )}
-        <FormDescription className="text-xs mt-1">Max {MAX_PDF_SIZE_MB}MB (solo PDF).</FormDescription>
+        <FormDescription className="text-xs mt-1">Max {MAX_PDF_SIZE_MB}MB (solo PDF). Il file verrà caricato e salvato cliccando su "Salva Profilo".</FormDescription>
       </FormItem>
     );
   };
@@ -482,9 +480,7 @@ export default function ProfessionalProfilePage() {
                     alboPdfUrl,
                     alboUploadProgress,
                     alboInputRef,
-                    (e) => handleGenericFileChange(e, setAlboPdfFile, setAlboPdfUrl, setAlboUploadProgress, 'pdf', MAX_PDF_SIZE_MB),
-                    () => { setAlboPdfFile(null); setAlboPdfUrl(null); form.setValue('alboRegistrationUrl',''); if (alboInputRef.current) alboInputRef.current.value=""; },
-                    form.getValues('alboRegistrationUrl')
+                    (e) => handleGenericFileChange(e, setAlboPdfFile, setAlboPdfUrl, setAlboUploadProgress, 'pdf', MAX_PDF_SIZE_MB)
                   )}
                   {renderFileUploadSection(
                     "Certificazione UNI 11337 (o equivalenti)",
@@ -493,9 +489,7 @@ export default function ProfessionalProfilePage() {
                     uniPdfUrl,
                     uniUploadProgress,
                     uniInputRef,
-                    (e) => handleGenericFileChange(e, setUniPdfFile, setUniPdfUrl, setUniUploadProgress, 'pdf', MAX_PDF_SIZE_MB),
-                    () => { setUniPdfFile(null); setUniPdfUrl(null); form.setValue('uniCertificationUrl',''); if (uniInputRef.current) uniInputRef.current.value=""; },
-                    form.getValues('uniCertificationUrl')
+                    (e) => handleGenericFileChange(e, setUniPdfFile, setUniPdfUrl, setUniUploadProgress, 'pdf', MAX_PDF_SIZE_MB)
                   )}
                   {renderFileUploadSection(
                     "Altre Certificazioni Rilevanti (es. Software Professionale Autodesk)",
@@ -504,9 +498,7 @@ export default function ProfessionalProfilePage() {
                     otherCertPdfUrl,
                     otherCertUploadProgress,
                     otherCertInputRef,
-                    (e) => handleGenericFileChange(e, setOtherCertPdfFile, setOtherCertPdfUrl, setOtherCertUploadProgress, 'pdf', MAX_PDF_SIZE_MB),
-                    () => { setOtherCertPdfFile(null); setOtherCertPdfUrl(null); form.setValue('otherCertificationsUrl',''); if (otherCertInputRef.current) otherCertInputRef.current.value=""; },
-                    form.getValues('otherCertificationsUrl')
+                    (e) => handleGenericFileChange(e, setOtherCertPdfFile, setOtherCertPdfUrl, setOtherCertUploadProgress, 'pdf', MAX_PDF_SIZE_MB)
                   )}
                 </TabsContent>
 
