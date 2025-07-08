@@ -255,10 +255,14 @@ export default function ProfessionalProfilePage() {
 
     setIsDeletingFile(true);
     try {
-        await updateUserProfile(user.uid, {
+        const updatedProfile = await updateUserProfile(user.uid, {
             [`${certType}RegistrationUrl`]: null,
             [`${certType}SelfCertified`]: false,
         });
+
+        if (updatedProfile) {
+            form.reset(mapProfileToFormData(updatedProfile as ProfessionalProfile));
+        }
         
         const setFileState = certType === 'albo' ? setAlboPdfFile : certType === 'uni' ? setUniPdfFile : setOtherCertPdfFile;
         setFileState(null);
