@@ -81,7 +81,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       router.push(ROUTES.DASHBOARD); 
     } catch (error: any) {
       console.error("Login error:", error);
-      toast({ title: "Errore di Accesso", description: error.message || "Credenziali non valide.", variant: "destructive" });
+      let errorMessage: string;
+      switch (error.code) {
+        case 'auth/invalid-credential':
+        case 'auth/wrong-password': // Deprecated, but good to have for older SDK versions
+        case 'auth/user-not-found': // Deprecated
+          errorMessage = "Credenziali non corrette. Controlla email e password e riprova.";
+          break;
+        case 'auth/invalid-email':
+          errorMessage = "L'indirizzo email inserito non è valido.";
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = "Accesso temporaneamente disabilitato a causa di troppi tentativi falliti. Riprova più tardi.";
+          break;
+        case 'auth/network-request-failed':
+            errorMessage = "Errore di rete. Controlla la tua connessione internet e riprova.";
+            break;
+        default:
+          errorMessage = error.message || "Si è verificato un errore imprevisto durante l'accesso.";
+      }
+      toast({ title: "Errore di Accesso", description: errorMessage, variant: "destructive" });
       throw error;
     } finally {
       setIsLoggingIn(false);
@@ -236,4 +255,3 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
-
