@@ -24,6 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from 'next/link';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { deleteField } from 'firebase/firestore';
 
 
 const MAX_PDF_SIZE_MB = 5;
@@ -248,38 +249,44 @@ export default function ProfessionalProfilePage() {
   const handleConfirmDeleteCertification = async () => {
     const certType = deleteDialogState.certType;
     if (!certType || !user) {
-        toast({ title: "Errore", description: "Impossibile procedere, utente non trovato.", variant: "destructive" });
-        setDeleteDialogState({ isOpen: false, certType: null });
-        return;
+      toast({ title: "Errore", description: "Impossibile procedere, utente non trovato.", variant: "destructive" });
+      setDeleteDialogState({ isOpen: false, certType: null });
+      return;
     }
 
     setIsDeletingFile(true);
     try {
-        await updateUserProfile(user.uid, {
-            [`${certType}RegistrationUrl`]: null,
-            [`${certType}SelfCertified`]: false,
-        });
+      // Use deleteField() to properly remove the field from Firestore
+      const updatedProfile = await updateUserProfile(user.uid, {
+        [`${certType}RegistrationUrl`]: deleteField(),
+        [`${certType}SelfCertified`]: false,
+      });
 
-        // Imperatively update the form's state to reflect the change immediately
+      // Explicitly reset the form with the fresh profile data returned from the context update.
+      // This is the most reliable way to ensure the UI reflects the DB state.
+      if (updatedProfile) {
+        form.reset(mapProfileToFormData(updatedProfile as ProfessionalProfile));
+      } else {
+        // Fallback in case the updated profile isn't returned, update form fields manually
         form.setValue(`${certType}RegistrationUrl`, '');
         form.setValue(`${certType}SelfCertified`, false);
-        
-        // Also clear any locally staged file
-        const setFileState = certType === 'albo' ? setAlboPdfFile : certType === 'uni' ? setUniPdfFile : setOtherCertPdfFile;
-        setFileState(null);
-        
-        const fileInputRef = certType === 'albo' ? alboInputRef : certType === 'uni' ? uniInputRef : otherCertInputRef;
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-        }
-        
-        toast({ title: "Documento Eliminato", description: "Il documento è stato rimosso con successo dal tuo profilo." });
+      }
+      
+      const setFileState = certType === 'albo' ? setAlboPdfFile : certType === 'uni' ? setUniPdfFile : setOtherCertPdfFile;
+      setFileState(null);
+      
+      const fileInputRef = certType === 'albo' ? alboInputRef : certType === 'uni' ? uniInputRef : otherCertInputRef;
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      
+      toast({ title: "Documento Eliminato", description: "Il documento è stato rimosso con successo dal tuo profilo." });
 
     } catch (error: any) {
-        toast({ title: "Errore", description: `Impossibile eliminare il documento: ${error.message}`, variant: "destructive" });
+      toast({ title: "Errore", description: `Impossibile eliminare il documento: ${error.message}`, variant: "destructive" });
     } finally {
-        setIsDeletingFile(false);
-        setDeleteDialogState({ isOpen: false, certType: null });
+      setIsDeletingFile(false);
+      setDeleteDialogState({ isOpen: false, certType: null });
     }
   };
 
@@ -694,5 +701,3 @@ export default function ProfessionalProfilePage() {
     </>
   );
 }
-
-    
