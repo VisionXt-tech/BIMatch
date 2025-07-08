@@ -248,64 +248,56 @@ export default function ProfessionalProfilePage() {
 
   const handleConfirmDeleteCertification = async () => {
     const certType = deleteDialogState.certType;
-    if (!certType || !user || !userProfile || !storage) {
-        toast({ title: "Errore", description: "Impossibile procedere: servizio di storage non disponibile o utente non trovato.", variant: "destructive" });
-        setDeleteDialogState({ isOpen: false, certType: null });
-        return;
+    if (!certType || !user || !storage) {
+      toast({ title: "Errore", description: "Impossibile procedere: utente o servizio di storage non disponibile.", variant: "destructive" });
+      setDeleteDialogState({ isOpen: false, certType: null });
+      return;
     }
 
     setIsDeletingFile(true);
     try {
-        const urlToDelete = (userProfile as ProfessionalProfile)[`${certType}RegistrationUrl`];
+      const urlToDelete = form.getValues(`${certType}RegistrationUrl`);
 
-        // Step 1: Delete from Firebase Storage if a URL exists
-        if (urlToDelete) {
-            try {
-                const fileRef = storageRef(storage, urlToDelete);
-                await deleteObject(fileRef);
-            } catch (storageError: any) {
-                // It's okay if the file is not found (maybe deleted manually), we can still proceed
-                // to delete the reference from the database.
-                if (storageError.code !== 'storage/object-not-found') {
-                    throw storageError; // Re-throw other storage errors
-                }
-                console.warn(`File at ${urlToDelete} not found in Storage, but proceeding to delete DB reference.`);
-            }
-        }
-
-        // Step 2: Delete from Firestore database
-        const updatedProfile = await updateUserProfile(user.uid, {
-            [`${certType}RegistrationUrl`]: deleteField(),
-            [`${certType}SelfCertified`]: false,
+      // 1. Delete from Firebase Storage if a URL exists
+      if (urlToDelete) {
+        const fileRef = storageRef(storage, urlToDelete);
+        await deleteObject(fileRef).catch((error) => {
+          // It's okay if the file is not found (e.g. already deleted), but log other errors
+          if (error.code !== 'storage/object-not-found') {
+            console.error(`Failed to delete file from storage: ${urlToDelete}`, error);
+            // We proceed anyway to ensure DB link is removed.
+          }
         });
+      }
 
-        // Step 3: Update UI state instantly and reliably
-        if (updatedProfile) {
-            form.reset(mapProfileToFormData(updatedProfile as ProfessionalProfile));
-        } else {
-            // Fallback: manually update the form fields
-            form.setValue(`${certType}RegistrationUrl`, '');
-            form.setValue(`${certType}SelfCertified`, false);
-        }
+      // 2. Delete from Firestore database using deleteField()
+      await updateUserProfile(user.uid, {
+        [`${certType}RegistrationUrl`]: deleteField(),
+        [`${certType}SelfCertified`]: deleteField(),
+      });
 
-        const setFileState = certType === 'albo' ? setAlboPdfFile : certType === 'uni' ? setUniPdfFile : setOtherCertPdfFile;
-        setFileState(null);
+      // 3. Update UI state INSTANTLY and RELIABLY
+      form.setValue(`${certType}RegistrationUrl`, '');
+      form.setValue(`${certType}SelfCertified`, false);
 
-        const fileInputRef = certType === 'albo' ? alboInputRef : certType === 'uni' ? uniInputRef : otherCertInputRef;
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-        }
+      // Also clear any staged local file for upload
+      const setFileState = certType === 'albo' ? setAlboPdfFile : certType === 'uni' ? setUniPdfFile : setOtherCertPdfFile;
+      setFileState(null);
 
-        toast({ title: "Documento Eliminato", description: "Il documento e il riferimento sono stati rimossi con successo." });
+      const fileInputRef = certType === 'albo' ? alboInputRef : certType === 'uni' ? uniInputRef : otherCertInputRef;
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
 
+      toast({ title: "Documento Eliminato", description: "Il documento è stato rimosso con successo." });
     } catch (error: any) {
-        console.error("Error during certification deletion:", error);
-        toast({ title: "Errore Eliminazione", description: `Impossibile completare l'eliminazione: ${error.message}`, variant: "destructive" });
+      console.error("Error during certification deletion:", error);
+      toast({ title: "Errore Eliminazione", description: `Impossibile completare l'eliminazione: ${error.message}`, variant: "destructive" });
     } finally {
-        setIsDeletingFile(false);
-        setDeleteDialogState({ isOpen: false, certType: null });
+      setIsDeletingFile(false);
+      setDeleteDialogState({ isOpen: false, certType: null });
     }
-};
+  };
 
 
   const onSubmit = async (data: ProfessionalProfileFormData) => {
@@ -718,5 +710,3 @@ export default function ProfessionalProfilePage() {
     </>
   );
 }
-
-    
