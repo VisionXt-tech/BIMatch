@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Save, UserCircle2, Upload, FileText, Link as LinkIcon, BadgeCheck, Award, ShieldAlert, Trash2, Loader2, ShieldCheck } from 'lucide-react';
-import type { ProfessionalProfile } from '@/types/auth';
+import type { ProfessionalProfile as FullProfessionalProfile } from '@/types/auth';
 import { FormInput, FormTextarea, FormMultiSelect, FormSingleSelect } from '@/components/ProfileFormElements';
 import { BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, AVAILABILITY_OPTIONS, ITALIAN_REGIONS, EXPERIENCE_LEVEL_OPTIONS } from '@/constants';
 import { useEffect, useState, useRef } from 'react';
@@ -68,7 +68,7 @@ type ProfessionalProfileFormData = z.infer<typeof professionalProfileSchema>;
 type CertificationType = 'albo' | 'uni' | 'other';
 
 
-const mapProfileToFormData = (profile?: ProfessionalProfile | null): ProfessionalProfileFormData => {
+const mapProfileToFormData = (profile?: FullProfessionalProfile | null): ProfessionalProfileFormData => {
   const p = profile || {};
   return {
     firstName: p.firstName || '',
@@ -99,8 +99,6 @@ export default function ProfessionalProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
   const { db, storage } = useFirebase();
-
-  const [localProfile, setLocalProfile] = useState<ProfessionalProfile | null>(null);
 
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -134,17 +132,11 @@ export default function ProfessionalProfilePage() {
 
   useEffect(() => {
     if (userProfile && userProfile.role === 'professional') {
-        setLocalProfile(userProfile as ProfessionalProfile);
-    }
-  }, [userProfile]);
-
-  useEffect(() => {
-    if (localProfile) {
-      const defaultValuesForForm = mapProfileToFormData(localProfile);
+      const defaultValuesForForm = mapProfileToFormData(userProfile as FullProfessionalProfile);
       form.reset(defaultValuesForForm);
-      setImagePreview(localProfile.photoURL || null);
+      setImagePreview(userProfile.photoURL || null);
     }
-  }, [localProfile, form]);
+  }, [userProfile, form]);
   
   const handleCertificationCheckboxChange = (
     certType: CertificationType,
@@ -250,7 +242,7 @@ export default function ProfessionalProfilePage() {
 
   const handleConfirmDeleteCertification = async () => {
     const certType = deleteDialogState.certType;
-    if (!certType || !user || !storage || !db || !localProfile) {
+    if (!certType || !user || !userProfile || !storage || !db) {
         toast({ title: "Errore", description: "Impossibile procedere: dati mancanti.", variant: "destructive" });
         setDeleteDialogState({ isOpen: false, certType: null });
         return;
@@ -258,11 +250,10 @@ export default function ProfessionalProfilePage() {
 
     setIsDeletingFile(true);
     try {
-        const urlToDeleteKey = `${certType}RegistrationUrl` as keyof ProfessionalProfile;
-        const selfCertifiedKey = `${certType}SelfCertified` as keyof ProfessionalProfile;
-        const urlToDelete = localProfile[urlToDeleteKey] as string | undefined;
+        const urlToDeleteKey = `${certType}RegistrationUrl` as keyof FullProfessionalProfile;
+        const selfCertifiedKey = `${certType}SelfCertified` as keyof FullProfessionalProfile;
+        const urlToDelete = (userProfile as FullProfessionalProfile)[urlToDeleteKey] as string | undefined;
 
-        // 1. Delete the file from Firebase Storage.
         if (urlToDelete) {
             const fileRef = storageRef(storage, urlToDelete);
             try {
@@ -274,32 +265,20 @@ export default function ProfessionalProfilePage() {
                 console.warn(`File non trovato nello storage (già eliminato?): ${urlToDelete}`);
             }
         }
+        
+        const updatePayload = {
+          [urlToDeleteKey]: deleteField(),
+          [selfCertifiedKey]: deleteField(),
+        };
 
-        // 2. Update the Firestore document using deleteField().
-        const userDocRef = doc(db, 'users', user.uid);
-        await updateDoc(userDocRef, {
-            [urlToDeleteKey]: deleteField(),
-            [selfCertifiedKey]: deleteField(),
-        });
+        await updateUserProfile(user.uid, updatePayload);
 
-        // 3. Update the local state immediately to trigger the UI refresh.
-        // This is the most crucial part for an instant UI update.
-        setLocalProfile(prevProfile => {
-            if (!prevProfile) return null;
-            const newProfile = { ...prevProfile };
-            delete (newProfile as any)[urlToDeleteKey];
-            delete (newProfile as any)[selfCertifiedKey];
-            return newProfile;
-        });
-
-        // Reset the corresponding file input state.
         const fileInputRef = certType === 'albo' ? alboInputRef : certType === 'uni' ? uniInputRef : otherCertInputRef;
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-        }
-        if(certType === 'albo') setAlboPdfFile(null);
-        if(certType === 'uni') setUniPdfFile(null);
-        if(certType === 'other') setOtherCertPdfFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        
+        if (certType === 'albo') setAlboPdfFile(null);
+        if (certType === 'uni') setUniPdfFile(null);
+        if (certType === 'other') setOtherCertPdfFile(null);
         
         toast({ title: "Documento Eliminato", description: "Il documento è stato rimosso con successo." });
 
@@ -314,15 +293,15 @@ export default function ProfessionalProfilePage() {
 
 
   const onSubmit = async (data: ProfessionalProfileFormData) => {
-    if (!user || !localProfile) {
+    if (!user || !userProfile) {
       toast({ title: "Errore", description: "Utente non autenticato.", variant: "destructive" });
       return;
     }
 
-    let photoURLToUpdate = localProfile.photoURL || '';
-    let alboUrlToUpdate = data.alboSelfCertified ? '' : (form.getValues('alboRegistrationUrl') || localProfile.alboRegistrationUrl || '');
-    let uniUrlToUpdate = data.uniSelfCertified ? '' : (form.getValues('uniCertificationUrl') || localProfile.uniCertificationUrl || '');
-    let otherCertUrlToUpdate = data.otherCertificationsSelfCertified ? '' : (form.getValues('otherCertificationsUrl') || localProfile.otherCertificationsUrl || '');
+    let photoURLToUpdate = (userProfile as FullProfessionalProfile).photoURL || '';
+    let alboUrlToUpdate = data.alboSelfCertified ? '' : (form.getValues('alboRegistrationUrl') || (userProfile as FullProfessionalProfile).alboRegistrationUrl || '');
+    let uniUrlToUpdate = data.uniSelfCertified ? '' : (form.getValues('uniCertificationUrl') || (userProfile as FullProfessionalProfile).uniCertificationUrl || '');
+    let otherCertUrlToUpdate = data.otherCertificationsSelfCertified ? '' : (form.getValues('otherCertificationsUrl') || (userProfile as FullProfessionalProfile).otherCertificationsUrl || '');
 
 
     setIsUploadingAnyFile(true);
@@ -345,11 +324,11 @@ export default function ProfessionalProfilePage() {
         otherCertUrlToUpdate = await uploadFileAndGetURL(otherCertPdfFile, 'professionalCertifications/other', setOtherCertUploadProgress);
       }
 
-      const updatedDisplayName = `${data.firstName || localProfile.firstName || ''} ${data.lastName || localProfile.lastName || ''}`.trim();
+      const updatedDisplayName = `${data.firstName || (userProfile as FullProfessionalProfile).firstName || ''} ${data.lastName || (userProfile as FullProfessionalProfile).lastName || ''}`.trim();
       
-      const dataToUpdate : Partial<ProfessionalProfile> = {
+      const dataToUpdate : Partial<FullProfessionalProfile> = {
         ...data,
-        displayName: updatedDisplayName || localProfile.displayName,
+        displayName: updatedDisplayName || userProfile.displayName,
         photoURL: photoURLToUpdate,
         monthlyRate: data.monthlyRate === undefined || data.monthlyRate === null || String(data.monthlyRate).trim() === '' ? null : Number(data.monthlyRate),
         alboRegistrationUrl: alboUrlToUpdate,
@@ -360,10 +339,7 @@ export default function ProfessionalProfilePage() {
         otherCertificationsSelfCertified: !!data.otherCertificationsSelfCertified,
       };
 
-      const updatedProfile = await updateUserProfile(user.uid, dataToUpdate);
-      if(updatedProfile) {
-        setLocalProfile(updatedProfile); // Resync local state with the newly saved profile from context
-      }
+      await updateUserProfile(user.uid, dataToUpdate);
 
       toast({ title: "Profilo Aggiornato", description: "Le modifiche sono state salvate con successo." });
       
@@ -393,11 +369,11 @@ export default function ProfessionalProfilePage() {
   };
 
 
-  if (authLoading && !localProfile) {
+  if (authLoading && !userProfile) {
     return <div className="text-center py-10">Caricamento profilo...</div>;
   }
 
-  if (!user || !localProfile || localProfile.role !== 'professional') {
+  if (!user || !userProfile || userProfile.role !== 'professional') {
     return <div className="text-center py-10">Profilo non trovato o non autorizzato.</div>;
   }
   
@@ -414,7 +390,7 @@ export default function ProfessionalProfilePage() {
   }) => {
     const IconComponent = icon;
     const isUploadingThisFile = progressState !== null && progressState < 100;
-    const currentUrl = fileState ? null : watchUrl;
+    const currentUrl = watchUrl;
     const hasExistingFile = !!currentUrl || !!fileState;
 
     return (
@@ -517,8 +493,8 @@ export default function ProfessionalProfilePage() {
                       <FormLabel className="text-sm font-semibold text-primary">Immagine del Profilo</FormLabel>
                       <div className="flex items-center space-x-4 pt-2">
                         <Avatar className="h-24 w-24 border">
-                            <AvatarImage src={imagePreview || undefined} alt={localProfile.displayName || 'User'} data-ai-hint="profile person" />
-                            <AvatarFallback className="text-3xl">{getInitials(localProfile.displayName)}</AvatarFallback>
+                            <AvatarImage src={imagePreview || undefined} alt={(userProfile as FullProfessionalProfile).displayName || 'User'} data-ai-hint="profile person" />
+                            <AvatarFallback className="text-3xl">{getInitials((userProfile as FullProfessionalProfile).displayName)}</AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col space-y-2">
                             <Button
