@@ -133,10 +133,10 @@ export default function ProfessionalProfilePage() {
   });
 
   useEffect(() => {
-    if (userProfile && !localProfile && userProfile.role === 'professional') {
+    if (userProfile && userProfile.role === 'professional') {
         setLocalProfile(userProfile as ProfessionalProfile);
     }
-  }, [userProfile, localProfile]);
+  }, [userProfile]);
 
   useEffect(() => {
     if (localProfile) {
@@ -262,25 +262,28 @@ export default function ProfessionalProfilePage() {
         const selfCertifiedKey = `${certType}SelfCertified` as keyof ProfessionalProfile;
         const urlToDelete = localProfile[urlToDeleteKey] as string | undefined;
 
+        // 1. Delete the file from Firebase Storage.
         if (urlToDelete) {
             const fileRef = storageRef(storage, urlToDelete);
             try {
                 await deleteObject(fileRef);
             } catch (error: any) {
                 if (error.code !== 'storage/object-not-found') {
-                    console.warn(`Could not delete file from Storage, it might be already gone: ${error.message}. Proceeding to update DB.`);
+                    throw new Error(`Errore durante l'eliminazione del file dallo storage: ${error.message}`);
                 }
+                console.warn(`File non trovato nello storage (già eliminato?): ${urlToDelete}`);
             }
         }
 
-        const dataToUpdate = {
+        // 2. Update the Firestore document using deleteField().
+        const userDocRef = doc(db, 'users', user.uid);
+        await updateDoc(userDocRef, {
             [urlToDeleteKey]: deleteField(),
             [selfCertifiedKey]: deleteField(),
-        };
+        });
 
-        const userDocRef = doc(db, 'users', user.uid);
-        await updateDoc(userDocRef, dataToUpdate);
-
+        // 3. Update the local state immediately to trigger the UI refresh.
+        // This is the most crucial part for an instant UI update.
         setLocalProfile(prevProfile => {
             if (!prevProfile) return null;
             const newProfile = { ...prevProfile };
@@ -288,14 +291,16 @@ export default function ProfessionalProfilePage() {
             delete (newProfile as any)[selfCertifiedKey];
             return newProfile;
         });
-        
-        const setFileState = certType === 'albo' ? setAlboPdfFile : certType === 'uni' ? setUniPdfFile : setOtherCertPdfFile;
-        setFileState(null);
+
+        // Reset the corresponding file input state.
         const fileInputRef = certType === 'albo' ? alboInputRef : certType === 'uni' ? uniInputRef : otherCertInputRef;
         if (fileInputRef.current) {
             fileInputRef.current.value = "";
         }
-
+        if(certType === 'albo') setAlboPdfFile(null);
+        if(certType === 'uni') setUniPdfFile(null);
+        if(certType === 'other') setOtherCertPdfFile(null);
+        
         toast({ title: "Documento Eliminato", description: "Il documento è stato rimosso con successo." });
 
     } catch (error: any) {
