@@ -100,7 +100,6 @@ export default function ProfessionalProfilePage() {
   const { toast } = useToast();
   const { db, storage } = useFirebase();
 
-  // Local state to manage the profile for immediate UI feedback.
   const [localProfile, setLocalProfile] = useState<ProfessionalProfile | null>(null);
 
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
@@ -133,14 +132,12 @@ export default function ProfessionalProfilePage() {
     defaultValues: mapProfileToFormData(),
   });
 
-  // Sync context profile to local state only once or when context profile changes.
   useEffect(() => {
-    if (userProfile && userProfile.role === 'professional') {
+    if (userProfile && !localProfile && userProfile.role === 'professional') {
         setLocalProfile(userProfile as ProfessionalProfile);
     }
-  }, [userProfile]);
+  }, [userProfile, localProfile]);
 
-  // Sync local profile state to the form. This is the new single source of truth for the UI.
   useEffect(() => {
     if (localProfile) {
       const defaultValuesForForm = mapProfileToFormData(localProfile);
@@ -271,7 +268,7 @@ export default function ProfessionalProfilePage() {
                 await deleteObject(fileRef);
             } catch (error: any) {
                 if (error.code !== 'storage/object-not-found') {
-                    throw new Error(`Impossibile eliminare il file dallo Storage: ${error.message}.`);
+                    console.warn(`Could not delete file from Storage, it might be already gone: ${error.message}. Proceeding to update DB.`);
                 }
             }
         }
@@ -291,7 +288,7 @@ export default function ProfessionalProfilePage() {
             delete (newProfile as any)[selfCertifiedKey];
             return newProfile;
         });
-
+        
         const setFileState = certType === 'albo' ? setAlboPdfFile : certType === 'uni' ? setUniPdfFile : setOtherCertPdfFile;
         setFileState(null);
         const fileInputRef = certType === 'albo' ? alboInputRef : certType === 'uni' ? uniInputRef : otherCertInputRef;
@@ -358,7 +355,11 @@ export default function ProfessionalProfilePage() {
         otherCertificationsSelfCertified: !!data.otherCertificationsSelfCertified,
       };
 
-      await updateUserProfile(user.uid, dataToUpdate);
+      const updatedProfile = await updateUserProfile(user.uid, dataToUpdate);
+      if(updatedProfile) {
+        setLocalProfile(updatedProfile); // Resync local state with the newly saved profile from context
+      }
+
       toast({ title: "Profilo Aggiornato", description: "Le modifiche sono state salvate con successo." });
       
       setProfileImageFile(null); if (profileImageInputRef.current) profileImageInputRef.current.value = "";
@@ -721,3 +722,5 @@ export default function ProfessionalProfilePage() {
     </>
   );
 }
+
+    
