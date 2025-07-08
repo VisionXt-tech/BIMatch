@@ -1,3 +1,4 @@
+
 // This file is for Firebase configuration variables.
 // IMPORTANT: These are loaded from .env.local.
 // Ensure your .env.local file has the correct Firebase project configuration.

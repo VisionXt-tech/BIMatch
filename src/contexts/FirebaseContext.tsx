@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { FirebaseApp } from 'firebase/app';
