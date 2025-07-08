@@ -9,7 +9,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Save, UserCircle2, Upload, FileText, Link as LinkIcon, BadgeCheck, Award, ShieldAlert } from 'lucide-react';
+import { Save, UserCircle2, Upload, FileText, Link as LinkIcon, BadgeCheck, Award, ShieldAlert, Trash2 } from 'lucide-react';
 import type { ProfessionalProfile } from '@/types/auth';
 import { FormInput, FormTextarea, FormMultiSelect, FormSingleSelect } from '@/components/ProfileFormElements';
 import { BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, AVAILABILITY_OPTIONS, ITALIAN_REGIONS, EXPERIENCE_LEVEL_OPTIONS } from '@/constants';
@@ -159,6 +159,7 @@ export default function ProfessionalProfilePage() {
         certType,
         onConfirm: () => {
           form.setValue(`${certType}SelfCertified`, true);
+          // Clear any staged file if user decides to self-certify
           if (certType === 'albo') setAlboPdfFile(null);
           if (certType === 'uni') setUniPdfFile(null);
           if (certType === 'other') setOtherCertPdfFile(null);
@@ -247,6 +248,20 @@ export default function ProfessionalProfilePage() {
         }
       );
     });
+  };
+  
+  const handleClearCertification = (certType: CertificationType) => {
+    const fileInputRef = certType === 'albo' ? alboInputRef : certType === 'uni' ? uniInputRef : otherCertInputRef;
+    const setFileState = certType === 'albo' ? setAlboPdfFile : certType === 'uni' ? setUniPdfFile : setOtherCertPdfFile;
+    const setUrlState = certType === 'albo' ? setAlboPdfUrl : certType === 'uni' ? setUniPdfUrl : setOtherCertPdfUrl;
+
+    setFileState(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    form.setValue(`${certType}RegistrationUrl`, '');
+    setUrlState(null);
+    form.setValue(`${certType}SelfCertified`, false);
+
+    toast({ title: "Documento Rimosso", description: 'Il documento è stato rimosso dalla selezione. Clicca su "Salva Profilo" per rendere la modifica definitiva.' });
   };
 
 
@@ -347,6 +362,7 @@ export default function ProfessionalProfilePage() {
     const IconComponent = icon;
     const isUploadingThisFile = progressState !== null && progressState < 100;
     const currentUrl = fileState ? null : watchUrl;
+    const hasExistingFile = !!currentUrl || !!fileState;
 
     return (
       <FormItem className="border p-4 rounded-md shadow-sm bg-muted/30">
@@ -354,20 +370,36 @@ export default function ProfessionalProfilePage() {
           <IconComponent className="mr-2 h-5 w-5" /> {title}
         </FormLabel>
         
-        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 mt-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-2">
           <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()} disabled={isUploadingAnyFile || watchSelfCert}>
-            <Upload className="mr-2 h-4 w-4" /> {currentUrl || fileState ? 'Modifica PDF' : 'Carica PDF'}
+            <Upload className="mr-2 h-4 w-4" /> {hasExistingFile ? 'Modifica PDF' : 'Carica PDF'}
           </Button>
-          <Input type="file" accept=".pdf" onChange={(e) => handleGenericFileChange(e, certType === 'albo' ? setAlboPdfFile : certType === 'uni' ? setUniPdfFile : setOtherCertPdfFile, certType)} className="hidden" ref={inputRef} disabled={isUploadingAnyFile || watchSelfCert} />
+          {hasExistingFile && (
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              className="h-8 px-2 py-1 text-xs"
+              onClick={() => handleClearCertification(certType)}
+              disabled={isUploadingAnyFile || watchSelfCert}
+            >
+              <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+              Elimina PDF
+            </Button>
+          )}
+        </div>
+        
+        <div className="mt-2 text-sm text-muted-foreground">
           {fileState && (
-            <span className="text-sm text-muted-foreground truncate max-w-xs">Selezionato: {fileState.name}</span>
+            <span className="truncate max-w-xs block">Selezionato: {fileState.name}</span>
           )}
           {!fileState && currentUrl && (
-            <Link href={currentUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center">
+            <Link href={currentUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center">
               <LinkIcon className="mr-1 h-4 w-4" /> Visualizza PDF Caricato
             </Link>
           )}
         </div>
+
         {isUploadingThisFile && progressState !== null && (
           <div className="mt-2"><Progress value={progressState} className="w-full h-1.5" /><p className="text-xs text-muted-foreground mt-1">Caricamento: {Math.round(progressState)}%</p></div>
         )}
@@ -386,7 +418,7 @@ export default function ProfessionalProfilePage() {
                     id={`${certType}SelfCertified`}
                     checked={field.value}
                     onCheckedChange={(checked) => handleCertificationCheckboxChange(certType, !!checked)}
-                    disabled={isUploadingAnyFile || !!fileState || (!!watchUrl && !field.value) }
+                    disabled={isUploadingAnyFile || hasExistingFile }
                   />
                   <label
                     htmlFor={`${certType}SelfCertified`}
