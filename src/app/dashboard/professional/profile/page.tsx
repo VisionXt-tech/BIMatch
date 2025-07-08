@@ -9,7 +9,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Save, UserCircle2, Upload, FileText, Link as LinkIcon, BadgeCheck, Award, ShieldAlert, Trash2 } from 'lucide-react';
+import { Save, UserCircle2, Upload, FileText, Link as LinkIcon, BadgeCheck, Award, ShieldAlert, Trash2, Loader2 } from 'lucide-react';
 import type { ProfessionalProfile } from '@/types/auth';
 import { FormInput, FormTextarea, FormMultiSelect, FormSingleSelect } from '@/components/ProfileFormElements';
 import { BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, AVAILABILITY_OPTIONS, ITALIAN_REGIONS, EXPERIENCE_LEVEL_OPTIONS } from '@/constants';
@@ -108,11 +108,7 @@ export default function ProfessionalProfilePage() {
   const [alboPdfFile, setAlboPdfFile] = useState<File | null>(null);
   const [uniPdfFile, setUniPdfFile] = useState<File | null>(null);
   const [otherCertPdfFile, setOtherCertPdfFile] = useState<File | null>(null);
-
-  const [alboPdfUrl, setAlboPdfUrl] = useState<string | null>(null);
-  const [uniPdfUrl, setUniPdfUrl] = useState<string | null>(null);
-  const [otherCertPdfUrl, setOtherCertPdfUrl] = useState<string | null>(null);
-
+  
   const [alboUploadProgress, setAlboUploadProgress] = useState<number | null>(null);
   const [uniUploadProgress, setUniUploadProgress] = useState<number | null>(null);
   const [otherCertUploadProgress, setOtherCertUploadProgress] = useState<number | null>(null);
@@ -123,7 +119,9 @@ export default function ProfessionalProfilePage() {
   const uniInputRef = useRef<HTMLInputElement>(null);
   const otherCertInputRef = useRef<HTMLInputElement>(null);
   
-  const [dialogState, setDialogState] = useState<{ isOpen: boolean; certType: CertificationType | null; onConfirm: () => void }>({ isOpen: false, certType: null, onConfirm: () => {} });
+  const [certDialogState, setCertDialogState] = useState<{ isOpen: boolean; certType: CertificationType | null; onConfirm: () => void }>({ isOpen: false, certType: null, onConfirm: () => {} });
+  const [deleteDialogState, setDeleteDialogState] = useState<{ isOpen: boolean; certType: CertificationType | null; }>({ isOpen: false, certType: null });
+  const [isDeletingFile, setIsDeletingFile] = useState(false);
 
 
   const form = useForm<ProfessionalProfileFormData>({
@@ -137,15 +135,9 @@ export default function ProfessionalProfilePage() {
       const defaultValuesForForm = mapProfileToFormData(professionalData);
       form.reset(defaultValuesForForm);
       setImagePreview(professionalData.photoURL || null);
-      setAlboPdfUrl(professionalData.alboRegistrationUrl || null);
-      setUniPdfUrl(professionalData.uniCertificationUrl || null);
-      setOtherCertPdfUrl(professionalData.otherCertificationsUrl || null);
     } else if (!authLoading && !userProfile) {
       form.reset(mapProfileToFormData());
       setImagePreview(null);
-      setAlboPdfUrl(null);
-      setUniPdfUrl(null);
-      setOtherCertPdfUrl(null);
     }
   }, [userProfile, form, authLoading]);
   
@@ -154,7 +146,7 @@ export default function ProfessionalProfilePage() {
     isChecked: boolean
   ) => {
     if (isChecked) {
-      setDialogState({
+      setCertDialogState({
         isOpen: true,
         certType,
         onConfirm: () => {
@@ -164,14 +156,13 @@ export default function ProfessionalProfilePage() {
           if (certType === 'uni') setUniPdfFile(null);
           if (certType === 'other') setOtherCertPdfFile(null);
           form.setValue(`${certType}RegistrationUrl`, '');
-          setDialogState({ isOpen: false, certType: null, onConfirm: () => {} });
+          setCertDialogState({ isOpen: false, certType: null, onConfirm: () => {} });
         },
       });
     } else {
       form.setValue(`${certType}SelfCertified`, false);
     }
   };
-
 
   const handleGenericFileChange = (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -250,18 +241,41 @@ export default function ProfessionalProfilePage() {
     });
   };
   
-  const handleClearCertification = (certType: CertificationType) => {
-    const fileInputRef = certType === 'albo' ? alboInputRef : certType === 'uni' ? uniInputRef : otherCertInputRef;
-    const setFileState = certType === 'albo' ? setAlboPdfFile : certType === 'uni' ? setUniPdfFile : setOtherCertPdfFile;
-    const setUrlState = certType === 'albo' ? setAlboPdfUrl : certType === 'uni' ? setUniPdfUrl : setOtherCertPdfUrl;
+  const openDeleteConfirmation = (certType: CertificationType) => {
+    setDeleteDialogState({ isOpen: true, certType });
+  };
 
-    setFileState(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-    form.setValue(`${certType}RegistrationUrl`, '');
-    setUrlState(null);
-    form.setValue(`${certType}SelfCertified`, false);
+  const handleConfirmDeleteCertification = async () => {
+    const certType = deleteDialogState.certType;
+    if (!certType || !user) {
+        toast({ title: "Errore", description: "Impossibile procedere, utente non trovato.", variant: "destructive" });
+        setDeleteDialogState({ isOpen: false, certType: null });
+        return;
+    }
 
-    toast({ title: "Documento Rimosso", description: 'Il documento è stato rimosso dalla selezione. Clicca su "Salva Profilo" per rendere la modifica definitiva.' });
+    setIsDeletingFile(true);
+    try {
+        await updateUserProfile(user.uid, {
+            [`${certType}RegistrationUrl`]: null,
+            [`${certType}SelfCertified`]: false,
+        });
+        
+        const setFileState = certType === 'albo' ? setAlboPdfFile : certType === 'uni' ? setUniPdfFile : setOtherCertPdfFile;
+        setFileState(null);
+        
+        const fileInputRef = certType === 'albo' ? alboInputRef : certType === 'uni' ? uniInputRef : otherCertInputRef;
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
+        
+        toast({ title: "Documento Eliminato", description: "Il documento è stato rimosso con successo dal tuo profilo." });
+
+    } catch (error: any) {
+        toast({ title: "Errore", description: `Impossibile eliminare il documento: ${error.message}`, variant: "destructive" });
+    } finally {
+        setIsDeletingFile(false);
+        setDeleteDialogState({ isOpen: false, certType: null });
+    }
   };
 
 
@@ -349,7 +363,7 @@ export default function ProfessionalProfilePage() {
     return <div className="text-center py-10">Profilo non trovato o non autorizzato.</div>;
   }
   
-  const CertificationSection = ({ certType, title, icon, fileState, progressState, inputRef, watchSelfCert, watchUrl }: {
+  const CertificationSection = ({ certType, title, icon, fileState, progressState, inputRef, watchSelfCert, watchUrl, onDelete }: {
       certType: CertificationType;
       title: string;
       icon: React.ElementType;
@@ -358,6 +372,7 @@ export default function ProfessionalProfilePage() {
       inputRef: React.RefObject<HTMLInputElement>;
       watchSelfCert?: boolean;
       watchUrl?: string;
+      onDelete: (certType: CertificationType) => void;
   }) => {
     const IconComponent = icon;
     const isUploadingThisFile = progressState !== null && progressState < 100;
@@ -380,7 +395,7 @@ export default function ProfessionalProfilePage() {
               variant="destructive"
               size="sm"
               className="h-8 px-2 py-1 text-xs"
-              onClick={() => handleClearCertification(certType)}
+              onClick={() => onDelete(certType)}
               disabled={isUploadingAnyFile || watchSelfCert}
             >
               <Trash2 className="mr-1.5 h-3.5 w-3.5" />
@@ -566,6 +581,7 @@ export default function ProfessionalProfilePage() {
                     inputRef={alboInputRef}
                     watchSelfCert={form.watch('alboSelfCertified')}
                     watchUrl={form.watch('alboRegistrationUrl')}
+                    onDelete={openDeleteConfirmation}
                   />
                   <CertificationSection
                     certType="uni"
@@ -576,6 +592,7 @@ export default function ProfessionalProfilePage() {
                     inputRef={uniInputRef}
                     watchSelfCert={form.watch('uniSelfCertified')}
                     watchUrl={form.watch('uniCertificationUrl')}
+                    onDelete={openDeleteConfirmation}
                   />
                   <CertificationSection
                     certType="other"
@@ -586,6 +603,7 @@ export default function ProfessionalProfilePage() {
                     inputRef={otherCertInputRef}
                     watchSelfCert={form.watch('otherCertificationsSelfCertified')}
                     watchUrl={form.watch('otherCertificationsUrl')}
+                    onDelete={openDeleteConfirmation}
                   />
                 </TabsContent>
 
@@ -628,27 +646,46 @@ export default function ProfessionalProfilePage() {
       </Card>
     </div>
     
-    <AlertDialog open={dialogState.isOpen} onOpenChange={(isOpen) => !isOpen && setDialogState({ isOpen: false, certType: null, onConfirm: () => {} })}>
+    <AlertDialog open={certDialogState.isOpen} onOpenChange={(isOpen) => !isOpen && setCertDialogState({ isOpen: false, certType: null, onConfirm: () => {} })}>
         <AlertDialogContent>
             <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center"><ShieldAlert className="mr-2 h-6 w-6 text-yellow-500"/>Conferma Autocertificazione</AlertDialogTitle>
             <AlertDialogDescription>
                 Stai per dichiarare di possedere la certificazione{" "}
                 <strong>
-                {dialogState.certType === 'albo' && 'di Iscrizione all\'Albo Professionale'}
-                {dialogState.certType === 'uni' && 'UNI 11337 (o equivalente)'}
-                {dialogState.certType === 'other' && 'rilevante per la professione'}
+                {certDialogState.certType === 'albo' && 'di Iscrizione all\'Albo Professionale'}
+                {certDialogState.certType === 'uni' && 'UNI 11337 (o equivalente)'}
+                {certDialogState.certType === 'other' && 'rilevante per la professione'}
                 </strong>.
                 <br/><br/>
-                Questa è un&apos;autodichiarazione con valore legale. Assicurati che le informazioni siano veritiere e corrette.
+                Assicurati che le informazioni siano veritiere e corrette.
             </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDialogState({ isOpen: false, certType: null, onConfirm: () => {} })}>Annulla</AlertDialogCancel>
-            <AlertDialogAction onClick={dialogState.onConfirm}>Confermo e Accetto</AlertDialogAction>
+            <AlertDialogCancel onClick={() => setCertDialogState({ isOpen: false, certType: null, onConfirm: () => {} })}>Annulla</AlertDialogCancel>
+            <AlertDialogAction onClick={certDialogState.onConfirm}>Confermo e Accetto</AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>
     </AlertDialog>
+
+    <AlertDialog open={deleteDialogState.isOpen} onOpenChange={(isOpen) => !isOpen && setDeleteDialogState({ isOpen: false, certType: null })}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Conferma Eliminazione Documento</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Sei sicuro di voler eliminare questo documento dal tuo profilo? L'azione è permanente e non può essere annullata.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setDeleteDialogState({ isOpen: false, certType: null })} disabled={isDeletingFile}>Annulla</AlertDialogCancel>
+                <AlertDialogAction onClick={handleConfirmDeleteCertification} disabled={isDeletingFile} className="bg-destructive hover:bg-destructive/90">
+                    {isDeletingFile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                    Elimina Definitivamente
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+
     </>
   );
 }
