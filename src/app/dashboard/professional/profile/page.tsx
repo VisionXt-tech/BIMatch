@@ -255,15 +255,16 @@ export default function ProfessionalProfilePage() {
 
     setIsDeletingFile(true);
     try {
-        const updatedProfile = await updateUserProfile(user.uid, {
+        await updateUserProfile(user.uid, {
             [`${certType}RegistrationUrl`]: null,
             [`${certType}SelfCertified`]: false,
         });
 
-        if (updatedProfile) {
-            form.reset(mapProfileToFormData(updatedProfile as ProfessionalProfile));
-        }
+        // Imperatively update the form's state to reflect the change immediately
+        form.setValue(`${certType}RegistrationUrl`, '');
+        form.setValue(`${certType}SelfCertified`, false);
         
+        // Also clear any locally staged file
         const setFileState = certType === 'albo' ? setAlboPdfFile : certType === 'uni' ? setUniPdfFile : setOtherCertPdfFile;
         setFileState(null);
         
@@ -693,3 +694,5 @@ export default function ProfessionalProfilePage() {
     </>
   );
 }
+
+    
