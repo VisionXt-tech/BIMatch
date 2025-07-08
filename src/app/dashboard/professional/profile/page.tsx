@@ -24,7 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from 'next/link';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { deleteField } from 'firebase/firestore';
+import { doc, updateDoc, deleteField } from 'firebase/firestore';
 
 
 const MAX_PDF_SIZE_MB = 5;
@@ -98,7 +98,7 @@ export default function ProfessionalProfilePage() {
   const { user, userProfile, updateUserProfile, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const { storage } = useFirebase();
+  const { db, storage } = useFirebase();
 
   // Local state to manage the profile for immediate UI feedback.
   const [localProfile, setLocalProfile] = useState<ProfessionalProfile | null>(null);
@@ -133,14 +133,14 @@ export default function ProfessionalProfilePage() {
     defaultValues: mapProfileToFormData(),
   });
 
-  // Sync context profile to local state
+  // Sync context profile to local state only once or when context profile changes.
   useEffect(() => {
     if (userProfile && userProfile.role === 'professional') {
         setLocalProfile(userProfile as ProfessionalProfile);
     }
   }, [userProfile]);
 
-  // Sync local profile state to the form
+  // Sync local profile state to the form. This is the new single source of truth for the UI.
   useEffect(() => {
     if (localProfile) {
       const defaultValuesForForm = mapProfileToFormData(localProfile);
@@ -159,7 +159,6 @@ export default function ProfessionalProfilePage() {
         certType,
         onConfirm: () => {
           form.setValue(`${certType}SelfCertified`, true);
-          // Clear any staged file if user decides to self-certify
           if (certType === 'albo') setAlboPdfFile(null);
           if (certType === 'uni') setUniPdfFile(null);
           if (certType === 'other') setOtherCertPdfFile(null);
@@ -199,7 +198,6 @@ export default function ProfessionalProfilePage() {
         setImagePreview(URL.createObjectURL(file));
         setImageUploadProgress(null);
       } else {
-        // Clear self-certification when a file is chosen
         form.setValue(`${certType}SelfCertified`, false);
       }
     }
@@ -235,7 +233,7 @@ export default function ProfessionalProfilePage() {
         async () => {
           try {
             const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            setProgress(100); // Mark as complete
+            setProgress(100); 
             resolve(downloadURL);
           } catch (error) {
             console.error("Errore getDownloadURL:", error);
@@ -255,8 +253,8 @@ export default function ProfessionalProfilePage() {
 
   const handleConfirmDeleteCertification = async () => {
     const certType = deleteDialogState.certType;
-    if (!certType || !user || !storage || !localProfile) {
-        toast({ title: "Errore", description: "Impossibile procedere: utente o profilo locale non disponibile.", variant: "destructive" });
+    if (!certType || !user || !storage || !db || !localProfile) {
+        toast({ title: "Errore", description: "Impossibile procedere: dati mancanti.", variant: "destructive" });
         setDeleteDialogState({ isOpen: false, certType: null });
         return;
     }
@@ -267,7 +265,6 @@ export default function ProfessionalProfilePage() {
         const selfCertifiedKey = `${certType}SelfCertified` as keyof ProfessionalProfile;
         const urlToDelete = localProfile[urlToDeleteKey] as string | undefined;
 
-        // 1. Delete from Firebase Storage if a URL exists
         if (urlToDelete) {
             const fileRef = storageRef(storage, urlToDelete);
             try {
@@ -279,17 +276,14 @@ export default function ProfessionalProfilePage() {
             }
         }
 
-        // 2. Prepare data for Firestore update
         const dataToUpdate = {
             [urlToDeleteKey]: deleteField(),
             [selfCertifiedKey]: deleteField(),
         };
 
-        // 3. Update Firestore (this will also update the main context)
-        await updateUserProfile(user.uid, dataToUpdate);
+        const userDocRef = doc(db, 'users', user.uid);
+        await updateDoc(userDocRef, dataToUpdate);
 
-        // 4. Update the local state to trigger an immediate UI re-render.
-        // This is the key change for instant feedback.
         setLocalProfile(prevProfile => {
             if (!prevProfile) return null;
             const newProfile = { ...prevProfile };
@@ -298,7 +292,6 @@ export default function ProfessionalProfilePage() {
             return newProfile;
         });
 
-        // 5. Clear any local file state that might have been staged for upload
         const setFileState = certType === 'albo' ? setAlboPdfFile : certType === 'uni' ? setUniPdfFile : setOtherCertPdfFile;
         setFileState(null);
         const fileInputRef = certType === 'albo' ? alboInputRef : certType === 'uni' ? uniInputRef : otherCertInputRef;
@@ -426,9 +419,9 @@ export default function ProfessionalProfilePage() {
         
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-2">
           <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()} disabled={isUploadingAnyFile || watchSelfCert}>
-            <Upload className="mr-2 h-4 w-4" /> {hasExistingFile ? 'Modifica PDF' : 'Carica PDF'}
+            <Upload className="mr-2 h-4 w-4" /> {currentUrl ? 'Modifica PDF' : 'Carica PDF'}
           </Button>
-          {hasExistingFile && (
+          {currentUrl && (
             <Button
               type="button"
               variant="destructive"
