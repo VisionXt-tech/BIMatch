@@ -11,10 +11,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, MapPin, Briefcase, Laptop, DollarSign, Linkedin, ExternalLink, FileText, Settings, CalendarDays, UserCircle2, WifiOff, Award, BadgeCheck, Link as LinkIcon } from 'lucide-react';
+import { ArrowLeft, MapPin, Briefcase, Laptop, DollarSign, Linkedin, ExternalLink, FileText, Settings, CalendarDays, UserCircle2, WifiOff, Award, BadgeCheck, Link as LinkIcon, ShieldCheck } from 'lucide-react';
 import { BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, AVAILABILITY_OPTIONS, EXPERIENCE_LEVEL_OPTIONS, ROUTES } from '@/constants';
 import Image from 'next/image'; 
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const getInitials = (name: string | null | undefined): string => {
   if (!name) return 'P';
@@ -116,10 +117,11 @@ export default function ProfessionalProfileViewPage() {
   const availabilityLabel = getLabelForValue(AVAILABILITY_OPTIONS, professional.availability);
   const isImmediata = availabilityLabel === AVAILABILITY_OPTIONS.find(opt => opt.value === 'immediata')?.label;
 
-  const hasCertifications = professional.alboRegistrationUrl || professional.uniCertificationUrl || professional.otherCertificationsUrl;
+  const hasCertifications = professional.alboRegistrationUrl || professional.uniCertificationUrl || professional.otherCertificationsUrl || professional.alboSelfCertified || professional.uniSelfCertified || professional.otherCertificationsSelfCertified;
 
   return (
     <div className="container mx-auto px-2 py-8 md:px-4">
+    <TooltipProvider>
       <Button variant="outline" onClick={() => router.back()} className="mb-6 group">
         <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" /> Torna Indietro
       </Button>
@@ -176,27 +178,25 @@ export default function ProfessionalProfileViewPage() {
               <Card className="shadow-sm border bg-background">
                 <CardHeader><CardTitle className="text-xl flex items-center text-foreground/90"><Award className="mr-3 h-6 w-6 text-primary"/> Certificazioni</CardTitle></CardHeader>
                 <CardContent className="space-y-3">
-                  {professional.alboRegistrationUrl && (
-                    <Button variant="outline" asChild className="w-full justify-start group hover:border-primary/50 hover:bg-primary/5">
-                      <Link href={professional.alboRegistrationUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/90">
-                        <FileText className="mr-2 h-4 w-4 group-hover:text-primary transition-colors" /> Iscrizione Albo Professionale
-                      </Link>
-                    </Button>
-                  )}
-                  {professional.uniCertificationUrl && (
-                    <Button variant="outline" asChild className="w-full justify-start group hover:border-primary/50 hover:bg-primary/5">
-                      <Link href={professional.uniCertificationUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/90">
-                        <BadgeCheck className="mr-2 h-4 w-4 group-hover:text-primary transition-colors" /> Certificazione UNI
-                      </Link>
-                    </Button>
-                  )}
-                  {professional.otherCertificationsUrl && (
-                    <Button variant="outline" asChild className="w-full justify-start group hover:border-primary/50 hover:bg-primary/5">
-                      <Link href={professional.otherCertificationsUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/90">
-                        <LinkIcon className="mr-2 h-4 w-4 group-hover:text-primary transition-colors" /> Altre Certificazioni
-                      </Link>
-                    </Button>
-                  )}
+                  
+                   {professional.alboRegistrationUrl ? (
+                    <Button variant="outline" asChild className="w-full justify-start group hover:border-primary/50 hover:bg-primary/5"><Link href={professional.alboRegistrationUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/90"><FileText className="mr-2 h-4 w-4 group-hover:text-primary transition-colors" /> Iscrizione Albo Professionale (PDF)</Link></Button>
+                  ) : professional.alboSelfCertified ? (
+                    <div className="flex items-center text-sm p-3 bg-muted rounded-md border"><ShieldCheck className="mr-2 h-4 w-4 text-green-600"/> Iscrizione Albo (Autocertificata)</div>
+                  ): null}
+
+                  {professional.uniCertificationUrl ? (
+                    <Button variant="outline" asChild className="w-full justify-start group hover:border-primary/50 hover:bg-primary/5"><Link href={professional.uniCertificationUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/90"><FileText className="mr-2 h-4 w-4 group-hover:text-primary transition-colors" /> Certificazione UNI (PDF)</Link></Button>
+                  ) : professional.uniSelfCertified ? (
+                     <div className="flex items-center text-sm p-3 bg-muted rounded-md border"><ShieldCheck className="mr-2 h-4 w-4 text-green-600"/> Certificazione UNI (Autocertificata)</div>
+                  ): null}
+
+                  {professional.otherCertificationsUrl ? (
+                    <Button variant="outline" asChild className="w-full justify-start group hover:border-primary/50 hover:bg-primary/5"><Link href={professional.otherCertificationsUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/90"><FileText className="mr-2 h-4 w-4 group-hover:text-primary transition-colors" /> Altre Certificazioni (PDF)</Link></Button>
+                  ) : professional.otherCertificationsSelfCertified ? (
+                     <div className="flex items-center text-sm p-3 bg-muted rounded-md border"><ShieldCheck className="mr-2 h-4 w-4 text-green-600"/> Altre Certificazioni (Autocertificate)</div>
+                  ): null}
+
                 </CardContent>
               </Card>
             )}
@@ -284,6 +284,7 @@ export default function ProfessionalProfileViewPage() {
             </p>
         </CardFooter>
       </Card>
+      </TooltipProvider>
     </div>
   );
 }

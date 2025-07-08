@@ -33,8 +33,11 @@ const mapFirestoreDocToMarketplaceProfile = (docData: FullProfessionalProfile): 
     tagline: docData.bio ? (docData.bio.length > 150 ? docData.bio.substring(0, 147) + "..." : docData.bio) : undefined,
     keySoftware: docData.softwareProficiency ? docData.softwareProficiency.slice(0, 3) : [], // Take top 3 for card
     alboRegistrationUrl: docData.alboRegistrationUrl,
+    alboSelfCertified: docData.alboSelfCertified,
     uniCertificationUrl: docData.uniCertificationUrl,
+    uniSelfCertified: docData.uniSelfCertified,
     otherCertificationsUrl: docData.otherCertificationsUrl,
+    otherCertificationsSelfCertified: docData.otherCertificationsSelfCertified,
   };
 };
 

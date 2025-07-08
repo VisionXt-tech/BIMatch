@@ -11,6 +11,9 @@ export interface ProfessionalMarketplaceProfile {
   // For example, a few key software proficiencies or certifications
   keySoftware?: string[]; // Few top software
   alboRegistrationUrl?: string;
+  alboSelfCertified?: boolean;
   uniCertificationUrl?: string;
+  uniSelfCertified?: boolean;
   otherCertificationsUrl?: string;
+  otherCertificationsSelfCertified?: boolean;
 }

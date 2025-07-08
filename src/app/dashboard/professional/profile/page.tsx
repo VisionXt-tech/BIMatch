@@ -9,7 +9,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Save, UserCircle2, Upload, FileText, Link as LinkIcon, BadgeCheck, Award } from 'lucide-react';
+import { Save, UserCircle2, Upload, FileText, Link as LinkIcon, BadgeCheck, Award, ShieldAlert } from 'lucide-react';
 import type { ProfessionalProfile } from '@/types/auth';
 import { FormInput, FormTextarea, FormMultiSelect, FormSingleSelect } from '@/components/ProfileFormElements';
 import { BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, AVAILABILITY_OPTIONS, ITALIAN_REGIONS, EXPERIENCE_LEVEL_OPTIONS } from '@/constants';
@@ -22,6 +22,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from 'next/link';
+import { Checkbox } from '@/components/ui/checkbox';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+
 
 const MAX_PDF_SIZE_MB = 5;
 const MAX_PDF_SIZE_BYTES = MAX_PDF_SIZE_MB * 1024 * 1024;
@@ -53,11 +56,16 @@ const professionalProfileSchema = z.object({
       .nullable()
   ),
   alboRegistrationUrl: z.string().url({ message: 'URL non valido.' }).optional().or(z.literal('')),
+  alboSelfCertified: z.boolean().optional(),
   uniCertificationUrl: z.string().url({ message: 'URL non valido.' }).optional().or(z.literal('')),
+  uniSelfCertified: z.boolean().optional(),
   otherCertificationsUrl: z.string().url({ message: 'URL non valido.' }).optional().or(z.literal('')),
+  otherCertificationsSelfCertified: z.boolean().optional(),
 });
 
 type ProfessionalProfileFormData = z.infer<typeof professionalProfileSchema>;
+type CertificationType = 'albo' | 'uni' | 'other';
+
 
 const mapProfileToFormData = (profile?: ProfessionalProfile | null): ProfessionalProfileFormData => {
   const p = profile || {};
@@ -76,8 +84,11 @@ const mapProfileToFormData = (profile?: ProfessionalProfile | null): Professiona
     linkedInProfile: p.linkedInProfile || '',
     monthlyRate: p.monthlyRate === undefined || p.monthlyRate === null || String(p.monthlyRate).trim() === '' ? undefined : Number(p.monthlyRate),
     alboRegistrationUrl: p.alboRegistrationUrl || '',
+    alboSelfCertified: p.alboSelfCertified || false,
     uniCertificationUrl: p.uniCertificationUrl || '',
+    uniSelfCertified: p.uniSelfCertified || false,
     otherCertificationsUrl: p.otherCertificationsUrl || '',
+    otherCertificationsSelfCertified: p.otherCertificationsSelfCertified || false,
   };
 };
 
@@ -111,6 +122,9 @@ export default function ProfessionalProfilePage() {
   const alboInputRef = useRef<HTMLInputElement>(null);
   const uniInputRef = useRef<HTMLInputElement>(null);
   const otherCertInputRef = useRef<HTMLInputElement>(null);
+  
+  const [dialogState, setDialogState] = useState<{ isOpen: boolean; certType: CertificationType | null; onConfirm: () => void }>({ isOpen: false, certType: null, onConfirm: () => {} });
+
 
   const form = useForm<ProfessionalProfileFormData>({
     resolver: zodResolver(professionalProfileSchema),
@@ -134,45 +148,63 @@ export default function ProfessionalProfilePage() {
       setOtherCertPdfUrl(null);
     }
   }, [userProfile, form, authLoading]);
+  
+  const handleCertificationCheckboxChange = (
+    certType: CertificationType,
+    isChecked: boolean
+  ) => {
+    if (isChecked) {
+      setDialogState({
+        isOpen: true,
+        certType,
+        onConfirm: () => {
+          form.setValue(`${certType}SelfCertified`, true);
+          if (certType === 'albo') setAlboPdfFile(null);
+          if (certType === 'uni') setUniPdfFile(null);
+          if (certType === 'other') setOtherCertPdfFile(null);
+          form.setValue(`${certType}RegistrationUrl`, '');
+          setDialogState({ isOpen: false, certType: null, onConfirm: () => {} });
+        },
+      });
+    } else {
+      form.setValue(`${certType}SelfCertified`, false);
+    }
+  };
+
 
   const handleGenericFileChange = (
     event: React.ChangeEvent<HTMLInputElement>,
     setFile: React.Dispatch<React.SetStateAction<File | null>>,
-    setPreviewUrl: React.Dispatch<React.SetStateAction<string | null>>, // Not used for PDF, but kept for consistency if reused
-    setUploadProgress: React.Dispatch<React.SetStateAction<number | null>>,
-    fileType: 'image' | 'pdf' = 'image',
-    maxSizeMB: number = 2
+    certType: CertificationType | 'image'
   ) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
+      const isPdf = file.type === 'application/pdf';
+      const isImage = file.type.startsWith('image/');
+      const maxSizeMB = isImage ? 2 : MAX_PDF_SIZE_MB;
       const maxSize = maxSizeMB * 1024 * 1024;
 
-      if (fileType === 'image' && !file.type.startsWith('image/')) {
-        toast({ title: "Formato File Non Valido", description: `Seleziona un file immagine (es. JPG, PNG, WEBP).`, variant: "destructive"});
-        event.target.value = ''; setFile(null); return;
-      }
-      if (fileType === 'pdf' && file.type !== 'application/pdf') {
-        toast({ title: "Formato File Non Valido", description: `Seleziona un file PDF.`, variant: "destructive"});
+      if ((certType !== 'image' && !isPdf) || (certType === 'image' && !isImage)) {
+        toast({ title: "Formato File Non Valido", description: `Seleziona un file ${isImage ? 'immagine' : 'PDF'}.`, variant: "destructive"});
         event.target.value = ''; setFile(null); return;
       }
       if (file.size > maxSize) {
         toast({ title: "File Troppo Grande", description: `Il file non deve superare i ${maxSizeMB}MB.`, variant: "destructive"});
         event.target.value = ''; setFile(null); return;
       }
-      if (file.size === 0) {
-        toast({ title: "File Vuoto", description: "Il file selezionato è vuoto.", variant: "destructive" });
-        event.target.value = ''; setFile(null); return;
-      }
       
       setFile(file);
-      if (fileType === 'image') setPreviewUrl(URL.createObjectURL(file));
-      // For PDFs, we don't set a direct preview URL from createObjectURL, URL will come from storage
-      setUploadProgress(null); // Reset progress for new file
-    } else {
-      setFile(null);
-      // Logic to reset preview for images, PDF URLs handled by profile data
+      
+      if (certType === 'image') {
+        setImagePreview(URL.createObjectURL(file));
+        setImageUploadProgress(null);
+      } else {
+        // Clear self-certification when a file is chosen
+        form.setValue(`${certType}SelfCertified`, false);
+      }
     }
   };
+
 
   const uploadFileAndGetURL = async (
     file: File,
@@ -225,11 +257,12 @@ export default function ProfessionalProfilePage() {
     }
 
     let photoURLToUpdate = (userProfile as ProfessionalProfile).photoURL || '';
-    let alboUrlToUpdate = form.getValues('alboRegistrationUrl') || (userProfile as ProfessionalProfile).alboRegistrationUrl || '';
-    let uniUrlToUpdate = form.getValues('uniCertificationUrl') || (userProfile as ProfessionalProfile).uniCertificationUrl || '';
-    let otherCertUrlToUpdate = form.getValues('otherCertificationsUrl') || (userProfile as ProfessionalProfile).otherCertificationsUrl || '';
+    let alboUrlToUpdate = data.alboSelfCertified ? '' : (form.getValues('alboRegistrationUrl') || (userProfile as ProfessionalProfile).alboRegistrationUrl || '');
+    let uniUrlToUpdate = data.uniSelfCertified ? '' : (form.getValues('uniCertificationUrl') || (userProfile as ProfessionalProfile).uniCertificationUrl || '');
+    let otherCertUrlToUpdate = data.otherCertificationsSelfCertified ? '' : (form.getValues('otherCertificationsUrl') || (userProfile as ProfessionalProfile).otherCertificationsUrl || '');
 
-    setIsUploadingAnyFile(true); // Set at the beginning of submission process
+
+    setIsUploadingAnyFile(true);
 
     try {
       if (profileImageFile && storage) {
@@ -238,32 +271,30 @@ export default function ProfessionalProfilePage() {
         setIsUploadingImage(false);
         setImagePreview(photoURLToUpdate); 
       }
-
-      if (alboPdfFile && storage) {
+      
+      if (alboPdfFile && storage && !data.alboSelfCertified) {
         alboUrlToUpdate = await uploadFileAndGetURL(alboPdfFile, 'professionalCertifications/albo', setAlboUploadProgress);
-        setAlboPdfUrl(alboUrlToUpdate);
-        form.setValue('alboRegistrationUrl', alboUrlToUpdate);
       }
-      if (uniPdfFile && storage) {
+      if (uniPdfFile && storage && !data.uniSelfCertified) {
         uniUrlToUpdate = await uploadFileAndGetURL(uniPdfFile, 'professionalCertifications/uni', setUniUploadProgress);
-        setUniPdfUrl(uniUrlToUpdate);
-        form.setValue('uniCertificationUrl', uniUrlToUpdate);
       }
-      if (otherCertPdfFile && storage) {
+      if (otherCertPdfFile && storage && !data.otherCertificationsSelfCertified) {
         otherCertUrlToUpdate = await uploadFileAndGetURL(otherCertPdfFile, 'professionalCertifications/other', setOtherCertUploadProgress);
-        setOtherCertPdfUrl(otherCertUrlToUpdate);
-        form.setValue('otherCertificationsUrl', otherCertUrlToUpdate);
       }
 
       const updatedDisplayName = `${data.firstName || (userProfile as ProfessionalProfile).firstName || ''} ${data.lastName || (userProfile as ProfessionalProfile).lastName || ''}`.trim();
+      
       const dataToUpdate : Partial<ProfessionalProfile> = {
         ...data,
         displayName: updatedDisplayName || userProfile.displayName,
         photoURL: photoURLToUpdate,
         monthlyRate: data.monthlyRate === undefined || data.monthlyRate === null || String(data.monthlyRate).trim() === '' ? null : Number(data.monthlyRate),
         alboRegistrationUrl: alboUrlToUpdate,
+        alboSelfCertified: !!data.alboSelfCertified,
         uniCertificationUrl: uniUrlToUpdate,
+        uniSelfCertified: !!data.uniSelfCertified,
         otherCertificationsUrl: otherCertUrlToUpdate,
+        otherCertificationsSelfCertified: !!data.otherCertificationsSelfCertified,
       };
 
       await updateUserProfile(user.uid, dataToUpdate);
@@ -275,8 +306,6 @@ export default function ProfessionalProfilePage() {
       setOtherCertPdfFile(null); if (otherCertInputRef.current) otherCertInputRef.current.value = "";
 
     } catch (error) {
-      // Toast for upload errors is handled in uploadFileAndGetURL
-      // General profile update error will be handled by updateUserProfile
     } finally {
       setIsUploadingImage(false);
       setImageUploadProgress(null);
@@ -304,30 +333,32 @@ export default function ProfessionalProfilePage() {
   if (!user || !userProfile || userProfile.role !== 'professional') {
     return <div className="text-center py-10">Profilo non trovato o non autorizzato.</div>;
   }
-
-  const renderFileUploadSection = (
-    title: string,
-    icon: React.ElementType,
-    fileState: File | null,
-    urlState: string | null,
-    progressState: number | null,
-    inputRef: React.RefObject<HTMLInputElement>,
-    handleChange: (event: React.ChangeEvent<HTMLInputElement>) => void
-  ) => {
+  
+  const CertificationSection = ({ certType, title, icon, fileState, progressState, inputRef, watchSelfCert, watchUrl }: {
+      certType: CertificationType;
+      title: string;
+      icon: React.ElementType;
+      fileState: File | null;
+      progressState: number | null;
+      inputRef: React.RefObject<HTMLInputElement>;
+      watchSelfCert?: boolean;
+      watchUrl?: string;
+  }) => {
     const IconComponent = icon;
-    const currentUrl = fileState ? null : urlState;
     const isUploadingThisFile = progressState !== null && progressState < 100;
+    const currentUrl = fileState ? null : watchUrl;
 
     return (
       <FormItem className="border p-4 rounded-md shadow-sm bg-muted/30">
         <FormLabel className="text-md font-semibold text-primary flex items-center">
           <IconComponent className="mr-2 h-5 w-5" /> {title}
         </FormLabel>
+        
         <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 mt-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()} disabled={isUploadingAnyFile}>
+          <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()} disabled={isUploadingAnyFile || watchSelfCert}>
             <Upload className="mr-2 h-4 w-4" /> {currentUrl || fileState ? 'Modifica PDF' : 'Carica PDF'}
           </Button>
-          <Input type="file" accept=".pdf" onChange={handleChange} className="hidden" ref={inputRef} disabled={isUploadingAnyFile} />
+          <Input type="file" accept=".pdf" onChange={(e) => handleGenericFileChange(e, certType === 'albo' ? setAlboPdfFile : certType === 'uni' ? setUniPdfFile : setOtherCertPdfFile, certType)} className="hidden" ref={inputRef} disabled={isUploadingAnyFile || watchSelfCert} />
           {fileState && (
             <span className="text-sm text-muted-foreground truncate max-w-xs">Selezionato: {fileState.name}</span>
           )}
@@ -338,21 +369,42 @@ export default function ProfessionalProfilePage() {
           )}
         </div>
         {isUploadingThisFile && progressState !== null && (
-          <div className="mt-2">
-            <Progress value={progressState} className="w-full h-1.5" />
-            <p className="text-xs text-muted-foreground mt-1">Caricamento: {Math.round(progressState)}%</p>
-          </div>
+          <div className="mt-2"><Progress value={progressState} className="w-full h-1.5" /><p className="text-xs text-muted-foreground mt-1">Caricamento: {Math.round(progressState)}%</p></div>
         )}
         {!isUploadingThisFile && progressState === 100 && fileState && (
            <p className="text-xs text-green-600 mt-1">Nuovo file "{fileState.name}" pronto. Clicca "Salva Profilo" per completare.</p>
         )}
-        <FormDescription className="text-xs mt-1">Max {MAX_PDF_SIZE_MB}MB (solo PDF). Il file verrà caricato e salvato cliccando su "Salva Profilo".</FormDescription>
+        <FormDescription className="text-xs mt-1">Max {MAX_PDF_SIZE_MB}MB (solo PDF).</FormDescription>
+        
+        <div className="flex items-center space-x-2 mt-4 pt-4 border-t border-border/50">
+           <FormField
+              control={form.control}
+              name={`${certType}SelfCertified`}
+              render={({ field }) => (
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`${certType}SelfCertified`}
+                    checked={field.value}
+                    onCheckedChange={(checked) => handleCertificationCheckboxChange(certType, !!checked)}
+                    disabled={isUploadingAnyFile || !!fileState || (!!watchUrl && !field.value) }
+                  />
+                  <label
+                    htmlFor={`${certType}SelfCertified`}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground"
+                  >
+                    In alternativa, autocertifico il possesso di questo requisito.
+                  </label>
+                </div>
+              )}
+            />
+        </div>
       </FormItem>
     );
   };
 
 
   return (
+    <>
     <div className="space-y-6">
       <Card className="shadow-xl">
         <CardHeader className="p-6 border-b">
@@ -403,7 +455,7 @@ export default function ProfessionalProfilePage() {
                             <Input
                                 type="file"
                                 accept="image/jpeg, image/png, image/webp"
-                                onChange={(e) => handleGenericFileChange(e, setProfileImageFile, setImagePreview, setImageUploadProgress, 'image', 2)}
+                                onChange={(e) => handleGenericFileChange(e, setProfileImageFile, 'image')}
                                 className="hidden"
                                 ref={profileImageInputRef}
                                 disabled={isUploadingAnyFile}
@@ -471,36 +523,40 @@ export default function ProfessionalProfilePage() {
                     placeholder="Indica i software che conosci"
                   />
                 </TabsContent>
-
+                
                 <TabsContent value="certifications" className="space-y-4">
-                  {renderFileUploadSection(
-                    "Iscrizione Albo Professionale (ove applicabile)",
-                    Award,
-                    alboPdfFile,
-                    alboPdfUrl,
-                    alboUploadProgress,
-                    alboInputRef,
-                    (e) => handleGenericFileChange(e, setAlboPdfFile, setAlboPdfUrl, setAlboUploadProgress, 'pdf', MAX_PDF_SIZE_MB)
-                  )}
-                  {renderFileUploadSection(
-                    "Certificazione UNI 11337 (o equivalenti)",
-                    BadgeCheck,
-                    uniPdfFile,
-                    uniPdfUrl,
-                    uniUploadProgress,
-                    uniInputRef,
-                    (e) => handleGenericFileChange(e, setUniPdfFile, setUniPdfUrl, setUniUploadProgress, 'pdf', MAX_PDF_SIZE_MB)
-                  )}
-                  {renderFileUploadSection(
-                    "Altre Certificazioni Rilevanti (es. Software Professionale Autodesk)",
-                    FileText,
-                    otherCertPdfFile,
-                    otherCertPdfUrl,
-                    otherCertUploadProgress,
-                    otherCertInputRef,
-                    (e) => handleGenericFileChange(e, setOtherCertPdfFile, setOtherCertPdfUrl, setOtherCertUploadProgress, 'pdf', MAX_PDF_SIZE_MB)
-                  )}
+                  <CertificationSection
+                    certType="albo"
+                    title="Iscrizione Albo Professionale (ove applicabile)"
+                    icon={Award}
+                    fileState={alboPdfFile}
+                    progressState={alboUploadProgress}
+                    inputRef={alboInputRef}
+                    watchSelfCert={form.watch('alboSelfCertified')}
+                    watchUrl={form.watch('alboRegistrationUrl')}
+                  />
+                  <CertificationSection
+                    certType="uni"
+                    title="Certificazione UNI 11337 (o equivalenti)"
+                    icon={BadgeCheck}
+                    fileState={uniPdfFile}
+                    progressState={uniUploadProgress}
+                    inputRef={uniInputRef}
+                    watchSelfCert={form.watch('uniSelfCertified')}
+                    watchUrl={form.watch('uniCertificationUrl')}
+                  />
+                  <CertificationSection
+                    certType="other"
+                    title="Altre Certificazioni Rilevanti"
+                    icon={FileText}
+                    fileState={otherCertPdfFile}
+                    progressState={otherCertUploadProgress}
+                    inputRef={otherCertInputRef}
+                    watchSelfCert={form.watch('otherCertificationsSelfCertified')}
+                    watchUrl={form.watch('otherCertificationsUrl')}
+                  />
                 </TabsContent>
+
 
                 <TabsContent value="links-rate" className="space-y-4">
                   <FormItem>
@@ -539,7 +595,28 @@ export default function ProfessionalProfilePage() {
         </CardContent>
       </Card>
     </div>
+    
+    <AlertDialog open={dialogState.isOpen} onOpenChange={(isOpen) => !isOpen && setDialogState({ isOpen: false, certType: null, onConfirm: () => {} })}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center"><ShieldAlert className="mr-2 h-6 w-6 text-yellow-500"/>Conferma Autocertificazione</AlertDialogTitle>
+            <AlertDialogDescription>
+                Stai per dichiarare di possedere la certificazione{" "}
+                <strong>
+                {dialogState.certType === 'albo' && 'di Iscrizione all\'Albo Professionale'}
+                {dialogState.certType === 'uni' && 'UNI 11337 (o equivalente)'}
+                {dialogState.certType === 'other' && 'rilevante per la professione'}
+                </strong>.
+                <br/><br/>
+                Questa è un&apos;autodichiarazione con valore legale. Assicurati che le informazioni siano veritiere e corrette.
+            </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDialogState({ isOpen: false, certType: null, onConfirm: () => {} })}>Annulla</AlertDialogCancel>
+            <AlertDialogAction onClick={dialogState.onConfirm}>Confermo e Accetto</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
-
-    

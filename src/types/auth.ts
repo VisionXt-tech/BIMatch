@@ -50,8 +50,11 @@ export interface ProfessionalProfile extends BaseUserProfile {
   linkedInProfile?: string;
   preferredProjectTypes?: string[];
   alboRegistrationUrl?: string; // URL to PDF
+  alboSelfCertified?: boolean;
   uniCertificationUrl?: string; // URL to PDF
-  otherCertificationsUrl?: string; // URL to PDF or a general link
+  uniSelfCertified?: boolean;
+  otherCertificationsUrl?: string; // URL to PDF
+  otherCertificationsSelfCertified?: boolean;
 }
 
 // Profile for Companies

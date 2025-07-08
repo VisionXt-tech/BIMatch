@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ROUTES, BIM_SKILLS_OPTIONS, EXPERIENCE_LEVEL_OPTIONS, AVAILABILITY_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS } from '@/constants';
-import { MapPin, User, Clock, Construction, Code2, Award, BadgeCheck, FileText } from 'lucide-react';
+import { MapPin, User, Clock, Construction, Code2, Award, BadgeCheck, FileText, ShieldCheck } from 'lucide-react';
 import Image from 'next/image';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -17,7 +17,7 @@ interface ProfessionalCardProps {
 const getInitials = (name: string | null | undefined) => {
   if (!name) return 'P';
   const names = name.split(' ');
-  if (names.length > 1 && names[0] && names[names.length -1]) {
+  if (names.length > 1 && names[0] && names[names.length - 1]) {
     return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
   }
   return name.substring(0, 2).toUpperCase();
@@ -26,7 +26,7 @@ const getInitials = (name: string | null | undefined) => {
 const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional }) => {
   const experienceLabel = EXPERIENCE_LEVEL_OPTIONS.find(opt => opt.value === professional.experienceLevel)?.label;
   const availabilityLabel = AVAILABILITY_OPTIONS.find(opt => opt.value === professional.availability)?.label;
-  const hasCertifications = professional.alboRegistrationUrl || professional.uniCertificationUrl || professional.otherCertificationsUrl;
+  const hasCertifications = professional.alboRegistrationUrl || professional.uniCertificationUrl || professional.otherCertificationsUrl || professional.alboSelfCertified || professional.uniSelfCertified || professional.otherCertificationsSelfCertified;
 
   return (
     <Card className="flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300">
@@ -48,40 +48,24 @@ const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional }) => 
              {hasCertifications && (
                 <div className="flex items-center space-x-1.5 mt-1">
                     {professional.alboRegistrationUrl && (
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                            <Badge variant="secondary" className="p-1 bg-blue-100/80 text-blue-800 border-blue-300/50 cursor-help">
-                                <Award className="h-3.5 w-3.5" />
-                            </Badge>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                            <p>Iscrizione Albo presente</p>
-                            </TooltipContent>
-                        </Tooltip>
+                        <Tooltip><TooltipTrigger asChild><Badge variant="secondary" className="p-1 bg-blue-100/80 text-blue-800 border-blue-300/50 cursor-help"><Award className="h-3.5 w-3.5" /></Badge></TooltipTrigger><TooltipContent><p>Iscrizione Albo (PDF)</p></TooltipContent></Tooltip>
                     )}
+                    {professional.alboSelfCertified && (
+                        <Tooltip><TooltipTrigger asChild><Badge variant="secondary" className="p-1 bg-blue-100/80 text-blue-800 border-blue-300/50 cursor-help"><ShieldCheck className="h-3.5 w-3.5" /></Badge></TooltipTrigger><TooltipContent><p>Iscrizione Albo (Autocertificata)</p></TooltipContent></Tooltip>
+                    )}
+
                     {professional.uniCertificationUrl && (
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                            <Badge variant="secondary" className="p-1 bg-green-100/80 text-green-800 border-green-300/50 cursor-help">
-                                <BadgeCheck className="h-3.5 w-3.5" />
-                            </Badge>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                            <p>Certificazione UNI presente</p>
-                            </TooltipContent>
-                        </Tooltip>
+                        <Tooltip><TooltipTrigger asChild><Badge variant="secondary" className="p-1 bg-green-100/80 text-green-800 border-green-300/50 cursor-help"><BadgeCheck className="h-3.5 w-3.5" /></Badge></TooltipTrigger><TooltipContent><p>Certificazione UNI (PDF)</p></TooltipContent></Tooltip>
                     )}
+                     {professional.uniSelfCertified && (
+                        <Tooltip><TooltipTrigger asChild><Badge variant="secondary" className="p-1 bg-green-100/80 text-green-800 border-green-300/50 cursor-help"><ShieldCheck className="h-3.5 w-3.5" /></Badge></TooltipTrigger><TooltipContent><p>Certificazione UNI (Autocertificata)</p></TooltipContent></Tooltip>
+                    )}
+
                     {professional.otherCertificationsUrl && (
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                            <Badge variant="secondary" className="p-1 bg-gray-100 text-gray-800 border-gray-300/50 cursor-help">
-                                <FileText className="h-3.5 w-3.5" />
-                            </Badge>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                            <p>Altre certificazioni presenti</p>
-                            </TooltipContent>
-                        </Tooltip>
+                        <Tooltip><TooltipTrigger asChild><Badge variant="secondary" className="p-1 bg-gray-100 text-gray-800 border-gray-300/50 cursor-help"><FileText className="h-3.5 w-3.5" /></Badge></TooltipTrigger><TooltipContent><p>Altre Certificazioni (PDF)</p></TooltipContent></Tooltip>
+                    )}
+                     {professional.otherCertificationsSelfCertified && (
+                        <Tooltip><TooltipTrigger asChild><Badge variant="secondary" className="p-1 bg-gray-100 text-gray-800 border-gray-300/50 cursor-help"><ShieldCheck className="h-3.5 w-3.5" /></Badge></TooltipTrigger><TooltipContent><p>Altre Certificazioni (Autocertificate)</p></TooltipContent></Tooltip>
                     )}
                 </div>
             )}
