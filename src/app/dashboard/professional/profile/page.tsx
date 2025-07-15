@@ -129,21 +129,18 @@ export default function ProfessionalProfilePage() {
 
   const form = useForm<ProfessionalProfileFormData>({
     resolver: zodResolver(professionalProfileSchema),
-    defaultValues: mapProfileToFormData(),
+    defaultValues: mapProfileToFormData(userProfile as FullProfessionalProfile),
   });
   
   useEffect(() => {
     if (userProfile && userProfile.role === 'professional') {
-        setLocalProfile(userProfile as FullProfessionalProfile);
+        const fullProfile = userProfile as FullProfessionalProfile;
+        setLocalProfile(fullProfile);
+        form.reset(mapProfileToFormData(fullProfile));
+        setImagePreview(fullProfile.photoURL || null);
     }
-  }, [userProfile]);
+  }, [userProfile, form]);
 
-  useEffect(() => {
-    if (localProfile) {
-      form.reset(mapProfileToFormData(localProfile));
-      setImagePreview(localProfile.photoURL || null);
-    }
-  }, [localProfile, form]);
   
   const handleCertificationCheckboxChange = (
     certType: CertificationType,
@@ -281,10 +278,9 @@ export default function ProfessionalProfilePage() {
         const userDocRef = doc(db, 'users', user.uid);
         await updateDoc(userDocRef, updatePayload);
 
-        // Update local state to trigger UI refresh
         const newLocalProfile = { ...localProfile };
-        delete newLocalProfile[urlToDeleteKey];
-        delete newLocalProfile[selfCertifiedKey];
+        delete (newLocalProfile as any)[urlToDeleteKey];
+        delete (newLocalProfile as any)[selfCertifiedKey];
         setLocalProfile(newLocalProfile);
         
         toast({ title: "Documento Eliminato", description: "Il documento è stato rimosso con successo." });
@@ -301,72 +297,64 @@ export default function ProfessionalProfilePage() {
 
   const onSubmit = async (data: ProfessionalProfileFormData) => {
     if (!user || !userProfile) {
-      toast({ title: "Errore", description: "Utente non autenticato.", variant: "destructive" });
-      return;
+        toast({ title: "Errore", description: "Utente non autenticato.", variant: "destructive" });
+        return;
     }
 
-    let photoURLToUpdate = (userProfile as FullProfessionalProfile).photoURL || '';
-    let alboUrlToUpdate = data.alboSelfCertified ? '' : (form.getValues('alboRegistrationUrl') || (userProfile as FullProfessionalProfile).alboRegistrationUrl || '');
-    let uniUrlToUpdate = data.uniSelfCertified ? '' : (form.getValues('uniCertificationUrl') || (userProfile as FullProfessionalProfile).uniCertificationUrl || '');
-    let otherCertUrlToUpdate = data.otherCertificationsSelfCertified ? '' : (form.getValues('otherCertificationsUrl') || (userProfile as FullProfessionalProfile).otherCertificationsUrl || '');
-
-
     setIsUploadingAnyFile(true);
+    let photoURLToUpdate = (userProfile as FullProfessionalProfile).photoURL || '';
+    let alboUrlToUpdate = (userProfile as FullProfessionalProfile).alboRegistrationUrl || '';
+    let uniUrlToUpdate = (userProfile as FullProfessionalProfile).uniCertificationUrl || '';
+    let otherCertUrlToUpdate = (userProfile as FullProfessionalProfile).otherCertificationsUrl || '';
 
     try {
-      if (profileImageFile && storage) {
-        setIsUploadingImage(true);
-        photoURLToUpdate = await uploadFileAndGetURL(profileImageFile, 'profileImages', setImageUploadProgress);
-        setIsUploadingImage(false);
-        setImagePreview(photoURLToUpdate); 
-      }
-      
-      if (alboPdfFile && storage && !data.alboSelfCertified) {
-        alboUrlToUpdate = await uploadFileAndGetURL(alboPdfFile, 'professionalCertifications/albo', setAlboUploadProgress);
-      }
-      if (uniPdfFile && storage && !data.uniSelfCertified) {
-        uniUrlToUpdate = await uploadFileAndGetURL(uniPdfFile, 'professionalCertifications/uni', setUniUploadProgress);
-      }
-      if (otherCertPdfFile && storage && !data.otherCertificationsSelfCertified) {
-        otherCertUrlToUpdate = await uploadFileAndGetURL(otherCertPdfFile, 'professionalCertifications/other', setOtherCertUploadProgress);
-      }
+        if (profileImageFile) {
+            setIsUploadingImage(true);
+            photoURLToUpdate = await uploadFileAndGetURL(profileImageFile, 'profileImages', setImageUploadProgress);
+            setIsUploadingImage(false);
+        }
+        if (alboPdfFile) {
+            alboUrlToUpdate = await uploadFileAndGetURL(alboPdfFile, 'professionalCertifications/albo', setAlboUploadProgress);
+        }
+        if (uniPdfFile) {
+            uniUrlToUpdate = await uploadFileAndGetURL(uniPdfFile, 'professionalCertifications/uni', setUniUploadProgress);
+        }
+        if (otherCertPdfFile) {
+            otherCertUrlToUpdate = await uploadFileAndGetURL(otherCertPdfFile, 'professionalCertifications/other', setOtherCertUploadProgress);
+        }
 
-      const updatedDisplayName = `${data.firstName || (userProfile as FullProfessionalProfile).firstName || ''} ${data.lastName || (userProfile as FullProfessionalProfile).lastName || ''}`.trim();
-      
-      const dataToUpdate : Partial<FullProfessionalProfile> = {
-        ...data,
-        displayName: updatedDisplayName || userProfile.displayName,
-        photoURL: photoURLToUpdate,
-        monthlyRate: data.monthlyRate === undefined || data.monthlyRate === null || String(data.monthlyRate).trim() === '' ? null : Number(data.monthlyRate),
-        alboRegistrationUrl: alboUrlToUpdate,
-        alboSelfCertified: !!data.alboSelfCertified,
-        uniCertificationUrl: uniUrlToUpdate,
-        uniSelfCertified: !!data.uniSelfCertified,
-        otherCertificationsUrl: otherCertUrlToUpdate,
-        otherCertificationsSelfCertified: !!data.otherCertificationsSelfCertified,
-      };
+        const dataToUpdate: Partial<FullProfessionalProfile> = {
+            ...data,
+            displayName: `${data.firstName || ''} ${data.lastName || ''}`.trim(),
+            photoURL: photoURLToUpdate,
+            monthlyRate: data.monthlyRate === undefined || data.monthlyRate === null ? null : Number(data.monthlyRate),
+            alboRegistrationUrl: data.alboSelfCertified ? undefined : alboUrlToUpdate,
+            uniCertificationUrl: data.uniSelfCertified ? undefined : uniUrlToUpdate,
+            otherCertificationsUrl: data.otherCertificationsSelfCertified ? undefined : otherCertUrlToUpdate,
+        };
 
-      const updatedProfile = await updateUserProfile(user.uid, dataToUpdate);
-      if (updatedProfile) {
-        setLocalProfile(updatedProfile as FullProfessionalProfile);
-      }
-      
+        await updateUserProfile(user.uid, dataToUpdate);
+        
+        toast({ title: "Profilo Aggiornato", description: "Le modifiche sono state salvate con successo." });
+        
+        setProfileImageFile(null);
+        setAlboPdfFile(null);
+        setUniPdfFile(null);
+        setOtherCertPdfFile(null);
+        if (profileImageInputRef.current) profileImageInputRef.current.value = "";
+        if (alboInputRef.current) alboInputRef.current.value = "";
+        if (uniInputRef.current) uniInputRef.current.value = "";
+        if (otherCertInputRef.current) otherCertInputRef.current.value = "";
 
-      toast({ title: "Profilo Aggiornato", description: "Le modifiche sono state salvate con successo." });
-      
-      setProfileImageFile(null); if (profileImageInputRef.current) profileImageInputRef.current.value = "";
-      setAlboPdfFile(null); if (alboInputRef.current) alboInputRef.current.value = "";
-      setUniPdfFile(null); if (uniInputRef.current) uniInputRef.current.value = "";
-      setOtherCertPdfFile(null); if (otherCertInputRef.current) otherCertInputRef.current.value = "";
-
-    } catch (error) {
+    } catch (error: any) {
+        console.error("Error submitting profile update:", error);
     } finally {
-      setIsUploadingImage(false);
-      setImageUploadProgress(null);
-      setAlboUploadProgress(null);
-      setUniUploadProgress(null);
-      setOtherCertUploadProgress(null);
-      setIsUploadingAnyFile(false);
+        setIsUploadingImage(false);
+        setIsUploadingAnyFile(false);
+        setImageUploadProgress(null);
+        setAlboUploadProgress(null);
+        setUniUploadProgress(null);
+        setOtherCertUploadProgress(null);
     }
   };
 
@@ -399,7 +387,7 @@ export default function ProfessionalProfilePage() {
   }) => {
     const IconComponent = icon;
     const isUploadingThisFile = progressState !== null && progressState < 100;
-    const currentUrl = form.watch(`${certType}RegistrationUrl`);
+    const currentUrl = localProfile?.[`${certType}RegistrationUrl` as keyof FullProfessionalProfile] as string | undefined;
     const selfCertified = form.watch(`${certType}SelfCertified`);
     const hasExistingFile = !!currentUrl;
     const hasPendingFile = !!fileState;
@@ -412,9 +400,9 @@ export default function ProfessionalProfilePage() {
         
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-2">
           <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()} disabled={isUploadingAnyFile || selfCertified}>
-            <Upload className="mr-2 h-4 w-4" /> {currentUrl ? 'Modifica PDF' : 'Carica PDF'}
+            <Upload className="mr-2 h-4 w-4" /> {hasExistingFile ? 'Modifica PDF' : 'Carica PDF'}
           </Button>
-          {currentUrl && (
+          {hasExistingFile && (
             <Button
               type="button"
               variant="destructive"
@@ -712,5 +700,3 @@ export default function ProfessionalProfilePage() {
     </>
   );
 }
-
-    
