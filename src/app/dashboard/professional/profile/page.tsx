@@ -9,7 +9,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Save, UserCircle2, Upload, FileText, Link as LinkIcon, BadgeCheck, Award, ShieldAlert, Trash2, Loader2, ShieldCheck } from 'lucide-react';
+import { Save, UserCircle2, Upload, FileText, Link as LinkIcon, Award, Trash2, Loader2, ShieldCheck, BadgeCheck } from 'lucide-react';
 import type { ProfessionalProfile as FullProfessionalProfile } from '@/types/auth';
 import { FormInput, FormTextarea, FormMultiSelect, FormSingleSelect } from '@/components/ProfileFormElements';
 import { BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, AVAILABILITY_OPTIONS, ITALIAN_REGIONS, EXPERIENCE_LEVEL_OPTIONS } from '@/constants';
@@ -99,6 +99,8 @@ export default function ProfessionalProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
   const { db, storage } = useFirebase();
+  
+  const [localProfile, setLocalProfile] = useState<FullProfessionalProfile | null>(null);
 
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -130,19 +132,18 @@ export default function ProfessionalProfilePage() {
     defaultValues: mapProfileToFormData(),
   });
   
-  const syncFormWithProfile = useCallback((profile: FullProfessionalProfile | null) => {
-    if (profile) {
-      const defaultValues = mapProfileToFormData(profile);
-      form.reset(defaultValues);
-      setImagePreview(profile.photoURL || null);
-    }
-  }, [form]);
-
   useEffect(() => {
     if (userProfile && userProfile.role === 'professional') {
-      syncFormWithProfile(userProfile as FullProfessionalProfile);
+        setLocalProfile(userProfile as FullProfessionalProfile);
     }
-  }, [userProfile, syncFormWithProfile]);
+  }, [userProfile]);
+
+  useEffect(() => {
+    if (localProfile) {
+      form.reset(mapProfileToFormData(localProfile));
+      setImagePreview(localProfile.photoURL || null);
+    }
+  }, [localProfile, form]);
   
   const handleCertificationCheckboxChange = (
     certType: CertificationType,
@@ -248,7 +249,7 @@ export default function ProfessionalProfilePage() {
 
   const handleConfirmDeleteCertification = async () => {
     const certType = deleteDialogState.certType;
-    if (!certType || !user || !userProfile || !storage || !db) {
+    if (!certType || !user || !localProfile || !storage || !db) {
         toast({ title: "Errore", description: "Impossibile procedere: dati mancanti.", variant: "destructive" });
         setDeleteDialogState({ isOpen: false, certType: null });
         return;
@@ -258,7 +259,7 @@ export default function ProfessionalProfilePage() {
     try {
         const urlToDeleteKey = `${certType}RegistrationUrl` as keyof FullProfessionalProfile;
         const selfCertifiedKey = `${certType}SelfCertified` as keyof FullProfessionalProfile;
-        const urlToDelete = (userProfile as FullProfessionalProfile)[urlToDeleteKey] as string | undefined;
+        const urlToDelete = localProfile[urlToDeleteKey] as string | undefined;
 
         if (urlToDelete) {
             try {
@@ -280,9 +281,12 @@ export default function ProfessionalProfilePage() {
         const userDocRef = doc(db, 'users', user.uid);
         await updateDoc(userDocRef, updatePayload);
 
-        const updatedProfile = await updateUserProfile(user.uid, {}); // Fetch latest profile
-        syncFormWithProfile(updatedProfile); // Sync form with fresh data
-
+        // Update local state to trigger UI refresh
+        const newLocalProfile = { ...localProfile };
+        delete newLocalProfile[urlToDeleteKey];
+        delete newLocalProfile[selfCertifiedKey];
+        setLocalProfile(newLocalProfile);
+        
         toast({ title: "Documento Eliminato", description: "Il documento è stato rimosso con successo." });
 
     } catch (error: any) {
@@ -343,7 +347,10 @@ export default function ProfessionalProfilePage() {
       };
 
       const updatedProfile = await updateUserProfile(user.uid, dataToUpdate);
-      syncFormWithProfile(updatedProfile);
+      if (updatedProfile) {
+        setLocalProfile(updatedProfile as FullProfessionalProfile);
+      }
+      
 
       toast({ title: "Profilo Aggiornato", description: "Le modifiche sono state salvate con successo." });
       
@@ -373,28 +380,27 @@ export default function ProfessionalProfilePage() {
   };
 
 
-  if (authLoading && !userProfile) {
+  if (authLoading && !localProfile) {
     return <div className="text-center py-10">Caricamento profilo...</div>;
   }
 
-  if (!user || !userProfile || userProfile.role !== 'professional') {
+  if (!user || !localProfile || localProfile.role !== 'professional') {
     return <div className="text-center py-10">Profilo non trovato o non autorizzato.</div>;
   }
   
-  const CertificationSection = ({ certType, title, icon, fileState, progressState, inputRef, watchSelfCert, watchUrl, onDelete }: {
+  const CertificationSection = ({ certType, title, icon, fileState, progressState, inputRef, onDelete }: {
       certType: CertificationType;
       title: string;
       icon: React.ElementType;
       fileState: File | null;
       progressState: number | null;
       inputRef: React.RefObject<HTMLInputElement>;
-      watchSelfCert?: boolean;
-      watchUrl?: string;
       onDelete: (certType: CertificationType) => void;
   }) => {
     const IconComponent = icon;
     const isUploadingThisFile = progressState !== null && progressState < 100;
-    const currentUrl = watchUrl;
+    const currentUrl = form.watch(`${certType}RegistrationUrl`);
+    const selfCertified = form.watch(`${certType}SelfCertified`);
     const hasExistingFile = !!currentUrl;
     const hasPendingFile = !!fileState;
 
@@ -405,7 +411,7 @@ export default function ProfessionalProfilePage() {
         </FormLabel>
         
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()} disabled={isUploadingAnyFile || watchSelfCert}>
+          <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()} disabled={isUploadingAnyFile || selfCertified}>
             <Upload className="mr-2 h-4 w-4" /> {currentUrl ? 'Modifica PDF' : 'Carica PDF'}
           </Button>
           {currentUrl && (
@@ -415,7 +421,7 @@ export default function ProfessionalProfilePage() {
               size="sm"
               className="h-8 px-2 py-1 text-xs"
               onClick={() => onDelete(certType)}
-              disabled={isUploadingAnyFile || watchSelfCert}
+              disabled={isUploadingAnyFile || selfCertified}
             >
               <Trash2 className="mr-1.5 h-3.5 w-3.5" />
               Elimina PDF
@@ -498,8 +504,8 @@ export default function ProfessionalProfilePage() {
                       <FormLabel className="text-sm font-semibold text-primary">Immagine del Profilo</FormLabel>
                       <div className="flex items-center space-x-4 pt-2">
                         <Avatar className="h-24 w-24 border">
-                            <AvatarImage src={imagePreview || undefined} alt={(userProfile as FullProfessionalProfile).displayName || 'User'} data-ai-hint="profile person" />
-                            <AvatarFallback className="text-3xl">{getInitials((userProfile as FullProfessionalProfile).displayName)}</AvatarFallback>
+                            <AvatarImage src={imagePreview || undefined} alt={localProfile.displayName || 'User'} data-ai-hint="profile person" />
+                            <AvatarFallback className="text-3xl">{getInitials(localProfile.displayName)}</AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col space-y-2">
                             <Button
@@ -602,8 +608,6 @@ export default function ProfessionalProfilePage() {
                     fileState={alboPdfFile}
                     progressState={alboUploadProgress}
                     inputRef={alboInputRef}
-                    watchSelfCert={form.watch('alboSelfCertified')}
-                    watchUrl={form.watch('alboRegistrationUrl')}
                     onDelete={openDeleteConfirmation}
                   />
                   <CertificationSection
@@ -613,8 +617,6 @@ export default function ProfessionalProfilePage() {
                     fileState={uniPdfFile}
                     progressState={uniUploadProgress}
                     inputRef={uniInputRef}
-                    watchSelfCert={form.watch('uniSelfCertified')}
-                    watchUrl={form.watch('uniCertificationUrl')}
                     onDelete={openDeleteConfirmation}
                   />
                   <CertificationSection
@@ -624,8 +626,6 @@ export default function ProfessionalProfilePage() {
                     fileState={otherCertPdfFile}
                     progressState={otherCertUploadProgress}
                     inputRef={otherCertInputRef}
-                    watchSelfCert={form.watch('otherCertificationsSelfCertified')}
-                    watchUrl={form.watch('otherCertificationsUrl')}
                     onDelete={openDeleteConfirmation}
                   />
                 </TabsContent>
@@ -672,7 +672,7 @@ export default function ProfessionalProfilePage() {
     <AlertDialog open={certDialogState.isOpen} onOpenChange={(isOpen) => !isOpen && setCertDialogState({ isOpen: false, certType: null, onConfirm: () => {} })}>
         <AlertDialogContent>
             <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center"><ShieldAlert className="mr-2 h-6 w-6 text-yellow-500"/>Conferma Autocertificazione</AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center"><ShieldCheck className="mr-2 h-6 w-6 text-yellow-500"/>Conferma Autocertificazione</AlertDialogTitle>
             <AlertDialogDescription>
                 Stai per dichiarare di possedere la certificazione{" "}
                 <strong>
@@ -712,3 +712,5 @@ export default function ProfessionalProfilePage() {
     </>
   );
 }
+
+    
