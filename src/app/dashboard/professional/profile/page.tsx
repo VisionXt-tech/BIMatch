@@ -13,7 +13,7 @@ import { Save, UserCircle2, Upload, FileText, Link as LinkIcon, BadgeCheck, Awar
 import type { ProfessionalProfile as FullProfessionalProfile } from '@/types/auth';
 import { FormInput, FormTextarea, FormMultiSelect, FormSingleSelect } from '@/components/ProfileFormElements';
 import { BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, AVAILABILITY_OPTIONS, ITALIAN_REGIONS, EXPERIENCE_LEVEL_OPTIONS } from '@/constants';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject, type FirebaseStorageError } from 'firebase/storage';
 import { useFirebase } from '@/contexts/FirebaseContext';
@@ -129,14 +129,20 @@ export default function ProfessionalProfilePage() {
     resolver: zodResolver(professionalProfileSchema),
     defaultValues: mapProfileToFormData(),
   });
+  
+  const syncFormWithProfile = useCallback((profile: FullProfessionalProfile | null) => {
+    if (profile) {
+      const defaultValues = mapProfileToFormData(profile);
+      form.reset(defaultValues);
+      setImagePreview(profile.photoURL || null);
+    }
+  }, [form]);
 
   useEffect(() => {
     if (userProfile && userProfile.role === 'professional') {
-      const defaultValuesForForm = mapProfileToFormData(userProfile as FullProfessionalProfile);
-      form.reset(defaultValuesForForm);
-      setImagePreview(userProfile.photoURL || null);
+      syncFormWithProfile(userProfile as FullProfessionalProfile);
     }
-  }, [userProfile, form]);
+  }, [userProfile, syncFormWithProfile]);
   
   const handleCertificationCheckboxChange = (
     certType: CertificationType,
@@ -255,12 +261,12 @@ export default function ProfessionalProfilePage() {
         const urlToDelete = (userProfile as FullProfessionalProfile)[urlToDeleteKey] as string | undefined;
 
         if (urlToDelete) {
-            const fileRef = storageRef(storage, urlToDelete);
             try {
+                const fileRef = storageRef(storage, urlToDelete);
                 await deleteObject(fileRef);
             } catch (error: any) {
                 if (error.code !== 'storage/object-not-found') {
-                    throw new Error(`Errore durante l'eliminazione del file dallo storage: ${error.message}`);
+                    throw error;
                 }
                 console.warn(`File non trovato nello storage (già eliminato?): ${urlToDelete}`);
             }
@@ -270,16 +276,13 @@ export default function ProfessionalProfilePage() {
           [urlToDeleteKey]: deleteField(),
           [selfCertifiedKey]: deleteField(),
         };
-
-        await updateUserProfile(user.uid, updatePayload);
-
-        const fileInputRef = certType === 'albo' ? alboInputRef : certType === 'uni' ? uniInputRef : otherCertInputRef;
-        if (fileInputRef.current) fileInputRef.current.value = "";
         
-        if (certType === 'albo') setAlboPdfFile(null);
-        if (certType === 'uni') setUniPdfFile(null);
-        if (certType === 'other') setOtherCertPdfFile(null);
-        
+        const userDocRef = doc(db, 'users', user.uid);
+        await updateDoc(userDocRef, updatePayload);
+
+        const updatedProfile = await updateUserProfile(user.uid, {}); // Fetch latest profile
+        syncFormWithProfile(updatedProfile); // Sync form with fresh data
+
         toast({ title: "Documento Eliminato", description: "Il documento è stato rimosso con successo." });
 
     } catch (error: any) {
@@ -339,7 +342,8 @@ export default function ProfessionalProfilePage() {
         otherCertificationsSelfCertified: !!data.otherCertificationsSelfCertified,
       };
 
-      await updateUserProfile(user.uid, dataToUpdate);
+      const updatedProfile = await updateUserProfile(user.uid, dataToUpdate);
+      syncFormWithProfile(updatedProfile);
 
       toast({ title: "Profilo Aggiornato", description: "Le modifiche sono state salvate con successo." });
       
@@ -391,7 +395,8 @@ export default function ProfessionalProfilePage() {
     const IconComponent = icon;
     const isUploadingThisFile = progressState !== null && progressState < 100;
     const currentUrl = watchUrl;
-    const hasExistingFile = !!currentUrl || !!fileState;
+    const hasExistingFile = !!currentUrl;
+    const hasPendingFile = !!fileState;
 
     return (
       <FormItem className="border p-4 rounded-md shadow-sm bg-muted/30">
@@ -419,10 +424,10 @@ export default function ProfessionalProfilePage() {
         </div>
         
         <div className="mt-2 text-sm text-muted-foreground">
-          {fileState && (
+          {hasPendingFile && (
             <span className="truncate max-w-xs block">Selezionato: {fileState.name}</span>
           )}
-          {!fileState && currentUrl && (
+          {!hasPendingFile && hasExistingFile && (
             <Link href={currentUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center">
               <LinkIcon className="mr-1 h-4 w-4" /> Visualizza PDF Caricato
             </Link>
@@ -432,7 +437,7 @@ export default function ProfessionalProfilePage() {
         {isUploadingThisFile && progressState !== null && (
           <div className="mt-2"><Progress value={progressState} className="w-full h-1.5" /><p className="text-xs text-muted-foreground mt-1">Caricamento: {Math.round(progressState)}%</p></div>
         )}
-        {!isUploadingThisFile && progressState === 100 && fileState && (
+        {hasPendingFile && (
            <p className="text-xs text-green-600 mt-1">Nuovo file "{fileState.name}" pronto. Clicca "Salva Profilo" per completare.</p>
         )}
         <FormDescription className="text-xs mt-1">Max {MAX_PDF_SIZE_MB}MB (solo PDF).</FormDescription>
@@ -447,7 +452,7 @@ export default function ProfessionalProfilePage() {
                     id={`${certType}SelfCertified`}
                     checked={field.value}
                     onCheckedChange={(checked) => handleCertificationCheckboxChange(certType, !!checked)}
-                    disabled={isUploadingAnyFile || hasExistingFile }
+                    disabled={isUploadingAnyFile || hasExistingFile || hasPendingFile }
                   />
                   <label
                     htmlFor={`${certType}SelfCertified`}
@@ -586,6 +591,10 @@ export default function ProfessionalProfilePage() {
                 </TabsContent>
                 
                 <TabsContent value="certifications" className="space-y-4">
+                   <Input type="file" className="hidden" ref={alboInputRef} accept="application/pdf" onChange={(e) => handleGenericFileChange(e, setAlboPdfFile, 'albo')} />
+                   <Input type="file" className="hidden" ref={uniInputRef} accept="application/pdf" onChange={(e) => handleGenericFileChange(e, setUniPdfFile, 'uni')} />
+                   <Input type="file" className="hidden" ref={otherCertInputRef} accept="application/pdf" onChange={(e) => handleGenericFileChange(e, setOtherCertPdfFile, 'other')} />
+
                   <CertificationSection
                     certType="albo"
                     title="Iscrizione Albo Professionale (ove applicabile)"
@@ -703,5 +712,3 @@ export default function ProfessionalProfilePage() {
     </>
   );
 }
-
-    
