@@ -152,7 +152,7 @@ export default function ProfessionalProfilePage() {
           if (certType === 'albo') setAlboPdfFile(null);
           if (certType === 'uni') setUniPdfFile(null);
           if (certType === 'other') setOtherCertPdfFile(null);
-          form.setValue(`${certType}RegistrationUrl`, '');
+          form.setValue(`${certType === 'albo' ? 'alboRegistrationUrl' : certType === 'uni' ? 'uniCertificationUrl' : 'otherCertificationsUrl'}`, '');
           setCertDialogState({ isOpen: false, certType: null, onConfirm: () => {} });
         },
       });
@@ -251,8 +251,20 @@ export default function ProfessionalProfilePage() {
 
     setIsDeletingFile(true);
     try {
-        const urlToDeleteKey = `${certType}RegistrationUrl` as keyof FullProfessionalProfile;
-        const selfCertifiedKey = `${certType}SelfCertified` as keyof FullProfessionalProfile;
+        const urlKeyMap: Record<CertificationType, keyof FullProfessionalProfile> = {
+            albo: 'alboRegistrationUrl',
+            uni: 'uniCertificationUrl',
+            other: 'otherCertificationsUrl'
+        };
+        const selfCertifiedKeyMap: Record<CertificationType, keyof FullProfessionalProfile> = {
+            albo: 'alboSelfCertified',
+            uni: 'uniSelfCertified',
+            other: 'otherCertificationsSelfCertified'
+        };
+
+        const urlToDeleteKey = urlKeyMap[certType];
+        const selfCertifiedKey = selfCertifiedKeyMap[certType];
+
         const urlToDelete = (userProfile as FullProfessionalProfile)[urlToDeleteKey] as string | undefined;
 
         if (urlToDelete) {
@@ -273,6 +285,7 @@ export default function ProfessionalProfilePage() {
         };
         
         await updateUserProfile(user.uid, updatePayload);
+        await form.trigger(); // Re-validate the form after deletion
         
         toast({ title: "Documento Eliminato", description: "Il documento è stato rimosso con successo." });
 
@@ -378,7 +391,14 @@ export default function ProfessionalProfilePage() {
   }) => {
     const IconComponent = icon;
     const isUploadingThisFile = progressState !== null && progressState < 100;
-    const currentUrl = (userProfile as FullProfessionalProfile)?.[`${certType}RegistrationUrl` as keyof FullProfessionalProfile] as string | undefined;
+
+    const urlKeyMap: Record<CertificationType, keyof FullProfessionalProfile> = {
+        albo: 'alboRegistrationUrl',
+        uni: 'uniCertificationUrl',
+        other: 'otherCertificationsUrl'
+    };
+    const urlKey = urlKeyMap[certType];
+    const currentUrl = (userProfile as FullProfessionalProfile)?.[urlKey] as string | undefined;
     const selfCertified = form.watch(`${certType}SelfCertified`);
     const hasExistingFile = !!currentUrl;
     const hasPendingFile = !!fileState;
@@ -691,5 +711,3 @@ export default function ProfessionalProfilePage() {
     </>
   );
 }
-
-    
