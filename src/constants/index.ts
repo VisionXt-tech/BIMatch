@@ -14,14 +14,18 @@ export const ROUTES = {
   DASHBOARD_COMPANY_POST_PROJECT: '/dashboard/company/post-project',
   DASHBOARD_COMPANY_PROJECTS: '/dashboard/company/projects',
   DASHBOARD_COMPANY_CANDIDATES: '/dashboard/company/candidates', // To view candidates for a project
-  DASHBOARD_COMPANY_NOTIFICATIONS: '/dashboard/company/notifications', // New route for company notifications
+  DASHBOARD_COMPANY_NOTIFICATIONS: '/dashboard/company/notifications',
   PROFESSIONALS_MARKETPLACE: '/professionals', 
   PROJECT_DETAILS: (id: string) => `/projects/${id}`,
   PROFESSIONAL_PROFILE_VIEW: (id: string) => `/professionals/${id}`, 
   TERMS_OF_SERVICE: '/terms-of-service',
   PRIVACY_POLICY: '/privacy-policy',
   HOW_IT_WORKS: '/how-it-works',
-  FAQ: '/faq', // New FAQ route
+  FAQ: '/faq',
+  // Admin Routes
+  DASHBOARD_ADMIN: '/dashboard/admin',
+  DASHBOARD_ADMIN_USERS: '/dashboard/admin/users',
+  DASHBOARD_ADMIN_PROJECTS: '/dashboard/admin/projects',
 };
 
 export const ROLES = {
@@ -131,7 +135,7 @@ export const NOTIFICATION_TYPES = {
 };
 
 // Moved from dashboard/layout.tsx
-import { LogOut, User, Briefcase, LayoutDashboard, FolderPlus, Building, Search, Users, Bell, type LucideIcon, HelpCircle as FaqIcon } from 'lucide-react';
+import { LogOut, User, Briefcase, LayoutDashboard, FolderPlus, Building, Search, Users, Bell, type LucideIcon, HelpCircle as FaqIcon, Shield } from 'lucide-react';
 
 interface NavItem {
   href: string;
@@ -153,4 +157,10 @@ export const CompanyNavItems: NavItem[] = [
   { href: ROUTES.DASHBOARD_COMPANY_PROJECTS, label: 'Progetti', icon: Briefcase },
   // { href: ROUTES.PROFESSIONALS_MARKETPLACE, label: 'Cerca Professionisti', icon: Users }, // Already in Navbar, maybe remove from here if dashboard specific
   { href: ROUTES.DASHBOARD_COMPANY_NOTIFICATIONS, label: 'Notifiche', icon: Bell },
+];
+
+export const AdminNavItems: NavItem[] = [
+    { href: ROUTES.DASHBOARD_ADMIN, label: 'Dashboard', icon: Shield },
+    { href: ROUTES.DASHBOARD_ADMIN_USERS, label: 'Utenti', icon: Users },
+    { href: ROUTES.DASHBOARD_ADMIN_PROJECTS, label: 'Progetti', icon: Briefcase },
 ];

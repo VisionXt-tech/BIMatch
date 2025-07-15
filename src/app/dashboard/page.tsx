@@ -15,8 +15,10 @@ export default function DashboardRedirectPage() {
         router.replace(ROUTES.DASHBOARD_PROFESSIONAL);
       } else if (userProfile.role === ROLES.COMPANY) {
         router.replace(ROUTES.DASHBOARD_COMPANY);
+      } else if (userProfile.role === ROLES.ADMIN) {
+        router.replace(ROUTES.DASHBOARD_ADMIN);
       } else {
-        // Fallback or for other roles like admin, if implemented
+        // Fallback or for other roles
         router.replace(ROUTES.HOME);
       }
     } else if (!loading && !userProfile) {

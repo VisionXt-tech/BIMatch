@@ -13,9 +13,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, User, LayoutDashboard, Briefcase, Building, Search, Menu, HelpCircle } from 'lucide-react';
+import { LogOut, User, LayoutDashboard, Briefcase, Building, Search, Menu, HelpCircle, Shield } from 'lucide-react';
 import Logo from './Logo';
-import { ROUTES, ROLES, ProfessionalNavItems, CompanyNavItems } from '@/constants';
+import { ROUTES, ROLES, ProfessionalNavItems, CompanyNavItems, AdminNavItems } from '@/constants';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
@@ -73,12 +73,18 @@ const Navbar = () => {
     await logout();
   };
 
-  const dashboardLink = userProfile?.role === ROLES.PROFESSIONAL ? ROUTES.DASHBOARD_PROFESSIONAL : ROUTES.DASHBOARD_COMPANY;
+  const dashboardLink = userProfile?.role === ROLES.PROFESSIONAL 
+    ? ROUTES.DASHBOARD_PROFESSIONAL 
+    : userProfile?.role === ROLES.COMPANY
+    ? ROUTES.DASHBOARD_COMPANY
+    : ROUTES.DASHBOARD_ADMIN;
 
   const activeRoleNavItems = userProfile?.role === ROLES.PROFESSIONAL
     ? ProfessionalNavItems
     : userProfile?.role === ROLES.COMPANY
     ? CompanyNavItems
+    : userProfile?.role === ROLES.ADMIN
+    ? AdminNavItems
     : [];
 
   const NavLinks = ({ mobile = false }: { mobile?: boolean }) => (
@@ -94,7 +100,7 @@ const Navbar = () => {
             asChild
             className={cn(
               "justify-start text-sm",
-              pathname === item.href ? "font-semibold text-primary bg-accent/50" : "text-muted-foreground hover:text-foreground",
+              pathname.startsWith(item.href) ? "font-semibold text-primary bg-accent/50" : "text-muted-foreground hover:text-foreground",
               mobile ? "w-full" : "px-2 lg:px-3 h-9"
             )}
             onClick={() => mobile && setIsMobileMenuOpen(false)}
@@ -130,6 +136,15 @@ const Navbar = () => {
                       </Link>
                   </Button>
               )}
+              
+              {userProfile?.role === ROLES.ADMIN && (
+                   <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex">
+                      <Link href={ROUTES.DASHBOARD_ADMIN}>
+                          <Shield className="mr-2 h-4 w-4" />Pannello Admin
+                      </Link>
+                  </Button>
+              )}
+
 
               {user && userProfile && isDashboardPageForContent && (
                 <div className="hidden md:flex items-center space-x-1">
@@ -137,8 +152,7 @@ const Navbar = () => {
                 </div>
               )}
               
-              {/* Pulsante "Vai alla Dashboard" visibile nella home e altre pagine se loggato */}
-              {user && userProfile && !isDashboardPageForContent && (
+              {user && userProfile && !isDashboardPageForContent && userProfile.role !== ROLES.ADMIN && (
                 <Button variant="outline" size="sm" asChild className="hidden md:inline-flex">
                   <Link href={dashboardLink}>
                     <LayoutDashboard className="mr-2 h-4 w-4" />
@@ -169,19 +183,28 @@ const Navbar = () => {
                         </div>
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      {/* Opzione per tornare alla dashboard se non si è già lì */}
-                      {!isDashboardPageForContent && (
+                      
+                      {userProfile.role === ROLES.ADMIN && (
+                        <DropdownMenuItem onClick={() => router.push(ROUTES.DASHBOARD_ADMIN)}>
+                           <Shield className="mr-2 h-4 w-4" />
+                           <span>Pannello Admin</span>
+                         </DropdownMenuItem>
+                      )}
+
+                      {!isDashboardPageForContent && userProfile.role !== ROLES.ADMIN && (
                          <DropdownMenuItem onClick={() => router.push(dashboardLink)}>
                            <LayoutDashboard className="mr-2 h-4 w-4" />
                            <span>Vai alla Dashboard</span>
                          </DropdownMenuItem>
                       )}
+
                       {isDashboardPageForContent && activeRoleNavItems.filter(item => item.href !== dashboardLink).map(item => (
                          <DropdownMenuItem key={`dropdown-${item.href}`} onClick={() => router.push(item.href)} className="md:hidden">
                            <item.icon className="mr-2 h-4 w-4" />
                            <span>{item.label}</span>
                          </DropdownMenuItem>
                       ))}
+
                        {isDashboardPageForContent && userProfile.role === ROLES.COMPANY && (
                          <DropdownMenuItem onClick={() => router.push(ROUTES.PROFESSIONALS_MARKETPLACE)} className="md:hidden">
                            <Search className="mr-2 h-4 w-4" />
