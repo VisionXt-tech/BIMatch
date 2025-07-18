@@ -58,14 +58,11 @@ export default function LoginPage() {
     setIsResettingPassword(true);
     const emailFromForm = form.getValues("email");
     let userEmailToReset = emailFromForm;
-    console.log("Attempting password reset for:", userEmailToReset);
 
     if (!userEmailToReset) {
       userEmailToReset = window.prompt("Inserisci la tua email per reimpostare la password:");
-      console.log("Email from prompt:", userEmailToReset);
     } else {
       const confirmReset = window.confirm(`Vuoi inviare un'email di reset password a ${userEmailToReset}?`);
-      console.log("Confirmation for reset:", confirmReset);
       if (!confirmReset) {
         setIsResettingPassword(false);
         return;
