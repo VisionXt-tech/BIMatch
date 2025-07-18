@@ -2,6 +2,7 @@
 import type { Metadata, ResolvingMetadata } from 'next';
 import type { ReactNode } from 'react';
 import { BIM_SKILLS_OPTIONS, ITALIAN_REGIONS, EXPERIENCE_LEVEL_OPTIONS } from '@/constants';
+import React from 'react';
 
 // Helper to get label for a filter value
 const getLabel = (options: { value: string; label: string }[], value?: string): string | undefined => {
@@ -16,20 +17,27 @@ type ProfessionalsLayoutMetadataProps = {
 };
 
 export async function generateMetadata(
-  { searchParams }: ProfessionalsLayoutMetadataProps, // `params` is implicitly passed by Next.js but we don't use it here.
-                                                    // The type helps signal its expected structure.
+  { searchParams }: ProfessionalsLayoutMetadataProps,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
+  // Use React.use to safely access searchParams in Server Components
+  const resolvedSearchParams = React.use(new Promise<{ [key: string]: string | undefined }>((resolve) => {
+    const params: { [key: string]: string | undefined } = {};
+    for (const key in searchParams) {
+        const value = searchParams[key];
+        if (typeof value === 'string') {
+            params[key] = value;
+        }
+    }
+    resolve(params);
+  }));
+
   let title = "Marketplace Professionisti BIM | BIMatch";
   let description = "Trova professionisti BIM qualificati, manager BIM, e specialisti in Italia su BIMatch. Filtra per competenze, località, e livello di esperienza.";
 
-  const skillQuery = searchParams?.skill;
-  const locationQuery = searchParams?.location;
-  const experienceQuery = searchParams?.experience;
-
-  const skillFilterValue = typeof skillQuery === 'string' ? skillQuery : undefined;
-  const locationFilterValue = typeof locationQuery === 'string' ? locationQuery : undefined;
-  const experienceFilterValue = typeof experienceQuery === 'string' ? experienceQuery : undefined;
+  const skillFilterValue = resolvedSearchParams?.skill;
+  const locationFilterValue = resolvedSearchParams?.location;
+  const experienceFilterValue = resolvedSearchParams?.experience;
 
   const skillLabel = getLabel(BIM_SKILLS_OPTIONS, skillFilterValue);
   const locationLabel = locationFilterValue; 
