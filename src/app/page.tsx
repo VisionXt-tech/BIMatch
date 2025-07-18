@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ROUTES } from "@/constants";
 import { ArrowRight, HelpCircle } from 'lucide-react';
+import Image from 'next/image';
 
 const initialTalentWords = ["Talenti", "Professionisti", "Esperti", "Innovatori", "Specialisti", "Consulenti"];
 
@@ -29,9 +30,20 @@ export default function HomePage() {
   }, [talentIndex, talentWords]);
 
   return (
-    <div className="flex flex-col items-center justify-center flex-grow text-center px-4 w-full">
-      <div className="w-full max-w-4xl 2xl:max-w-5xl py-12">
-        <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-primary mb-8 tracking-tight leading-tight">
+    <div className="relative flex flex-col items-center justify-center flex-grow text-center px-4 w-full">
+       <Image
+        src="https://images.unsplash.com/photo-1481026469463-66327c86e544?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxCdWlsZGluZyUyMEluZm9ybWF0aW9uJTIwTW9kZWxpbmd8ZW58MHx8fHwxNzQ5NDU1MTY1fDA&ixlib=rb-4.1.0&q=80&w=1080"
+        alt="Abstract BIM model background"
+        layout="fill"
+        objectFit="cover"
+        className="-z-20"
+        priority
+        data-ai-hint="Building Information"
+      />
+      <div className="absolute inset-0 bg-black/50 -z-10"></div>
+      
+      <div className="w-full max-w-4xl 2xl:max-w-5xl py-12 px-6 bg-card/10 backdrop-blur-sm border border-white/10 rounded-xl shadow-2xl">
+        <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-8 tracking-tight leading-tight">
           Fai Match con{' '}
           <Button
             variant="ghost"
@@ -40,15 +52,15 @@ export default function HomePage() {
                        h-auto 
                        px-3 py-2 
                        text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight
-                       border border-primary rounded-lg 
+                       border border-primary-foreground/50 rounded-lg 
                        relative
-                       focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-1
-                       bg-transparent hover:bg-transparent 
+                       focus-visible:ring-1 focus-visible:ring-primary-foreground focus-visible:ring-offset-1
+                       bg-transparent hover:bg-transparent text-white
                        "
           >
             <span
               key={currentTalentWord}
-              className="animate-fadeIn inline-block bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 bg-clip-text text-transparent"
+              className="animate-fadeIn inline-block bg-gradient-to-r from-teal-400 via-cyan-400 to-sky-400 bg-clip-text text-transparent"
             >
               {currentTalentWord}
             </span>
@@ -56,7 +68,7 @@ export default function HomePage() {
           {' '}e Progetti BIM.
         </h1>
 
-        <p className="text-md sm:text-lg md:text-xl text-foreground/90 mb-10 max-w-xl mx-auto">
+        <p className="text-md sm:text-lg md:text-xl text-primary-foreground/90 mb-10 max-w-xl mx-auto">
           La piattaforma N°1 in Italia per professionisti BIM e aziende. Trova opportunità o i migliori talenti.
         </p>
 
@@ -64,11 +76,11 @@ export default function HomePage() {
           <Button
             asChild
             size="lg"
-            variant="ghost" 
-            className="border border-primary hover:bg-primary/10 group text-base md:text-lg py-3 px-6 md:py-4 md:px-8 transform hover:scale-[1.03] transition-transform duration-300 shadow-md rounded-lg w-full sm:w-auto"
+            variant="outline" 
+            className="border-primary-foreground/80 text-primary-foreground hover:bg-primary-foreground/10 hover:text-white group text-base md:text-lg py-3 px-6 md:py-4 md:px-8 transform hover:scale-[1.03] transition-transform duration-300 shadow-md rounded-lg w-full sm:w-auto"
           >
-            <Link href={ROUTES.LOGIN}>
-              <span className="flex items-center bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 bg-clip-text text-transparent group-hover:from-teal-400 group-hover:via-cyan-400 group-hover:to-sky-400">
+            <Link href={ROUTES.REGISTER_PROFESSIONAL}>
+              <span className="flex items-center">
                 Sei un Professionista?
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </span>
@@ -79,27 +91,27 @@ export default function HomePage() {
             asChild
             size="lg"
             variant="default"
-            className="text-base md:text-lg py-3 px-6 md:py-4 md:px-8 transform hover:scale-[1.03] transition-transform duration-300 shadow-md rounded-lg w-full sm:w-auto group"
+            className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 text-base md:text-lg py-3 px-6 md:py-4 md:px-8 transform hover:scale-[1.03] transition-transform duration-300 shadow-md rounded-lg w-full sm:w-auto group"
           >
-            <Link href={ROUTES.LOGIN}>
+            <Link href={ROUTES.REGISTER_COMPANY}>
               Sei un'Azienda?
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Link>
           </Button>
         </div>
         
-         <p className="mt-10 text-sm md:text-base text-primary opacity-70">
+         <p className="mt-10 text-sm md:text-base text-primary-foreground opacity-80">
           Entra in BIMatch: dove le competenze incontrano le opportunità.
         </p>
 
         <Button
             asChild
             size="default" 
-            variant="outline"
-            className="mt-8 transform hover:scale-[1.03] transition-transform duration-300 shadow-md rounded-lg w-full sm:w-auto group border-primary/70 hover:bg-primary/5 text-primary/90 hover:text-primary"
+            variant="link"
+            className="mt-8 text-primary-foreground/80 hover:text-white group"
           >
             <Link href={ROUTES.HOW_IT_WORKS}>
-              <HelpCircle className="mr-2 h-4 w-4 text-primary/80 group-hover:text-primary transition-colors" /> Come Funziona BIMatch?
+              <HelpCircle className="mr-2 h-4 w-4" /> Come Funziona BIMatch?
             </Link>
         </Button>
       </div>
