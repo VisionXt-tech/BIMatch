@@ -32,7 +32,7 @@ export default function HomePage() {
   return (
     <div className="relative flex flex-col items-center justify-center flex-grow text-center px-4 w-full">
        <Image
-        src="https://images.unsplash.com/photo-1481026469463-66327c86e544?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxCdWlsZGluZyUyMEluZm9ybWF0aW9uJTIwTW9kZWxpbmd8ZW58MHx8fHwxNzQ5NDU1MTY1fDA&ixlib=rb-4.1.0&q=80&w=1080"
+        src="https://unsplash.com/it/foto/un-uomo-e-una-donna-che-si-stringono-la-mano-davanti-a-un-computer-portatile-qFSQFSmfZkA"
         alt="Abstract BIM model background"
         layout="fill"
         objectFit="cover"
