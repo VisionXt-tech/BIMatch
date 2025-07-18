@@ -81,7 +81,9 @@ export default function HomePage() {
           >
             <Link href={ROUTES.REGISTER_PROFESSIONAL}>
               <span className="flex items-center">
-                Sei un Professionista?
+                <span className="bg-gradient-to-r from-teal-400 via-cyan-400 to-sky-400 bg-clip-text text-transparent font-semibold">
+                  Sei un Professionista?
+                </span>
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </span>
             </Link>
