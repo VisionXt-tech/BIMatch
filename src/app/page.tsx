@@ -76,7 +76,7 @@ export default function HomePage() {
           <Button
             asChild
             size="lg"
-            variant="outline" 
+            variant="outline"
             className="border-primary-foreground/80 text-primary-foreground hover:bg-primary-foreground/10 hover:text-white group text-base md:text-lg py-3 px-6 md:py-4 md:px-8 transform hover:scale-[1.03] transition-transform duration-300 shadow-md rounded-lg w-full sm:w-auto"
           >
             <Link href={ROUTES.REGISTER_PROFESSIONAL}>
