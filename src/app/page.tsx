@@ -42,7 +42,7 @@ export default function HomePage() {
       />
       <div className="absolute inset-0 bg-black/50 -z-10"></div>
       
-      <div className="w-full max-w-4xl 2xl:max-w-5xl py-12 px-6 bg-card/10 backdrop-blur-sm border border-white/10 rounded-xl shadow-2xl">
+      <div className="w-full max-w-5xl 2xl:max-w-6xl py-12 px-6 bg-card/10 backdrop-blur-sm border border-white/10 rounded-xl shadow-2xl">
         <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-8 tracking-tight leading-tight">
           Fai Match con{' '}
           <Button
