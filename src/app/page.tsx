@@ -32,13 +32,13 @@ export default function HomePage() {
   return (
     <div className="relative flex flex-col items-center justify-center flex-grow text-center px-4 w-full">
        <Image
-        src="https://unsplash.com/it/foto/un-uomo-e-una-donna-che-si-stringono-la-mano-davanti-a-un-computer-portatile-qFSQFSmfZkA"
+        src="https://images.unsplash.com/photo-1543269865-cbf427effbad?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxjb2xsYWJvcmF0aW9ufGVufDB8fHx8MTc1MTEzMTc0NHww&ixlib=rb-4.1.0&q=80&w=1080"
         alt="Abstract BIM model background"
         layout="fill"
         objectFit="cover"
         className="-z-20"
         priority
-        data-ai-hint="Building Information"
+        data-ai-hint="collaboration handshake"
       />
       <div className="absolute inset-0 bg-black/50 -z-10"></div>
       
