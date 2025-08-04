@@ -309,7 +309,6 @@ export default function ProfessionalProfilePage() {
     try {
         let photoURLToUpdate = (userProfile as FullProfessionalProfile).photoURL || '';
         
-        // This remains an object that will be built with valid fields.
         const dataToUpdate: {[key: string]: any} = {
             ...data,
             displayName: `${data.firstName || ''} ${data.lastName || ''}`.trim(),
@@ -323,7 +322,6 @@ export default function ProfessionalProfilePage() {
         }
         dataToUpdate.photoURL = photoURLToUpdate;
 
-        // Handle Certifications
         const certs: CertificationType[] = ['albo', 'uni', 'other'];
         const urlKeyMap: Record<CertificationType, keyof FullProfessionalProfile> = {
             albo: 'alboRegistrationUrl', uni: 'uniCertificationUrl', other: 'otherCertificationsUrl'
@@ -343,14 +341,14 @@ export default function ProfessionalProfilePage() {
             if (file) {
                 const url = await uploadFileAndGetURL(file, `professionalCertifications/${cert}`, progressMap[cert]);
                 dataToUpdate[urlKey] = url;
-                dataToUpdate[`${cert}SelfCertified`] = false; // Cannot be self-certified if a file is uploaded
+                dataToUpdate[`${cert}SelfCertified`] = false;
             } else if (selfCertified) {
-                // If self-certified is checked, ensure the URL field is removed from Firestore.
                 dataToUpdate[urlKey] = deleteField();
+                dataToUpdate[`${cert}SelfCertified`] = true;
             } else {
-                // If neither file nor self-certified, keep existing value from `data` object unless it's empty string, then remove it
-                 if (data[urlKey] === '') {
+                 if (data[urlKey] === '' || data[urlKey] === null || data[urlKey] === undefined) {
                     dataToUpdate[urlKey] = deleteField();
+                    dataToUpdate[`${cert}SelfCertified`] = deleteField();
                  }
             }
         }
