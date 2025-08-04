@@ -396,7 +396,7 @@ export default function ProfessionalProfilePage() {
     return <div className="text-center py-10">Profilo non trovato o non autorizzato.</div>;
   }
   
-  const CertificationSection = ({ certType, title, icon, fileState, progressState, inputRef, onDelete }: {
+  const CertificationSection = ({ certType, title, icon, fileState, progressState, inputRef, onDelete, showSelfCertify = true }: {
       certType: CertificationType;
       title: string;
       icon: React.ElementType;
@@ -404,6 +404,7 @@ export default function ProfessionalProfilePage() {
       progressState: number | null;
       inputRef: React.RefObject<HTMLInputElement>;
       onDelete: (certType: CertificationType) => void;
+      showSelfCertify?: boolean;
   }) => {
     const IconComponent = icon;
     const isUploadingThisFile = progressState !== null && progressState < 100;
@@ -463,28 +464,30 @@ export default function ProfessionalProfilePage() {
         )}
         <FormDescription className="text-xs mt-1">Max {MAX_PDF_SIZE_MB}MB (solo PDF).</FormDescription>
         
-        <div className="flex items-center space-x-2 mt-4 pt-4 border-t border-border/50">
-           <FormField
-              control={form.control}
-              name={`${certType}SelfCertified`}
-              render={({ field }) => (
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`${certType}SelfCertified`}
-                    checked={field.value}
-                    onCheckedChange={(checked) => handleCertificationCheckboxChange(certType, !!checked)}
-                    disabled={isUploadingAnyFile || hasExistingFile || hasPendingFile }
-                  />
-                  <label
-                    htmlFor={`${certType}SelfCertified`}
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground"
-                  >
-                    In alternativa, autocertifico il possesso di questo requisito.
-                  </label>
-                </div>
-              )}
-            />
-        </div>
+        {showSelfCertify && (
+            <div className="flex items-center space-x-2 mt-4 pt-4 border-t border-border/50">
+               <FormField
+                  control={form.control}
+                  name={`${certType}SelfCertified`}
+                  render={({ field }) => (
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`${certType}SelfCertified`}
+                        checked={field.value}
+                        onCheckedChange={(checked) => handleCertificationCheckboxChange(certType, !!checked)}
+                        disabled={isUploadingAnyFile || hasExistingFile || hasPendingFile }
+                      />
+                      <label
+                        htmlFor={`${certType}SelfCertified`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground"
+                      >
+                        In alternativa, autocertifico il possesso di questo requisito.
+                      </label>
+                    </div>
+                  )}
+                />
+            </div>
+        )}
       </FormItem>
     );
   };
@@ -642,6 +645,7 @@ export default function ProfessionalProfilePage() {
                     progressState={otherCertUploadProgress}
                     inputRef={otherCertInputRef}
                     onDelete={openDeleteConfirmation}
+                    showSelfCertify={false}
                   />
                 </TabsContent>
 
@@ -727,5 +731,3 @@ export default function ProfessionalProfilePage() {
     </>
   );
 }
-
-    
