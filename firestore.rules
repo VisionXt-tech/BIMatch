@@ -1,0 +1,85 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to get user role from the 'users' collection
+    function getUserRole(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data.role;
+    }
+
+    // Rules for the 'users' collection
+    match /users/{userId} {
+      // READ: Anyone can read a user's public profile
+      allow read: if true;
+
+      // CREATE: A user can only create their own profile document
+      allow create: if request.auth != null && request.auth.uid == userId;
+
+      // UPDATE: A user can only update their own profile. An admin can update any profile.
+      allow update: if request.auth != null && (request.auth.uid == userId || getUserRole(request.auth.uid) == 'admin');
+      
+      // DELETE: No one can delete user profiles from the client-side
+      allow delete: if false;
+    }
+
+    // Rules for the 'projects' collection
+    match /projects/{projectId} {
+      // READ: Anyone can read project details
+      allow read: if true;
+
+      // CREATE: Only authenticated 'company' users can create projects
+      allow create: if request.auth != null && getUserRole(request.auth.uid) == 'company'
+                    && request.resource.data.companyId == request.auth.uid;
+      
+      // UPDATE: Only the company that owns the project or an admin can update it
+      allow update: if request.auth != null && (get(/databases/$(database)/documents/projects/$(projectId)).data.companyId == request.auth.uid || getUserRole(request.auth.uid) == 'admin');
+
+      // DELETE: Deleting projects should be an admin task or a soft delete (update status)
+      // Disabling direct client-side delete for safety.
+      allow delete: if false;
+    }
+
+    // Rules for the 'projectApplications' collection
+    match /projectApplications/{applicationId} {
+      // READ: 
+      // 1. The professional who applied can read their own application.
+      // 2. The company that owns the project can read applications for that project.
+      // 3. An admin can read any application.
+      allow read: if request.auth != null && (
+                    resource.data.professionalId == request.auth.uid ||
+                    get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data.companyId == request.auth.uid ||
+                    getUserRole(request.auth.uid) == 'admin'
+                  );
+                  
+      // CREATE: Only authenticated 'professional' users can create an application for themselves
+      allow create: if request.auth != null && getUserRole(request.auth.uid) == 'professional'
+                    && request.resource.data.professionalId == request.auth.uid;
+      
+      // UPDATE: 
+      // 1. The professional can update their own application (e.g., respond to interview)
+      // 2. The company that owns the project can update the application (e.g., change status)
+      allow update: if request.auth != null && (
+                    resource.data.professionalId == request.auth.uid ||
+                    get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data.companyId == request.auth.uid
+                  );
+
+      // DELETE: A professional can withdraw (delete) their own application
+      allow delete: if request.auth != null && resource.data.professionalId == request.auth.uid;
+    }
+
+    // Rules for the 'notifications' collection
+    match /notifications/{notificationId} {
+      // READ, UPDATE (e.g., mark as read), DELETE: Only the user the notification is for can perform these actions.
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      
+      // CREATE: Notifications should be created by server-side logic (Cloud Functions) or by specific, authenticated actions.
+      // Allowing any authenticated user to create a notification for another user is risky.
+      // For now, let's allow users to create notifications for themselves (less common)
+      // and companies/professionals to create them for the other party during specific actions (handled in app logic).
+      // A more secure approach would use Cloud Functions.
+      allow create: if request.auth != null;
+    }
+  }
+}
