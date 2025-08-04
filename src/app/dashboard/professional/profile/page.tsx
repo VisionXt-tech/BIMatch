@@ -308,34 +308,52 @@ export default function ProfessionalProfilePage() {
     setIsUploadingAnyFile(true);
     try {
         let photoURLToUpdate = (userProfile as FullProfessionalProfile).photoURL || '';
-        let alboUrlToUpdate = (userProfile as FullProfessionalProfile).alboRegistrationUrl || '';
-        let uniUrlToUpdate = (userProfile as FullProfessionalProfile).uniCertificationUrl || '';
-        let otherCertUrlToUpdate = (userProfile as FullProfessionalProfile).otherCertificationsUrl || '';
+        
+        // This remains an object that will be built with valid fields.
+        const dataToUpdate: {[key: string]: any} = {
+            ...data,
+            displayName: `${data.firstName || ''} ${data.lastName || ''}`.trim(),
+            monthlyRate: data.monthlyRate === undefined || data.monthlyRate === null ? null : Number(data.monthlyRate),
+        };
 
         if (profileImageFile) {
             setIsUploadingImage(true);
             photoURLToUpdate = await uploadFileAndGetURL(profileImageFile, 'profileImages', setImageUploadProgress);
             setIsUploadingImage(false);
         }
-        if (alboPdfFile) {
-            alboUrlToUpdate = await uploadFileAndGetURL(alboPdfFile, 'professionalCertifications/albo', setAlboUploadProgress);
-        }
-        if (uniPdfFile) {
-            uniUrlToUpdate = await uploadFileAndGetURL(uniPdfFile, 'professionalCertifications/uni', setUniUploadProgress);
-        }
-        if (otherCertPdfFile) {
-            otherCertUrlToUpdate = await uploadFileAndGetURL(otherCertPdfFile, 'professionalCertifications/other', setOtherCertUploadProgress);
-        }
+        dataToUpdate.photoURL = photoURLToUpdate;
 
-        const dataToUpdate: Partial<FullProfessionalProfile> = {
-            ...data,
-            displayName: `${data.firstName || ''} ${data.lastName || ''}`.trim(),
-            photoURL: photoURLToUpdate,
-            monthlyRate: data.monthlyRate === undefined || data.monthlyRate === null ? null : Number(data.monthlyRate),
-            alboRegistrationUrl: data.alboSelfCertified ? undefined : alboUrlToUpdate,
-            uniCertificationUrl: data.uniSelfCertified ? undefined : uniUrlToUpdate,
-            otherCertificationsUrl: data.otherCertificationsSelfCertified ? undefined : otherCertUrlToUpdate,
+        // Handle Certifications
+        const certs: CertificationType[] = ['albo', 'uni', 'other'];
+        const urlKeyMap: Record<CertificationType, keyof FullProfessionalProfile> = {
+            albo: 'alboRegistrationUrl', uni: 'uniCertificationUrl', other: 'otherCertificationsUrl'
         };
+        const fileMap: Record<CertificationType, File | null> = {
+            albo: alboPdfFile, uni: uniPdfFile, other: otherCertPdfFile
+        };
+        const progressMap: Record<CertificationType, React.Dispatch<React.SetStateAction<number|null>>> = {
+            albo: setAlboUploadProgress, uni: setUniUploadProgress, other: setOtherCertUploadProgress
+        };
+        
+        for (const cert of certs) {
+            const urlKey = urlKeyMap[cert];
+            const file = fileMap[cert];
+            const selfCertified = data[`${cert}SelfCertified`];
+
+            if (file) {
+                const url = await uploadFileAndGetURL(file, `professionalCertifications/${cert}`, progressMap[cert]);
+                dataToUpdate[urlKey] = url;
+                dataToUpdate[`${cert}SelfCertified`] = false; // Cannot be self-certified if a file is uploaded
+            } else if (selfCertified) {
+                // If self-certified is checked, ensure the URL field is removed from Firestore.
+                dataToUpdate[urlKey] = deleteField();
+            } else {
+                // If neither file nor self-certified, keep existing value from `data` object unless it's empty string, then remove it
+                 if (data[urlKey] === '') {
+                    dataToUpdate[urlKey] = deleteField();
+                 }
+            }
+        }
 
         await updateUserProfile(user.uid, dataToUpdate);
         
@@ -711,3 +729,5 @@ export default function ProfessionalProfilePage() {
     </>
   );
 }
+
+    
