@@ -214,7 +214,6 @@ export default function ProfessionalProfilePage() {
           setProgress(progress);
         },
         (error) => {
-          console.error("Errore Upload File:", error);
           toast({ title: "Errore Upload File", description: error.message, variant: "destructive" });
           setProgress(null);
           setIsUploadingAnyFile(false);
@@ -226,7 +225,6 @@ export default function ProfessionalProfilePage() {
             setProgress(100); 
             resolve(downloadURL);
           } catch (error) {
-            console.error("Errore getDownloadURL:", error);
             toast({ title: "Errore URL File", description: (error as Error).message, variant: "destructive" });
             setProgress(null);
             setIsUploadingAnyFile(false);
@@ -275,7 +273,7 @@ export default function ProfessionalProfilePage() {
                 if (error.code !== 'storage/object-not-found') {
                     throw error;
                 }
-                console.warn(`File non trovato nello storage (già eliminato?): ${urlToDelete}`);
+                // File already deleted from storage
             }
         }
         
@@ -290,7 +288,7 @@ export default function ProfessionalProfilePage() {
         toast({ title: "Documento Eliminato", description: "Il documento è stato rimosso con successo." });
 
     } catch (error: any) {
-        console.error("Errore durante l'eliminazione della certificazione:", error);
+        // Error during certification deletion
         toast({ title: "Errore Eliminazione", description: `Impossibile completare l'eliminazione: ${error.message}`, variant: "destructive" });
     } finally {
         setIsDeletingFile(false);
@@ -367,7 +365,7 @@ export default function ProfessionalProfilePage() {
         if (otherCertInputRef.current) otherCertInputRef.current.value = "";
 
     } catch (error: any) {
-        console.error("Error submitting profile update:", error);
+        toast({ title: "Errore", description: "Impossibile salvare le modifiche al profilo.", variant: "destructive" });
     } finally {
         setIsUploadingImage(false);
         setIsUploadingAnyFile(false);

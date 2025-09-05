@@ -4,6 +4,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { strongPasswordSchema, secureEmailSchema, secureNameSchema } from '@/lib/validation/password';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -24,11 +25,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import Image from 'next/image';
 
 const professionalRegistrationSchema = z.object({
-  firstName: z.string().min(2, { message: 'Il nome deve contenere almeno 2 caratteri.' }),
-  lastName: z.string().min(2, { message: 'Il cognome deve contenere almeno 2 caratteri.' }),
-  email: z.string().email({ message: 'Inserisci un indirizzo email valido.' }),
+  firstName: secureNameSchema,
+  lastName: secureNameSchema,
+  email: secureEmailSchema,
   location: z.string().min(1, { message: 'La localizzazione è richiesta.' }),
-  password: z.string().min(6, { message: 'La password deve contenere almeno 6 caratteri.' }),
+  password: strongPasswordSchema,
   confirmPassword: z.string(),
 }).refine(data => data.password === data.confirmPassword, {
   message: 'Le password non coincidono.',
@@ -56,7 +57,7 @@ export default function ProfessionalRegistrationPage() {
       await registerProfessional(data);
       router.push(ROUTES.DASHBOARD_PROFESSIONAL_PROFILE); 
     } catch (error) {
-      console.error('Professional registration failed on page:', error);
+      // Error is handled by useAuth
     }
   };
 
@@ -65,8 +66,8 @@ export default function ProfessionalRegistrationPage() {
       <Image
         src="https://images.unsplash.com/photo-1744627049721-73c27008ad28?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxCSU18ZW58MHx8fHwxNzQ3Njc2ODU1fDA&ixlib=rb-4.1.0&q=80&w=1080"
         alt="Background representing the professional BIM environment"
-        layout="fill"
-        objectFit="cover"
+        fill
+        style={{ objectFit: 'cover' }}
         className="-z-10"
         priority
         data-ai-hint="BIM"

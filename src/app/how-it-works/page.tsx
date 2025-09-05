@@ -17,7 +17,7 @@ const StepCard = ({ icon: Icon, title, description, imageSrc, imageHint, index }
     style={{ animationDelay: `${index * 0.15}s` }}
   >
     <div className="relative aspect-[16/9] overflow-hidden">
-      <Image src={imageSrc} alt={title} layout="fill" objectFit="cover" className="group-hover:scale-105 transition-transform duration-500" data-ai-hint={imageHint}/>
+      <Image src={imageSrc} alt={title} fill style={{ objectFit: 'cover' }} className="group-hover:scale-105 transition-transform duration-500" data-ai-hint={imageHint}/>
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
        <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
          <div className="flex items-center text-primary-foreground mb-1">

@@ -50,15 +50,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const fetchUserProfile = useCallback(async (firebaseUser: User | null) => {
     if (firebaseUser) {
-      const userDocRef = doc(db, 'users', firebaseUser.uid);
-      const userDocSnap = await getDoc(userDocRef);
-      if (userDocSnap.exists()) {
-        setUserProfile(userDocSnap.data() as UserProfile);
-      } else {
-        console.warn(`User profile for ${firebaseUser.uid} not found in Firestore.`);
-        setUserProfile(null); 
+      console.log('Fetching profile for user:', firebaseUser.uid);
+      try {
+        const userDocRef = doc(db, 'users', firebaseUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          const profileData = userDocSnap.data() as UserProfile;
+          console.log('Profile data loaded:', profileData);
+          setUserProfile(profileData);
+        } else {
+          console.warn(`User profile for ${firebaseUser.uid} not found in Firestore.`);
+          setUserProfile(null); 
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+        setUserProfile(null);
       }
     } else {
+      console.log('No firebase user, setting profile to null');
       setUserProfile(null);
     }
   }, [db]);
@@ -74,9 +83,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [auth, fetchUserProfile]);
 
   const login = async (data: LoginFormData) => {
+    console.log('Starting login for:', data.email);
     setIsLoggingIn(true);
     try {
-      await signInWithEmailAndPassword(auth, data.email, data.password);
+      const result = await signInWithEmailAndPassword(auth, data.email, data.password);
+      console.log('Firebase authentication successful:', result.user.uid);
       // No toast here, direct redirect
       router.push(ROUTES.DASHBOARD); 
     } catch (error: any) {

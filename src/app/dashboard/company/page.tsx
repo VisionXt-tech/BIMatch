@@ -36,10 +36,13 @@ export default function CompanyDashboardPage() {
     setErrorCounts(null);
 
     try {
+      console.log('Fetching dashboard data for user:', user.uid);
       // 1. Fetch active projects count
       const projectsRef = collection(db, 'projects');
       const qProjects = query(projectsRef, where('companyId', '==', user.uid), where('status', '==', 'attivo'));
+      console.log('Executing projects query...');
       const projectsSnapshot = await getDocs(qProjects);
+      console.log('Projects query successful, count:', projectsSnapshot.size);
       setActiveProjectsCount(projectsSnapshot.size);
 
       // 2. Fetch new candidates count & accepted matches count

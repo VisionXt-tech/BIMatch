@@ -154,7 +154,6 @@ export default function CompanyProfilePage() {
               setUploadProgress(progressPercentage);
             },
             (error: FirebaseStorageError) => {
-              console.error("Errore Caricamento Logo su Firebase Storage:", error.code, error.message, error.serverResponse);
               let userFriendlyMessage = "Errore durante il caricamento del logo.";
               switch (error.code) {
                 case 'storage/unauthorized':
@@ -185,7 +184,6 @@ export default function CompanyProfilePage() {
                 logoUrlToUpdate = await getDownloadURL(uploadTask.snapshot.ref);
                 resolve();
               } catch (getUrlError: any) {
-                console.error("Errore getDownloadURL:", getUrlError);
                 toast({ title: "Errore URL Logo", description: `Impossibile ottenere l'URL del logo: ${(getUrlError as Error).message}`, variant: "destructive" });
                 setIsUploading(false);
                 setUploadProgress(null);

@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ROUTES } from "@/constants";
 import { ArrowRight, HelpCircle } from 'lucide-react';
-import Image from 'next/image';
 
 const initialTalentWords = ["Talenti", "Professionisti", "Esperti", "Innovatori", "Specialisti", "Consulenti"];
 
@@ -30,26 +29,16 @@ export default function HomePage() {
 
   return (
     <div className="relative flex flex-col items-center justify-center flex-grow text-center px-4 w-full">
-       <Image
-        src="https://images.unsplash.com/photo-1635776062360-af423602aff3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxHUkFESUVOVHxlbnwwfHx8fDE3NTI4NDczMTl8MA&ixlib=rb-4.1.0&q=80&w=1080"
-        alt="Abstract BIM model background"
-        layout="fill"
-        objectFit="cover"
-        className="-z-20"
-        priority
-        data-ai-hint="collaboration handshake"
-      />
-      <div className="absolute inset-0 bg-black/50 -z-10"></div>
       
       <div className="w-full max-w-4xl 2xl:max-w-5xl py-12 px-6 bg-card/10 backdrop-blur-sm border border-white/10 rounded-xl shadow-2xl">
         <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-8 tracking-tight leading-tight">
-          Fai Match con{' '}
+          <span className="block sm:inline">Fai Match con{' '}</span>
           <Button
             variant="ghost"
             className="inline-block align-baseline text-center
-                       w-48 sm:w-52 md:w-60 lg:w-72
+                       w-40 xs:w-44 sm:w-52 md:w-60 lg:w-72
                        h-auto 
-                       px-3 py-2 
+                       px-2 xs:px-3 py-1 xs:py-2 
                        text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight
                        border border-primary-foreground/50 rounded-lg 
                        relative
@@ -64,7 +53,7 @@ export default function HomePage() {
               {currentTalentWord}
             </span>
           </Button>
-          {' '}e Progetti BIM.
+          <span className="block sm:inline mt-1 sm:mt-0">{' '}e Progetti BIM.</span>
         </h1>
 
         <p className="text-md sm:text-lg md:text-xl text-primary-foreground/90 mb-10 max-w-xl mx-auto">

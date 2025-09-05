@@ -82,32 +82,32 @@ storageInstance = firebaseApp.name ? getStorage(firebaseApp) : {} as FirebaseSto
 
 if (process.env.NODE_ENV === 'development' && firebaseApp.name) {
   if (process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === 'true') {
-    console.log("Attempting to connect to Firebase Emulators based on NEXT_PUBLIC_USE_FIREBASE_EMULATOR=true...");
+    // Attempting to connect to Firebase Emulators
     
     if (authInstance.name && !(authInstance as any).emulatorConfig) {
       try {
         connectAuthEmulator(authInstance, 'http://localhost:9099', { disableWarnings: true });
-        console.log("Auth Emulator connection attempted.");
+        // Auth Emulator connection attempted
       } catch (error) {
-        console.warn("Auth Emulator connection attempt failed (could be already connected or port unavailable):", error);
+        // Auth Emulator connection attempt failed
       }
     }
 
     if (dbInstance.app) { 
       try {
         connectFirestoreEmulator(dbInstance, 'localhost', 8080);
-        console.log("Firestore Emulator connection attempted.");
+        // Firestore Emulator connection attempted
       } catch (error) {
-        console.warn("Firestore Emulator connection attempt failed:", error);
+        // Firestore Emulator connection attempt failed
       }
     }
 
     if (storageInstance.app) { 
       try {
         connectStorageEmulator(storageInstance, 'localhost', 9199);
-        console.log("Storage Emulator connection attempted.");
+        // Storage Emulator connection attempted
       } catch (error) {
-        console.warn("Storage Emulator connection attempt failed:", error);
+        // Storage Emulator connection attempt failed
       }
     }
   }

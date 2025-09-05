@@ -1,0 +1,36 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can read/write their own profile
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Allow reading other users' profiles for marketplace
+      allow read: if request.auth != null;
+    }
+    
+    // Projects collection - companies can create, everyone can read
+    match /projects/{projectId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && 
+        resource.data.companyId == request.auth.uid;
+    }
+    
+    // Applications collection - professionals can apply, companies can manage
+    match /applications/{applicationId} {
+      allow read: if request.auth != null && 
+        (resource.data.professionalId == request.auth.uid || 
+         resource.data.companyId == request.auth.uid);
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && 
+        (resource.data.professionalId == request.auth.uid || 
+         resource.data.companyId == request.auth.uid);
+    }
+    
+    // Notifications collection - users can only access their own
+    match /notifications/{notificationId} {
+      allow read, write: if request.auth != null && 
+        resource.data.userId == request.auth.uid;
+    }
+  }
+}

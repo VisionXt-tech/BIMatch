@@ -58,7 +58,6 @@ export default function ProfessionalProfileViewPage() {
             setProfessional(null);
           }
         } catch (e: any) {
-          console.error("Error fetching professional profile:", e);
           let errorMessage = 'Errore nel caricamento del profilo.';
           if (typeof e.message === 'string' && (e.message.includes('offline') || e.message.includes('Failed to get document because the client is offline'))) {
             errorMessage = 'Impossibile caricare il profilo. Controlla la tua connessione internet e riprova.';

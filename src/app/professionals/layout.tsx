@@ -20,17 +20,14 @@ export async function generateMetadata(
   { searchParams }: ProfessionalsLayoutMetadataProps,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  // Use React.use to safely access searchParams in Server Components
-  const resolvedSearchParams = React.use(new Promise<{ [key: string]: string | undefined }>((resolve) => {
-    const params: { [key: string]: string | undefined } = {};
-    for (const key in searchParams) {
-        const value = searchParams[key];
-        if (typeof value === 'string') {
-            params[key] = value;
-        }
+  // Safely access searchParams for Server Components
+  const resolvedSearchParams: { [key: string]: string | undefined } = {};
+  for (const key in searchParams) {
+    const value = searchParams[key];
+    if (typeof value === 'string') {
+      resolvedSearchParams[key] = value;
     }
-    resolve(params);
-  }));
+  }
 
   let title = "Marketplace Professionisti BIM | BIMatch";
   let description = "Trova professionisti BIM qualificati, manager BIM, e specialisti in Italia su BIMatch. Filtra per competenze, località, e livello di esperienza.";

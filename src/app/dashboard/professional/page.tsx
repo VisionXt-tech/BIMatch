@@ -82,7 +82,6 @@ export default function ProfessionalDashboardPage() {
 
 
     } catch (e: any) {
-      console.error("Error fetching dashboard counts:", e);
       let specificError = "Errore nel caricamento dei dati della dashboard.";
        if (typeof e.message === 'string') {
             if (e.message.includes('offline')) {

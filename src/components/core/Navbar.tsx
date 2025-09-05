@@ -116,10 +116,28 @@ const Navbar = () => {
   );
 
   const isDashboardPageForContent = mounted && pathname.startsWith(ROUTES.DASHBOARD);
+  const isHomePage = pathname === '/';
 
+  // Dynamic navbar styles based on page
+  const getNavbarClasses = () => {
+    if (isHomePage) {
+      return "sticky top-0 z-50 backdrop-blur-md border-b border-white/10 homepage-transparent";
+    }
+    return "sticky top-0 z-50 border-b border-border bg-card";
+  };
+
+  const customHeaderStyle = isHomePage ? {
+    backgroundColor: 'transparent',
+    background: 'none',
+    backgroundImage: 'none',
+    '--tw-bg-opacity': '0'
+  } as React.CSSProperties : undefined;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-card">
+    <header 
+      className={getNavbarClasses()}
+      style={customHeaderStyle}
+    >
       <div className="w-full">
         <nav
           className="py-3 flex items-center"
@@ -225,18 +243,30 @@ const Navbar = () => {
                     variant="ghost" 
                     size="sm" 
                     asChild
-                    className="hidden md:inline-flex"
+                    className={cn("hidden md:inline-flex", isHomePage ? "text-white hover:text-white/80 hover:bg-white/10" : "")}
                   >
                     <Link href={ROUTES.HOW_IT_WORKS}>
                       <HelpCircle className="mr-1 h-4 w-4"/> Come Funziona?
                     </Link>
                   </Button>
-                  <Button variant="ghost" size="sm" asChild>
+                  <Button 
+                    variant={isHomePage ? "outline" : "ghost"} 
+                    size="sm" 
+                    asChild
+                    className={cn(
+                      isHomePage ? "border-white/50 text-white hover:bg-white/20 hover:text-white !text-white bg-white/10" : ""
+                    )}
+                  >
                     <Link href={ROUTES.LOGIN}>Accedi</Link>
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button size="sm">Registrati</Button>
+                      <Button 
+                        size="sm"
+                        className={isHomePage ? "bg-white text-slate-900 hover:bg-white/80 hover:scale-105 transition-transform" : ""}
+                      >
+                        Registrati
+                      </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => router.push(ROUTES.REGISTER_PROFESSIONAL)}>

@@ -9,15 +9,21 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Users, User, Building, ExternalLink } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Users, User, Building, Eye, Search, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { ROUTES } from '@/constants';
+import UserDetailModal from '@/components/admin/UserDetailModal';
 
 export default function AdminUsersPage() {
   const { db } = useFirebase();
   const [users, setUsers] = useState<UserProfile[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState<string>('all');
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -32,12 +38,50 @@ export default function AdminUsersPage() {
         fetchedUsers.push(doc.data() as UserProfile);
       });
       setUsers(fetchedUsers);
+      setFilteredUsers(fetchedUsers);
     } catch (error) {
       console.error("Error fetching users:", error);
     } finally {
       setLoading(false);
     }
   }, [db]);
+
+  // Filter users based on search term and role
+  useEffect(() => {
+    let filtered = users;
+
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(user => {
+        const displayName = user.displayName || 
+          (user.role === 'professional' ? `${(user as ProfessionalProfile).firstName} ${(user as ProfessionalProfile).lastName}` : 
+           (user as CompanyProfile).companyName);
+        return displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               user.email.toLowerCase().includes(searchTerm.toLowerCase());
+      });
+    }
+
+    // Apply role filter
+    if (roleFilter !== 'all') {
+      filtered = filtered.filter(user => user.role === roleFilter);
+    }
+
+    setFilteredUsers(filtered);
+  }, [users, searchTerm, roleFilter]);
+
+  const handleViewUser = (user: UserProfile) => {
+    setSelectedUser(user);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedUser(null);
+  };
+
+  const handleUserUpdated = () => {
+    fetchUsers();
+  };
 
   useEffect(() => {
     fetchUsers();
@@ -59,15 +103,46 @@ export default function AdminUsersPage() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-3">
-            <Users className="h-6 w-6 text-primary" />
-            <div>
-              <CardTitle>Gestione Utenti</CardTitle>
-              <CardDescription>Visualizza e gestisci tutti gli utenti registrati sulla piattaforma.</CardDescription>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Users className="h-6 w-6 text-primary" />
+              <div>
+                <CardTitle>Gestione Utenti</CardTitle>
+                <CardDescription>Visualizza e gestisci tutti gli utenti registrati sulla piattaforma.</CardDescription>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>Totale: {filteredUsers.length}</span>
             </div>
           </div>
         </CardHeader>
         <CardContent>
+          {/* Filters */}
+          <div className="flex gap-4 mb-6">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Cerca per nome o email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
+            </div>
+            <Select value={roleFilter} onValueChange={setRoleFilter}>
+              <SelectTrigger className="w-[180px]">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Filtra per ruolo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tutti i ruoli</SelectItem>
+                <SelectItem value="professional">Professionisti</SelectItem>
+                <SelectItem value="company">Aziende</SelectItem>
+                <SelectItem value="admin">Amministratori</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <Table>
             <TableHeader>
               <TableRow>
@@ -79,12 +154,12 @@ export default function AdminUsersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? renderSkeleton() : users.map((user) => (
+              {loading ? renderSkeleton() : filteredUsers.map((user) => (
                 <TableRow key={user.uid}>
                   <TableCell className="font-medium">{user.displayName || (user.role === 'professional' ? `${(user as ProfessionalProfile).firstName} ${(user as ProfessionalProfile).lastName}`: (user as CompanyProfile).companyName)}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
-                    <Badge variant={user.role === 'professional' ? 'secondary' : 'default'}>
+                    <Badge variant={user.role === 'professional' ? 'secondary' : user.role === 'admin' ? 'destructive' : 'default'}>
                       {user.role === 'professional' && <User className="mr-1 h-3 w-3" />}
                       {user.role === 'company' && <Building className="mr-1 h-3 w-3" />}
                       {user.role}
@@ -96,21 +171,9 @@ export default function AdminUsersPage() {
                       : 'N/D'}
                   </TableCell>
                   <TableCell className="text-right">
-                    {user.role === 'professional' && (
-                        <Button asChild variant="outline" size="sm">
-                            <Link href={ROUTES.PROFESSIONAL_PROFILE_VIEW(user.uid)} target="_blank">
-                               <ExternalLink className="h-4 w-4 mr-1"/> Vedi Profilo
-                            </Link>
-                        </Button>
-                    )}
-                     {user.role === 'company' && (
-                        <Button asChild variant="outline" size="sm">
-                            {/* We don't have a public company profile page yet, linking to their dashboard profile page for now */}
-                            <Link href={ROUTES.DASHBOARD_COMPANY_PROFILE} target="_blank">
-                               <ExternalLink className="h-4 w-4 mr-1"/> Vedi Profilo
-                            </Link>
-                        </Button>
-                    )}
+                    <Button variant="outline" size="sm" onClick={() => handleViewUser(user)}>
+                      <Eye className="h-4 w-4 mr-1"/> Visualizza
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -118,6 +181,13 @@ export default function AdminUsersPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <UserDetailModal
+        user={selectedUser}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onUserUpdated={handleUserUpdated}
+      />
     </div>
   );
 }

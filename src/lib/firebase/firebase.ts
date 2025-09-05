@@ -59,35 +59,35 @@ if (app) {
   if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === 'true') {
     (async () => {
       try {
-        console.log("firebase.ts: Attempting to connect to Firebase Emulators...");
+        // Attempting to connect to Firebase Emulators
         const { connectAuthEmulator } = await import('firebase/auth');
         const { connectFirestoreEmulator } = await import('firebase/firestore');
         const { connectStorageEmulator } = await import('firebase/storage');
 
         if (auth && !(auth as any).emulatorConfig) {
             connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
-            console.log("firebase.ts: Auth Emulator connection attempted.");
+            // Auth Emulator connection attempted
         } else if (auth) {
-            console.log("firebase.ts: Auth Emulator likely already connected or auth instance is invalid.");
+            // Auth Emulator likely already connected
         }
         
         if (db) {
           connectFirestoreEmulator(db, 'localhost', 8080);
-          console.log("firebase.ts: Firestore Emulator connection attempted.");
+          // Firestore Emulator connection attempted
         } else {
-          console.log("firebase.ts: Firestore instance is null, skipping emulator connection.");
+          // Firestore instance is null, skipping emulator connection
         }
         
         if (storage) {
           connectStorageEmulator(storage, 'localhost', 9199);
-          console.log("firebase.ts: Storage Emulator connection attempted.");
+          // Storage Emulator connection attempted
         } else {
-          console.log("firebase.ts: Storage instance is null, skipping emulator connection.");
+          // Storage instance is null, skipping emulator connection
         }
-        console.log("firebase.ts: Emulator connections initiated (if services were valid).");
+        // Emulator connections initiated
 
       } catch (e) {
-        console.warn("firebase.ts: Emulator connection attempt failed (could be due to prior connection or other issues):", e);
+        // Emulator connection attempt failed
       }
     })();
   }

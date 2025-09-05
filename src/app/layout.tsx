@@ -1,14 +1,59 @@
 
-'use client'; 
-
 import type { Metadata } from 'next';
 import { Raleway } from 'next/font/google';
 import './globals.css';
-import { AuthProvider } from '@/contexts/AuthContext'; 
-import { Toaster } from '@/components/ui/toaster';
-import Navbar from '@/components/core/Navbar';
-import Footer from '@/components/core/Footer';
-import { FirebaseProvider } from '@/contexts/FirebaseContext';
+import ClientLayout from '@/components/core/ClientLayout';
+
+export const metadata: Metadata = {
+  title: 'BIMatch - La Piattaforma N°1 per Professionisti BIM e Aziende in Italia',
+  description: 'Trova i migliori talenti BIM o le opportunità di lavoro più interessanti. BIMatch connette professionisti specializzati in Building Information Modeling con aziende e studi di progettazione in tutta Italia.',
+  keywords: [
+    'BIM', 'Building Information Modeling', 'lavoro BIM Italia', 'professionisti BIM', 
+    'Revit', 'ArchiCAD', 'Navisworks', 'ingegneri BIM', 'architetti BIM', 
+    'BIM Coordinator', 'BIM Manager', 'progettazione 3D', 'costruzioni digitali'
+  ],
+  authors: [{ name: 'BIMatch Team' }],
+  creator: 'BIMatch',
+  publisher: 'BIMatch',
+  metadataBase: new URL('https://bimatch.it'),
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'BIMatch - Connetti Talenti BIM con Opportunità',
+    description: 'La piattaforma italiana specializzata per professionisti BIM e aziende del settore edile.',
+    url: 'https://bimatch.it',
+    siteName: 'BIMatch',
+    images: [
+      {
+        url: '/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'BIMatch - Piattaforma BIM Italia',
+      },
+    ],
+    locale: 'it_IT',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'BIMatch - La Piattaforma N°1 per BIM in Italia',
+    description: 'Connetti i migliori talenti BIM con le opportunità più interessanti in Italia.',
+    images: ['/og-image.jpg'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  category: 'technology',
+};
 
 
 const raleway = Raleway({
@@ -26,16 +71,9 @@ export default function RootLayout({
   return (
     <html lang="it">
       <body className={`${raleway.variable} font-sans antialiased flex flex-col min-h-screen`}>
-        <FirebaseProvider>
-          <AuthProvider>
-            <Navbar />
-            <main className="flex-grow relative flex flex-col">
-              {children}
-            </main>
-            <Footer />
-            <Toaster />
-          </AuthProvider>
-        </FirebaseProvider>
+        <ClientLayout>
+          {children}
+        </ClientLayout>
       </body>
     </html>
   );

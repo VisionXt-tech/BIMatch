@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "bimatch"
-  }
+    "default": "bimatch-cd100"
+  },
+  "targets": {},
+  "etags": {}
 }

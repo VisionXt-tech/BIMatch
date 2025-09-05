@@ -2,6 +2,9 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+
+// Prevent static generation for this page as it requires Firebase client connection
+export const dynamic = 'force-dynamic';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -75,7 +78,6 @@ export default function ProfessionalsMarketplacePage() {
         });
         setProfessionals(fetchedProfessionals);
       } catch (e: any) {
-        console.error("Error fetching professionals:", e);
         setError(e.message.includes('offline') || e.message.includes('Failed to get document because the client is offline') ? 'Impossibile caricare i profili. Controlla la tua connessione internet.' : 'Errore nel caricamento dei profili.');
       } finally {
         setLoading(false);

@@ -95,7 +95,6 @@ export default function ProjectDetailPage() {
         setProject(null);
       }
     } catch (e: any) {
-      console.error("Error fetching project:", e);
       setErrorProject(e.message || 'Errore nel caricamento del progetto.');
     } finally {
       setLoadingProject(false);
@@ -127,7 +126,6 @@ export default function ProjectDetailPage() {
         setApplicationStatus(null);
       }
     } catch (error) {
-      console.error("Error checking existing application:", error);
       toast({ title: "Errore", description: "Impossibile verificare lo stato della candidatura.", variant: "destructive" });
       setApplicationStatus(null);
     } finally {
@@ -199,7 +197,6 @@ export default function ProjectDetailPage() {
       setIsApplicationDialogOpen(false);
       applicationForm.reset();
     } catch (error: any) {
-      console.error("Error submitting detailed application:", error);
       toast({ title: "Errore Candidatura", description: error.message || "Impossibile inviare la candidatura.", variant: "destructive" });
     } finally {
       setIsSubmittingApplication(false);
@@ -225,7 +222,6 @@ export default function ProjectDetailPage() {
       setApplicationId(null);
       setApplicationStatus(null);
     } catch (error: any) {
-      console.error("Error withdrawing application:", error);
       toast({ title: "Errore Ritiro Candidatura", description: error.message || "Impossibile ritirare la candidatura.", variant: "destructive" });
     } finally {
       setIsWithdrawing(false);
