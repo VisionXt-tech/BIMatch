@@ -11,14 +11,31 @@ import { SidebarProvider, Sidebar, SidebarInset } from '@/components/ui/sidebar'
 const NAVBAR_HEIGHT_CSS_VAR_VALUE = "4rem";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth(); // Removed userProfile as it's handled by Navbar
+  const { user, userProfile, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!loading && !user) {
       router.push(ROUTES.LOGIN);
     }
-  }, [user, loading, router]);
+    
+    // Additional security: validate user role against current path
+    if (!loading && user && userProfile) {
+      const pathname = window.location.pathname;
+      const pathSegments = pathname.split('/');
+      const requestedRole = pathSegments[2]; // /dashboard/[role]/...
+      
+      // Security check: ensure user role matches requested dashboard
+      if (requestedRole && userProfile.role !== requestedRole && requestedRole !== 'overview') {
+        console.warn(`Security: User role ${userProfile.role} attempted to access ${requestedRole} dashboard`);
+        // Redirect to correct dashboard based on user role
+        const correctPath = `/dashboard/${userProfile.role}`;
+        if (pathname !== correctPath) {
+          router.push(correctPath);
+        }
+      }
+    }
+  }, [user, userProfile, loading, router]);
 
   if (loading || !user) { // Simplified loading state check
     return (

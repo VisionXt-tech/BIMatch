@@ -65,7 +65,10 @@
       "Read(/C:\\Users\\lucar\\Projects\\BIM\\BIMatch\\src\\app\\dashboard\\company/**)",
       "Read(/C:\\Users\\lucar\\Projects\\BIM\\BIMatch\\src\\app\\dashboard\\company/**)",
       "Read(/C:\\Users\\lucar\\Projects\\BIM\\BIMatch/**)",
-      "Read(/C:\\Users\\lucar\\Projects\\BIM\\BIMatch\\src\\app\\projects\\[projectId]/**)"
+      "Read(/C:\\Users\\lucar\\Projects\\BIM\\BIMatch\\src\\app\\projects\\[projectId]/**)",
+      "Bash(npm install:*)",
+      "Bash(npm run lint)",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
     "ask": []

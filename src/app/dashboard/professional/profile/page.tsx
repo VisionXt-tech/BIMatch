@@ -15,6 +15,7 @@ import { FormInput, FormTextarea, FormMultiSelect, FormSingleSelect } from '@/co
 import { BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, AVAILABILITY_OPTIONS, ITALIAN_REGIONS, EXPERIENCE_LEVEL_OPTIONS } from '@/constants';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useSecureFileUpload } from '@/hooks/useSecureFileUpload';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject, type FirebaseStorageError } from 'firebase/storage';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { Progress } from '@/components/ui/progress';
@@ -65,7 +66,7 @@ const professionalProfileSchema = z.object({
 });
 
 type ProfessionalProfileFormData = z.infer<typeof professionalProfileSchema>;
-type CertificationType = 'albo' | 'uni' | 'other';
+type CertificationType = 'albo' | 'uni' | 'other' | 'cv';
 
 
 const mapProfileToFormData = (profile?: FullProfessionalProfile | null): ProfessionalProfileFormData => {
@@ -99,6 +100,7 @@ export default function ProfessionalProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
   const { db, storage } = useFirebase();
+  const { uploadFile } = useSecureFileUpload();
 
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -109,16 +111,19 @@ export default function ProfessionalProfilePage() {
   const [alboPdfFile, setAlboPdfFile] = useState<File | null>(null);
   const [uniPdfFile, setUniPdfFile] = useState<File | null>(null);
   const [otherCertPdfFile, setOtherCertPdfFile] = useState<File | null>(null);
+  const [cvPdfFile, setCvPdfFile] = useState<File | null>(null);
   
   const [alboUploadProgress, setAlboUploadProgress] = useState<number | null>(null);
   const [uniUploadProgress, setUniUploadProgress] = useState<number | null>(null);
   const [otherCertUploadProgress, setOtherCertUploadProgress] = useState<number | null>(null);
+  const [cvUploadProgress, setCvUploadProgress] = useState<number | null>(null);
   
   const [isUploadingAnyFile, setIsUploadingAnyFile] = useState(false);
 
   const alboInputRef = useRef<HTMLInputElement>(null);
   const uniInputRef = useRef<HTMLInputElement>(null);
   const otherCertInputRef = useRef<HTMLInputElement>(null);
+  const cvInputRef = useRef<HTMLInputElement>(null);
   
   const [certDialogState, setCertDialogState] = useState<{ isOpen: boolean; certType: CertificationType | null; onConfirm: () => void }>({ isOpen: false, certType: null, onConfirm: () => {} });
   const [deleteDialogState, setDeleteDialogState] = useState<{ isOpen: boolean; certType: CertificationType | null; }>({ isOpen: false, certType: null });
@@ -194,45 +199,57 @@ export default function ProfessionalProfilePage() {
   };
 
 
+  // Secure file upload function using server-side validation
   const uploadFileAndGetURL = async (
     file: File,
-    path: string,
+    folder: string,
     setProgress: React.Dispatch<React.SetStateAction<number | null>>
   ): Promise<string> => {
-    if (!storage || !user) throw new Error("Servizio di storage non disponibile o utente non loggato.");
+    if (!user) throw new Error("Utente non loggato.");
+    
+    console.log('Secure upload starting:', {
+      userUID: user.uid,
+      folder: folder,
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type
+    });
+    
     setIsUploadingAnyFile(true);
-    setProgress(0);
-    const filePath = `${path}/${user.uid}/${Date.now()}_${file.name}`;
-    const fileRef = storageRef(storage, filePath);
-    const uploadTask = uploadBytesResumable(fileRef, file);
-
-    return new Promise((resolve, reject) => {
-      uploadTask.on(
-        'state_changed',
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+    
+    // Determine file type for validation
+    const fileType: 'image' | 'document' = folder === 'profileImages' ? 'image' : 'document';
+    
+    // Determine size limits
+    const maxSizeBytes = fileType === 'image' ? 2 * 1024 * 1024 : 5 * 1024 * 1024;
+    
+    try {
+      // Use secure upload with server-side validation
+      const downloadURL = await uploadFile(file, user.uid, {
+        folder: folder,
+        fileType: fileType,
+        maxSizeBytes: maxSizeBytes,
+        onProgress: (progress) => {
           setProgress(progress);
         },
-        (error) => {
-          toast({ title: "Errore Upload File", description: error.message, variant: "destructive" });
+        onError: (error) => {
+          console.error('Secure upload error:', error);
           setProgress(null);
           setIsUploadingAnyFile(false);
-          reject(error);
         },
-        async () => {
-          try {
-            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            setProgress(100); 
-            resolve(downloadURL);
-          } catch (error) {
-            toast({ title: "Errore URL File", description: (error as Error).message, variant: "destructive" });
-            setProgress(null);
-            setIsUploadingAnyFile(false);
-            reject(error);
-          }
+        onSuccess: (url) => {
+          console.log('Secure upload successful:', url);
+          setProgress(100);
         }
-      );
-    });
+      });
+      
+      return downloadURL;
+      
+    } catch (error) {
+      setProgress(null);
+      setIsUploadingAnyFile(false);
+      throw error;
+    }
   };
   
   const openDeleteConfirmation = (certType: CertificationType) => {
@@ -252,12 +269,14 @@ export default function ProfessionalProfilePage() {
         const urlKeyMap: Record<CertificationType, keyof FullProfessionalProfile> = {
             albo: 'alboRegistrationUrl',
             uni: 'uniCertificationUrl',
-            other: 'otherCertificationsUrl'
+            other: 'otherCertificationsUrl',
+            cv: 'cvUrl'
         };
         const selfCertifiedKeyMap: Record<CertificationType, keyof FullProfessionalProfile> = {
             albo: 'alboSelfCertified',
             uni: 'uniSelfCertified',
-            other: 'otherCertificationsSelfCertified'
+            other: 'otherCertificationsSelfCertified',
+            cv: 'cvUrl' as any // CV doesn't have self-certification
         };
 
         const urlToDeleteKey = urlKeyMap[certType];
@@ -282,7 +301,7 @@ export default function ProfessionalProfilePage() {
           [selfCertifiedKey]: deleteField(),
         };
         
-        await updateUserProfile(user.uid, updatePayload);
+        await updateUserProfile(updatePayload);
         await form.trigger(); // Re-validate the form after deletion
         
         toast({ title: "Documento Eliminato", description: "Il documento è stato rimosso con successo." });
@@ -320,46 +339,53 @@ export default function ProfessionalProfilePage() {
         }
         dataToUpdate.photoURL = photoURLToUpdate;
 
-        const certs: CertificationType[] = ['albo', 'uni', 'other'];
+        const certs: CertificationType[] = ['cv', 'albo', 'uni', 'other'];
         const urlKeyMap: Record<CertificationType, keyof FullProfessionalProfile> = {
-            albo: 'alboRegistrationUrl', uni: 'uniCertificationUrl', other: 'otherCertificationsUrl'
+            albo: 'alboRegistrationUrl', uni: 'uniCertificationUrl', other: 'otherCertificationsUrl', cv: 'cvUrl'
         };
         const fileMap: Record<CertificationType, File | null> = {
-            albo: alboPdfFile, uni: uniPdfFile, other: otherCertPdfFile
+            albo: alboPdfFile, uni: uniPdfFile, other: otherCertPdfFile, cv: cvPdfFile
         };
         const progressMap: Record<CertificationType, React.Dispatch<React.SetStateAction<number|null>>> = {
-            albo: setAlboUploadProgress, uni: setUniUploadProgress, other: setOtherCertUploadProgress
+            albo: setAlboUploadProgress, uni: setUniUploadProgress, other: setOtherCertUploadProgress, cv: setCvUploadProgress
         };
         
         for (const cert of certs) {
             const urlKey = urlKeyMap[cert];
             const file = fileMap[cert];
-            const selfCertified = data[`${cert}SelfCertified`];
+            const selfCertified = cert !== 'cv' ? data[`${cert}SelfCertified`] : false;
 
             if (file) {
-                const url = await uploadFileAndGetURL(file, `professionalCertifications/${cert}`, progressMap[cert]);
+                const folderPath = cert === 'cv' ? 'cvs' : `certifications/${cert}`;
+                const url = await uploadFileAndGetURL(file, folderPath, progressMap[cert]);
                 dataToUpdate[urlKey] = url;
-                dataToUpdate[`${cert}SelfCertified`] = false;
-            } else if (selfCertified) {
+                if (cert !== 'cv') {
+                    dataToUpdate[`${cert}SelfCertified`] = false;
+                }
+            } else if (cert !== 'cv' && selfCertified) {
                 dataToUpdate[urlKey] = deleteField();
                 dataToUpdate[`${cert}SelfCertified`] = true;
             } else {
                  if (data[urlKey] === '' || data[urlKey] === null || data[urlKey] === undefined) {
                     dataToUpdate[urlKey] = deleteField();
-                    dataToUpdate[`${cert}SelfCertified`] = deleteField();
+                    if (cert !== 'cv') {
+                        dataToUpdate[`${cert}SelfCertified`] = deleteField();
+                    }
                  }
             }
         }
 
-        await updateUserProfile(user.uid, dataToUpdate);
+        await updateUserProfile(dataToUpdate);
         
         toast({ title: "Profilo Aggiornato", description: "Le modifiche sono state salvate con successo." });
         
         setProfileImageFile(null);
+        setCvPdfFile(null);
         setAlboPdfFile(null);
         setUniPdfFile(null);
         setOtherCertPdfFile(null);
         if (profileImageInputRef.current) profileImageInputRef.current.value = "";
+        if (cvInputRef.current) cvInputRef.current.value = "";
         if (alboInputRef.current) alboInputRef.current.value = "";
         if (uniInputRef.current) uniInputRef.current.value = "";
         if (otherCertInputRef.current) otherCertInputRef.current.value = "";
@@ -370,6 +396,7 @@ export default function ProfessionalProfilePage() {
         setIsUploadingImage(false);
         setIsUploadingAnyFile(false);
         setImageUploadProgress(null);
+        setCvUploadProgress(null);
         setAlboUploadProgress(null);
         setUniUploadProgress(null);
         setOtherCertUploadProgress(null);
@@ -410,42 +437,45 @@ export default function ProfessionalProfilePage() {
     const urlKeyMap: Record<CertificationType, keyof FullProfessionalProfile> = {
         albo: 'alboRegistrationUrl',
         uni: 'uniCertificationUrl',
-        other: 'otherCertificationsUrl'
+        other: 'otherCertificationsUrl',
+        cv: 'cvUrl'
     };
     const urlKey = urlKeyMap[certType];
     const currentUrl = (userProfile as FullProfessionalProfile)?.[urlKey] as string | undefined;
-    const selfCertified = form.watch(`${certType}SelfCertified`);
+    const selfCertified = certType !== 'cv' ? form.watch(`${certType}SelfCertified`) : false;
     const hasExistingFile = !!currentUrl;
     const hasPendingFile = !!fileState;
 
     return (
-      <FormItem className="border p-4 rounded-md shadow-sm bg-muted/30">
-        <FormLabel className="text-md font-semibold text-primary flex items-center">
-          <IconComponent className="mr-2 h-5 w-5" /> {title}
+      <FormItem className="border p-3 sm:p-4 rounded-md shadow-sm bg-muted/30">
+        <FormLabel className="text-sm sm:text-md font-semibold text-primary flex items-center">
+          <IconComponent className="mr-1 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" /> 
+          <span className="text-xs sm:text-sm">{title}</span>
         </FormLabel>
         
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()} disabled={isUploadingAnyFile || selfCertified}>
-            <Upload className="mr-2 h-4 w-4" /> {hasExistingFile ? 'Modifica PDF' : 'Carica PDF'}
+          <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()} disabled={isUploadingAnyFile || selfCertified} className="w-full sm:w-auto text-xs sm:text-sm">
+            <Upload className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" /> {hasExistingFile ? 'Modifica PDF' : 'Carica PDF'}
           </Button>
           {hasExistingFile && (
             <Button
               type="button"
               variant="destructive"
               size="sm"
-              className="h-8 px-2 py-1 text-xs"
+              className="h-8 px-2 py-1 text-xs w-full sm:w-auto"
               onClick={() => onDelete(certType)}
               disabled={isUploadingAnyFile || selfCertified}
             >
-              <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-              Elimina PDF
+              <Trash2 className="mr-1 sm:mr-1.5 h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              <span className="hidden sm:inline">Elimina PDF</span>
+              <span className="sm:hidden">Elimina</span>
             </Button>
           )}
         </div>
         
-        <div className="mt-2 text-sm text-muted-foreground">
+        <div className="mt-2 text-xs sm:text-sm text-muted-foreground">
           {hasPendingFile && (
-            <span className="truncate max-w-xs block">Selezionato: {fileState.name}</span>
+            <span className="truncate block">Selezionato: {fileState.name}</span>
           )}
           {!hasPendingFile && hasExistingFile && (
             <Link href={currentUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center">
@@ -463,21 +493,22 @@ export default function ProfessionalProfilePage() {
         <FormDescription className="text-xs mt-1">Max {MAX_PDF_SIZE_MB}MB (solo PDF).</FormDescription>
         
         {showSelfCertify && (
-            <div className="flex items-center space-x-2 mt-4 pt-4 border-t border-border/50">
+            <div className="flex items-start space-x-2 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-border/50">
                <FormField
                   control={form.control}
                   name={`${certType}SelfCertified`}
                   render={({ field }) => (
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-start space-x-2">
                       <Checkbox
                         id={`${certType}SelfCertified`}
                         checked={field.value}
                         onCheckedChange={(checked) => handleCertificationCheckboxChange(certType, !!checked)}
                         disabled={isUploadingAnyFile || hasExistingFile || hasPendingFile }
+                        className="mt-0.5 sm:mt-0"
                       />
                       <label
                         htmlFor={`${certType}SelfCertified`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground"
+                        className="text-xs sm:text-sm font-medium leading-tight sm:leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground"
                       >
                         In alternativa, autocertifico il possesso di questo requisito.
                       </label>
@@ -495,48 +526,49 @@ export default function ProfessionalProfilePage() {
     <>
     <div className="space-y-6">
       <Card className="shadow-xl">
-        <CardHeader className="p-6 border-b">
-          <div className="flex items-center space-x-4">
-            <UserCircle2 className="h-8 w-8 text-primary" />
+        <CardHeader className="p-4 sm:p-6 border-b">
+          <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+            <UserCircle2 className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
             <div>
-              <CardTitle className="text-2xl font-bold">Il Mio Profilo Professionale</CardTitle>
-              <CardDescription className="text-sm text-muted-foreground">Mantieni aggiornate le tue informazioni per attrarre le migliori opportunità.</CardDescription>
+              <CardTitle className="text-xl sm:text-2xl font-bold">Il Mio Profilo Professionale</CardTitle>
+              <CardDescription className="text-xs sm:text-sm text-muted-foreground">Mantieni aggiornate le tue informazioni per attrarre le migliori opportunità.</CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-6">
+        <CardContent className="p-4 sm:p-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                <Tabs defaultValue="personal-info" className="w-full">
-                <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-4 mb-6">
-                  <TabsTrigger value="personal-info">Info Personali e Immagine</TabsTrigger>
-                  <TabsTrigger value="skills-details">Competenze e Dettagli</TabsTrigger>
-                  <TabsTrigger value="certifications">Certificazioni</TabsTrigger>
-                  <TabsTrigger value="links-rate">Link e Retribuzione</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 sm:grid-cols-2 md:grid-cols-4 mb-4 sm:mb-6 h-auto">
+                  <TabsTrigger value="personal-info" className="text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2">Info Personali</TabsTrigger>
+                  <TabsTrigger value="skills-details" className="text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2">Competenze</TabsTrigger>
+                  <TabsTrigger value="certifications" className="text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2">CV e Cert.</TabsTrigger>
+                  <TabsTrigger value="links-rate" className="text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2">Link e Pay</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="personal-info" className="space-y-4">
+                <TabsContent value="personal-info" className="space-y-3 sm:space-y-4">
                   <FormItem>
                       <FormLabel className="text-sm font-semibold text-primary">Immagine del Profilo</FormLabel>
-                      <div className="flex items-center space-x-4 pt-2">
-                        <Avatar className="h-24 w-24 border">
+                      <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 pt-2">
+                        <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border self-center sm:self-auto">
                             <AvatarImage src={imagePreview || undefined} alt={(userProfile as FullProfessionalProfile).displayName || 'User'} data-ai-hint="profile person" />
-                            <AvatarFallback className="text-3xl">{getInitials((userProfile as FullProfessionalProfile).displayName)}</AvatarFallback>
+                            <AvatarFallback className="text-2xl sm:text-3xl">{getInitials((userProfile as FullProfessionalProfile).displayName)}</AvatarFallback>
                         </Avatar>
-                        <div className="flex flex-col space-y-2">
+                        <div className="flex flex-col space-y-2 w-full">
                             <Button
                             type="button"
                             variant="outline"
                             size="sm"
                             onClick={() => profileImageInputRef.current?.click()}
-                            className="bg-accent text-accent-foreground hover:bg-accent/90 w-fit"
+                            className="bg-accent text-accent-foreground hover:bg-accent/90 w-full sm:w-fit text-xs sm:text-sm"
                             disabled={isUploadingAnyFile}
                             >
-                            <Upload className="mr-2 h-4 w-4" />
-                            Carica / Modifica Immagine
+                            <Upload className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                            <span className="hidden sm:inline">Carica / Modifica Immagine</span>
+                            <span className="sm:hidden">Carica Immagine</span>
                             </Button>
                             {profileImageFile && (
-                            <span className="text-sm text-muted-foreground">
+                            <span className="text-xs sm:text-sm text-muted-foreground truncate">
                                 File: {profileImageFile.name}
                             </span>
                             )}
@@ -575,9 +607,6 @@ export default function ProfessionalProfilePage() {
                     placeholder="Seleziona la tua regione principale"
                   />
                   <FormTextarea control={form.control} name="bio" label="Breve Bio Professionale" placeholder="Descrivi la tua esperienza, specializzazioni e obiettivi..." rows={5} />
-                </TabsContent>
-
-                <TabsContent value="skills-details" className="space-y-4">
                   <div className="grid md:grid-cols-2 gap-4">
                     <FormSingleSelect
                       key={`experienceLevel-${form.watch('experienceLevel') || 'default'}`}
@@ -596,27 +625,41 @@ export default function ProfessionalProfilePage() {
                       placeholder="Seleziona la tua disponibilità"
                     />
                   </div>
+                </TabsContent>
+
+                <TabsContent value="skills-details" className="space-y-3 sm:space-y-4">
                   <FormMultiSelect
                     control={form.control}
                     name="bimSkills"
-                    label="Competenze BIM"
+                    label="Competenze BIM Specialistiche"
                     options={BIM_SKILLS_OPTIONS}
-                    placeholder="Seleziona le tue competenze BIM principali"
+                    placeholder="Seleziona le tue competenze BIM di maggiore specializzazione"
                   />
                   <FormMultiSelect
                     control={form.control}
                     name="softwareProficiency"
-                    label="Software BIM Utilizzati"
+                    label="Software di Piena Competenza"
                     options={SOFTWARE_PROFICIENCY_OPTIONS}
-                    placeholder="Indica i software che conosci"
+                    placeholder="Seleziona solo i software che padroneggi completamente"
                   />
                 </TabsContent>
                 
-                <TabsContent value="certifications" className="space-y-4">
+                <TabsContent value="certifications" className="space-y-3 sm:space-y-4">
+                   <Input type="file" className="hidden" ref={cvInputRef} accept="application/pdf" onChange={(e) => handleGenericFileChange(e, setCvPdfFile, 'cv')} />
                    <Input type="file" className="hidden" ref={alboInputRef} accept="application/pdf" onChange={(e) => handleGenericFileChange(e, setAlboPdfFile, 'albo')} />
                    <Input type="file" className="hidden" ref={uniInputRef} accept="application/pdf" onChange={(e) => handleGenericFileChange(e, setUniPdfFile, 'uni')} />
                    <Input type="file" className="hidden" ref={otherCertInputRef} accept="application/pdf" onChange={(e) => handleGenericFileChange(e, setOtherCertPdfFile, 'other')} />
 
+                  <CertificationSection
+                    certType="cv"
+                    title="Curriculum Vitae"
+                    icon={FileText}
+                    fileState={cvPdfFile}
+                    progressState={cvUploadProgress}
+                    inputRef={cvInputRef}
+                    onDelete={openDeleteConfirmation}
+                    showSelfCertify={false}
+                  />
                   <CertificationSection
                     certType="albo"
                     title="Iscrizione Albo Professionale (ove applicabile)"
@@ -648,7 +691,7 @@ export default function ProfessionalProfilePage() {
                 </TabsContent>
 
 
-                <TabsContent value="links-rate" className="space-y-4">
+                <TabsContent value="links-rate" className="space-y-3 sm:space-y-4">
                   <FormItem>
                     <FormLabel className="text-xs">Retribuzione Mensile Lorda (€) (Opzionale)</FormLabel>
                     <FormControl>
@@ -676,7 +719,7 @@ export default function ProfessionalProfilePage() {
                 </TabsContent>
               </Tabs>
 
-              <Button type="submit" className="w-full md:w-auto mt-6" size="lg" disabled={authLoading || form.formState.isSubmitting || isUploadingAnyFile}>
+              <Button type="submit" className="w-full md:w-auto mt-4 sm:mt-6" size="default" disabled={authLoading || form.formState.isSubmitting || isUploadingAnyFile}>
                 <Save className="mr-2 h-5 w-5" />
                 {isUploadingAnyFile ? `Caricamento File...` : (form.formState.isSubmitting ? 'Salvataggio Profilo...' : 'Salva Profilo Professionale')}
               </Button>

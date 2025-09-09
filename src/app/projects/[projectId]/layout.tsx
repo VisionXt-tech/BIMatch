@@ -6,7 +6,7 @@ import { db } from '@/lib/firebase/firebase'; // db can be null if Firebase init
 import type { Project } from '@/types/project';
 
 type Props = {
-  params: { projectId: string };
+  params: Promise<{ projectId: string }>;
   children: ReactNode;
 };
 
@@ -14,7 +14,7 @@ export async function generateMetadata(
   { params }: Props,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  const projectId = params.projectId;
+  const { projectId } = await params;
   let projectTitle = 'Dettagli Progetto';
   let projectDescription = 'Visualizza i dettagli del progetto e candidati se sei un professionista BIM.';
 

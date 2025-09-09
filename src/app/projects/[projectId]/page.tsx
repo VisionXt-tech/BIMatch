@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { doc, getDoc, addDoc, collection, query, where, getDocs, serverTimestamp, Timestamp, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, addDoc, collection, query, where, getDocs, serverTimestamp, Timestamp, deleteDoc, updateDoc } from 'firebase/firestore';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Project, ProjectApplication } from '@/types/project';
@@ -162,6 +162,7 @@ export default function ProjectDetailPage() {
       const applicationData: Omit<ProjectApplication, 'id'> = {
         projectId: project.id!,
         professionalId: user.uid,
+        companyId: project.companyId, // Required for Firestore rules
         professionalName: userProfile.displayName || `${(userProfile as ProfessionalProfile).firstName} ${(userProfile as ProfessionalProfile).lastName}`,
         professionalEmail: userProfile.email || '',
         applicationDate: serverTimestamp(),
@@ -212,17 +213,52 @@ export default function ProjectDetailPage() {
         toast({ title: "Azione non permessa", description: "Non puoi ritirare una candidatura già rifiutata.", variant: "default" });
         return;
     }
+    if (applicationStatus === 'ritirata') {
+        toast({ title: "Azione non permessa", description: "La candidatura è già stata ritirata.", variant: "default" });
+        return;
+    }
 
     setIsWithdrawing(true);
     try {
+      console.log('Withdraw Debug Info:', {
+        userUID: user.uid,
+        applicationId,
+        currentStatus: applicationStatus,
+        projectId: project.id,
+        companyId: project.companyId
+      });
+      
       const appDocRef = doc(db, 'projectApplications', applicationId);
-      await deleteDoc(appDocRef);
+      
+      // Simple update with only the fields we want to change
+      const updateData = {
+        status: 'ritirata' as const,
+        updatedAt: serverTimestamp()
+      };
+      
+      console.log('Update data:', updateData);
+      console.log('Document reference:', appDocRef.path);
+      
+      // Instead of deleting, update status to 'ritirata'
+      await updateDoc(appDocRef, updateData);
       toast({ title: "Candidatura Ritirata", description: `La tua candidatura per "${project.title}" è stata ritirata.` });
       setHasApplied(false);
       setApplicationId(null);
-      setApplicationStatus(null);
+      setApplicationStatus('ritirata');
     } catch (error: any) {
-      toast({ title: "Errore Ritiro Candidatura", description: error.message || "Impossibile ritirare la candidatura.", variant: "destructive" });
+      console.error('Withdraw application error - Full object:', error);
+      console.error('Withdraw application error - Stringified:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+      console.error('Withdraw application error - Type:', typeof error);
+      console.error('Withdraw application error - Constructor:', error.constructor?.name);
+      
+      const errorMessage = error?.message || error?.toString() || 'Errore sconosciuto';
+      const errorCode = error?.code || 'UNKNOWN_ERROR';
+      
+      toast({ 
+        title: "Errore Ritiro Candidatura", 
+        description: `${errorCode}: ${errorMessage}`, 
+        variant: "destructive" 
+      });
     } finally {
       setIsWithdrawing(false);
     }
@@ -287,7 +323,8 @@ export default function ProjectDetailPage() {
   
   const isDeadlinePassed = deadlineDate ? deadlineDate < new Date() : false;
   const isApplicationRejected = applicationStatus === 'rifiutata';
-  const canInteractWithApplication = user && userProfile?.role === 'professional' && !isDeadlinePassed && !isApplicationRejected;
+  const isApplicationWithdrawn = applicationStatus === 'ritirata';
+  const canInteractWithApplication = user && userProfile?.role === 'professional' && !isDeadlinePassed && !isApplicationRejected && !isApplicationWithdrawn;
   const professionalSkillsOptions = (userProfile as ProfessionalProfile)?.bimSkills?.map(skillValue => {
     const skill = BIM_SKILLS_OPTIONS.find(s => s.value === skillValue);
     return skill ? { value: skill.value, label: skill.label } : { value: skillValue, label: skillValue };
@@ -384,6 +421,10 @@ export default function ProjectDetailPage() {
                 ) : isApplicationRejected ? (
                   <Button className="w-full" disabled variant="destructive">
                     <Ban className="mr-2 h-5 w-5" /> Candidatura Rifiutata
+                  </Button>
+                ) : isApplicationWithdrawn ? (
+                  <Button className="w-full" disabled variant="secondary">
+                    <XCircle className="mr-2 h-5 w-5" /> Candidatura Ritirata
                   </Button>
                 ) : hasApplied ? (
                   <Button className="w-full" onClick={handleWithdrawApplication} disabled={isWithdrawing} variant="outline">

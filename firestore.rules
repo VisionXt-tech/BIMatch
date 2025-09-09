@@ -89,24 +89,65 @@ service cloud.firestore {
         
       allow update: if isAuthenticated() && 
         (resource.data.professionalId == request.auth.uid || 
-         resource.data.companyId == request.auth.uid) &&
-        // Prevent changing core identifiers
-        request.resource.data.professionalId == resource.data.professionalId &&
-        request.resource.data.companyId == resource.data.companyId &&
-        request.resource.data.projectId == resource.data.projectId;
+         resource.data.companyId == request.auth.uid);
         
       allow delete: if isAuthenticated() && 
         resource.data.companyId == request.auth.uid;
     }
     
-    // Notifications collection - strict user isolation
+    // Notifications collection - enhanced security
     match /notifications/{notificationId} {
-      allow read, write: if isAuthenticated() && 
+      // Read: Only notification owner can read their notifications
+      allow read: if isAuthenticated() && 
         resource.data.userId == request.auth.uid;
+      
+      // List: Only for owned notifications with proper filtering
+      allow list: if isAuthenticated() && 
+        request.auth.uid != null;
         
-      allow create: if isAuthenticated() && 
-        request.resource.data.userId == request.auth.uid &&
-        request.resource.data.createdAt == request.time;
+      // Update: Only owner can mark as read, no other updates allowed
+      allow update: if isAuthenticated() && 
+        resource.data.userId == request.auth.uid &&
+        // Only allow updating isRead field and updatedAt
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead', 'updatedAt']) &&
+        // Prevent changing critical fields
+        request.resource.data.userId == resource.data.userId &&
+        request.resource.data.type == resource.data.type &&
+        request.resource.data.message == resource.data.message;
+      
+      // Create: Strict validation - only system can create notifications
+      // Users cannot create notifications for other users
+      allow create: if false; // Block direct creation by users
+        
+      // Delete: Not allowed for data retention compliance
+      allow delete: if false;
+    }
+    
+    // System notifications - only admin/system can create
+    match /notifications/{notificationId} {
+      allow create: if hasRole('admin') &&
+        // Validate notification structure
+        request.resource.data.keys().hasAll(['userId', 'type', 'title', 'message', 'isRead', 'createdAt']) &&
+        // Validate timestamp
+        request.resource.data.createdAt == request.time &&
+        // Validate notification types
+        request.resource.data.type in [
+          'APPLICATION_STATUS_UPDATED', 
+          'NEW_PROJECT_MATCH', 
+          'PROFILE_VIEW', 
+          'NEW_APPLICATION_RECEIVED',
+          'INTERVIEW_PROPOSED',
+          'INTERVIEW_ACCEPTED_BY_PRO',
+          'INTERVIEW_REJECTED_BY_PRO',
+          'GENERIC_INFO'
+        ] &&
+        // Validate boolean isRead
+        request.resource.data.isRead is bool &&
+        // Validate string fields
+        request.resource.data.userId is string &&
+        request.resource.data.type is string &&
+        request.resource.data.title is string &&
+        request.resource.data.message is string;
     }
     
     // Admin-only collections

@@ -25,6 +25,7 @@ export interface ProjectApplication {
   id?: string; // Firestore document ID
   projectId: string;
   professionalId: string; // UID of the applying professional
+  companyId: string; // UID of the company that owns the project (required for Firestore rules)
   professionalName: string;
   professionalEmail?: string; // For notifications
   applicationDate: Timestamp | Date | any;
@@ -33,6 +34,7 @@ export interface ProjectApplication {
     | 'in_revisione' // Stato intermedio se l'azienda vuole segnarla come tale (non per rifiuto/preselezione diretta)
     | 'preselezionata' // L'azienda ha inviato una prima proposta di colloquio
     | 'rifiutata' 
+    | 'ritirata' // Il professionista ha ritirato la propria candidatura
     | 'accettata' // L'azienda ha accettato il professionista per il progetto
     | 'colloquio_proposto' // Sinonimo di preselezionata, ma più esplicito
     | 'colloquio_accettato_prof' // Il professionista ha accettato la data del colloquio

@@ -21,7 +21,7 @@ interface AuthContextType {
   registerProfessional: (data: ProfessionalRegistrationFormData) => Promise<void>;
   registerCompany: (data: CompanyRegistrationFormData) => Promise<void>;
   logout: () => Promise<void>;
-  updateUserProfile: (userId: string, data: Partial<UserProfile>) => Promise<UserProfile | null>;
+  updateUserProfile: (data: Partial<UserProfile>) => Promise<UserProfile | null>;
   requestPasswordReset: (email: string) => Promise<void>;
 }
 
@@ -86,7 +86,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     console.log('Starting login for:', data.email);
     setIsLoggingIn(true);
     try {
-      const result = await signInWithEmailAndPassword(auth, data.email, data.password);
+      const result = await signInWithEmailAndPassword(auth, data.email, data.password!);
       console.log('Firebase authentication successful:', result.user.uid);
       // No toast here, direct redirect
       router.push(ROUTES.DASHBOARD); 
@@ -120,7 +120,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const registerProfessional = async (data: ProfessionalRegistrationFormData) => {
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+      const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password!);
       const newUser = userCredential.user;
       const userDocRef = doc(db, 'users', newUser.uid);
       
@@ -128,7 +128,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         uid: newUser.uid,
         email: newUser.email,
         displayName: `${data.firstName} ${data.lastName}`,
-        role: ROLES.PROFESSIONAL,
+        role: ROLES.PROFESSIONAL as 'professional',
         firstName: data.firstName,
         lastName: data.lastName,
         location: data.location,
@@ -157,7 +157,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const registerCompany = async (data: CompanyRegistrationFormData) => {
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+      const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password!);
       const newUser = userCredential.user;
       const userDocRef = doc(db, 'users', newUser.uid);
 
@@ -165,7 +165,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         uid: newUser.uid,
         email: newUser.email,
         displayName: data.companyName,
-        role: ROLES.COMPANY,
+        role: ROLES.COMPANY as 'company',
         companyName: data.companyName,
         companyVat: data.companyVat,
         companyWebsite: data.companyWebsite || '',
@@ -204,8 +204,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
   
-  const updateUserProfile = async (userId: string, data: Partial<UserProfile>): Promise<UserProfile | null> => {
-    const userDocRef = doc(db, 'users', userId);
+  const updateUserProfile = async (data: Partial<UserProfile>): Promise<UserProfile | null> => {
+    // Security fix: Always use authenticated user's UID
+    if (!user?.uid) {
+      throw new Error('User not authenticated');
+    }
+    
+    const userDocRef = doc(db, 'users', user.uid);
     try {
       const dataToUpdate = {
         ...data,
@@ -219,7 +224,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return updatedProfileData; 
       }
       return null;
-    } catch (error: any)      {
+    } catch (error: any) {
       console.error("Error updating user profile:", error);
       toast({ title: "Errore Aggiornamento Profilo", description: error.message, variant: "destructive" });
       throw error; 

@@ -206,7 +206,7 @@ export default function CompanyProfilePage() {
     };
 
     try {
-      const updatedProfile = await updateUserProfile(user.uid, dataToUpdate);
+      const updatedProfile = await updateUserProfile(dataToUpdate);
        if (updatedProfile) {
         toast({ title: "Profilo Aggiornato", description: "Le modifiche sono state salvate con successo." });
       }
