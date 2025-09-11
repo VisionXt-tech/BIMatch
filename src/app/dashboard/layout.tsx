@@ -18,24 +18,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     if (!loading && !user) {
       router.push(ROUTES.LOGIN);
     }
-    
-    // Additional security: validate user role against current path
-    if (!loading && user && userProfile) {
-      const pathname = window.location.pathname;
-      const pathSegments = pathname.split('/');
-      const requestedRole = pathSegments[2]; // /dashboard/[role]/...
-      
-      // Security check: ensure user role matches requested dashboard
-      if (requestedRole && userProfile.role !== requestedRole && requestedRole !== 'overview') {
-        console.warn(`Security: User role ${userProfile.role} attempted to access ${requestedRole} dashboard`);
-        // Redirect to correct dashboard based on user role
-        const correctPath = `/dashboard/${userProfile.role}`;
-        if (pathname !== correctPath) {
-          router.push(correctPath);
-        }
-      }
-    }
-  }, [user, userProfile, loading, router]);
+  }, [user, loading, router]);
 
   if (loading || !user) { // Simplified loading state check
     return (

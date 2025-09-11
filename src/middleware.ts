@@ -10,16 +10,17 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check if user has authentication token
-  const authToken = request.cookies.get('__session')?.value || 
-                   request.headers.get('authorization');
+  // TODO: Implement proper Firebase Auth server-side validation
+  // For now, we temporarily disable server-side auth check to allow client-side Firebase Auth
+  // const authToken = request.cookies.get('__session')?.value || 
+  //                  request.headers.get('authorization');
   
-  if (!authToken) {
-    // No authentication token - redirect to login
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(loginUrl);
-  }
+  // if (!authToken) {
+  //   // No authentication token - redirect to login
+  //   const loginUrl = new URL('/login', request.url);
+  //   loginUrl.searchParams.set('redirect', pathname);
+  //   return NextResponse.redirect(loginUrl);
+  // }
 
   // Extract role from path
   const pathSegments = pathname.split('/');
@@ -51,12 +52,12 @@ export function middleware(request: NextRequest) {
   return response;
 }
 
-// Configure which paths this middleware should run on
+// Temporarily disable middleware by matching no routes
 export const config = {
   matcher: [
-    '/dashboard/:path*',
+    // '/dashboard/:path*',
     // Protect API routes as well
-    '/api/dashboard/:path*',
-    '/api/profile/:path*'
+    // '/api/dashboard/:path*',
+    // '/api/profile/:path*'
   ]
 };

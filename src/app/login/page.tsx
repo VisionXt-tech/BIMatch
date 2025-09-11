@@ -47,7 +47,7 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     try {
       await login(data);
-      router.push(ROUTES.DASHBOARD); 
+      // No need to redirect here - AuthContext handles the redirect
     } catch (error) {
       console.error('Login failed on page:', error);
       // Toast is handled by useAuth
