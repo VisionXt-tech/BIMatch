@@ -2,7 +2,7 @@
 'use client';
 
 import type { User } from 'firebase/auth';
-import { onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, sendEmailVerification } from 'firebase/auth';
 import type { DocumentData, DocumentReference } from 'firebase/firestore';
 import { doc, getDoc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import type { LoginFormData, ProfessionalRegistrationFormData, CompanyRegistrationFormData, UserProfile, ProfessionalProfile as FullProfessionalProfile, CompanyProfile as FullCompanyProfile } from '@/types/auth';
 import { ROLES, ROUTES } from '@/constants';
 import { useRouter } from 'next/navigation';
+import { useRateLimit } from '@/hooks/useRateLimit';
+import { createAuditLogger } from '@/lib/auditLog';
 
 interface AuthContextType {
   user: User | null;
@@ -23,6 +25,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   updateUserProfile: (data: Partial<UserProfile>) => Promise<UserProfile | null>;
   requestPasswordReset: (email: string) => Promise<void>;
+  resendVerificationEmail: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -47,6 +50,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+  const { checkRateLimit, recordAttempt, getRemainingTime } = useRateLimit();
+  const auditLog = createAuditLogger(db);
 
   const fetchUserProfile = useCallback(async (firebaseUser: User | null) => {
     if (firebaseUser) {
@@ -60,7 +65,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setUserProfile(profileData);
         } else {
           console.warn(`User profile for ${firebaseUser.uid} not found in Firestore.`);
-          setUserProfile(null); 
+          setUserProfile(null);
         }
       } catch (error) {
         console.error('Error fetching user profile:', error);
@@ -84,14 +89,47 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (data: LoginFormData) => {
     console.log('Starting login for:', data.email);
+    
+    // Rate limiting check
+    const rateLimitKey = `login_${data.email}`;
+    if (!checkRateLimit(rateLimitKey, { maxAttempts: 5, windowMs: 900000, blockDurationMs: 900000 })) { // 15 min
+      const remainingTime = getRemainingTime(rateLimitKey);
+      const minutes = Math.ceil(remainingTime / 60000);
+      toast({
+        title: "Troppi tentativi di accesso",
+        description: `Riprova tra ${minutes} minuti.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsLoggingIn(true);
     try {
       const result = await signInWithEmailAndPassword(auth, data.email, data.password!);
       console.log('Firebase authentication successful:', result.user.uid);
+      
+      // Audit log successful login
+      await auditLog({
+        userId: result.user.uid,
+        action: 'LOGIN_SUCCESS',
+        details: { email: data.email },
+        severity: 'LOW'
+      });
+      
       // No toast here, direct redirect
       router.push(ROUTES.DASHBOARD); 
     } catch (error: any) {
+      // Record failed attempt for rate limiting
+      recordAttempt(rateLimitKey);
       console.error("Login error:", error);
+      
+      // Audit log failed login
+      await auditLog({
+        action: 'LOGIN_FAILED',
+        details: { email: data.email, errorCode: error.code },
+        severity: 'MEDIUM'
+      });
+      
       let errorMessage: string;
       switch (error.code) {
         case 'auth/invalid-credential':
@@ -122,8 +160,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password!);
       const newUser = userCredential.user;
+
+      // Send email verification immediately after registration
+      await sendEmailVerification(newUser);
+      console.log('Email verification sent to:', newUser.email);
+
       const userDocRef = doc(db, 'users', newUser.uid);
-      
+
       const professionalProfile: UserProfile = {
         uid: newUser.uid,
         email: newUser.email,
@@ -136,18 +179,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         bimSkills: [],
         softwareProficiency: [],
         availability: '',
-        experienceLevel: '', 
-        cvUrl: '', 
+        experienceLevel: '',
+        cvUrl: '',
         portfolioUrl: '',
         bio: '',
-        monthlyRate: null, 
-        linkedInProfile: '', 
+        monthlyRate: null,
+        linkedInProfile: '',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
       await setDoc(userDocRef, professionalProfile);
-      setUserProfile(professionalProfile); 
-      toast({ title: "Registrazione Completata", description: "Benvenuto in BIMatch! Completa il tuo profilo." });
+      setUserProfile(professionalProfile);
+      toast({
+        title: "Registrazione Completata",
+        description: "Controlla la tua email per verificare l'account. Completa poi il tuo profilo."
+      });
     } catch (error: any) {
       console.error("Professional registration error:", error);
       toast({ title: "Errore di Registrazione", description: error.message || "Impossibile registrarsi.", variant: "destructive" });
@@ -159,6 +205,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password!);
       const newUser = userCredential.user;
+
+      // Send email verification immediately after registration
+      await sendEmailVerification(newUser);
+      console.log('Email verification sent to:', newUser.email);
+
       const userDocRef = doc(db, 'users', newUser.uid);
 
       const companyProfile: UserProfile = {
@@ -175,15 +226,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         industry: '',
         companyDescription: '',
         logoUrl: '',
-        contactPerson: '', 
-        contactEmail: '', 
-        contactPhone: '', 
+        contactPerson: '',
+        contactEmail: '',
+        contactPhone: '',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
       await setDoc(userDocRef, companyProfile);
-      setUserProfile(companyProfile); 
-      toast({ title: "Registrazione Azienda Completata", description: "Benvenuta in BIMatch! Crea il profilo della tua azienda." });
+      setUserProfile(companyProfile);
+      toast({
+        title: "Registrazione Azienda Completata",
+        description: "Controlla la tua email per verificare l'account. Crea poi il profilo della tua azienda."
+      });
     } catch (error: any) {
       console.error("Company registration error:", error);
       toast({ title: "Errore di Registrazione", description: error.message || "Impossibile registrarsi.", variant: "destructive" });
@@ -251,10 +305,47 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         description: errorMessage,
         variant: "destructive",
       });
-      throw error; 
+      throw error;
     }
   };
 
+  const resendVerificationEmail = async () => {
+    if (!user) {
+      toast({
+        title: "Errore",
+        description: "Devi essere loggato per richiedere la verifica email.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (user.emailVerified) {
+      toast({
+        title: "Email Già Verificata",
+        description: "La tua email è già stata verificata.",
+      });
+      return;
+    }
+
+    try {
+      await sendEmailVerification(user);
+      toast({
+        title: "Email Inviata",
+        description: "Controlla la tua casella email per il link di verifica.",
+      });
+    } catch (error: any) {
+      console.error("Email verification resend error:", error);
+      let errorMessage = "Impossibile inviare l'email di verifica.";
+      if (error.code === 'auth/too-many-requests') {
+        errorMessage = "Troppi tentativi. Riprova tra qualche minuto.";
+      }
+      toast({
+        title: "Errore",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
+  };
 
   const value = {
     user,
@@ -267,6 +358,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     updateUserProfile,
     requestPasswordReset,
+    resendVerificationEmail,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
