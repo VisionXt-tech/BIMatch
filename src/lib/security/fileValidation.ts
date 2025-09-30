@@ -29,7 +29,7 @@ export const validateFileUpload = (file: File, type: 'image' | 'document'): File
   
   // Check MIME type
   const allowedTypes = type === 'image' ? ALLOWED_FILE_TYPES.images : ALLOWED_FILE_TYPES.documents;
-  if (!allowedTypes.includes(file.type as any)) {
+  if (!(allowedTypes as readonly string[]).includes(file.type)) {
     return {
       isValid: false,
       error: `Tipo di file non consentito. Tipi permessi: ${allowedTypes.join(', ')}`
@@ -99,30 +99,27 @@ export const containsMaliciousPatterns = (filename: string): boolean => {
 
 // File content validation (basic header check)
 export const validateFileHeader = async (file: File): Promise<boolean> => {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
+  try {
+    // Get first 8 bytes of the file
+    const arrayBuffer = await file.slice(0, 8).arrayBuffer();
+    const bytes = new Uint8Array(arrayBuffer);
     
-    reader.onload = (e) => {
-      const arrayBuffer = e.target?.result as ArrayBuffer;
-      const bytes = new Uint8Array(arrayBuffer.slice(0, 8));
-      
-      // Check file magic numbers/signatures
-      const signatures = {
-        pdf: [0x25, 0x50, 0x44, 0x46], // %PDF
-        jpeg: [0xFF, 0xD8, 0xFF], // JPEG
-        png: [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A], // PNG
-      };
-      
-      const matchesPDF = signatures.pdf.every((byte, i) => bytes[i] === byte);
-      const matchesJPEG = signatures.jpeg.every((byte, i) => bytes[i] === byte);
-      const matchesPNG = signatures.png.every((byte, i) => bytes[i] === byte);
-      
-      resolve(matchesPDF || matchesJPEG || matchesPNG);
+    // Check file magic numbers/signatures
+    const signatures = {
+      pdf: [0x25, 0x50, 0x44, 0x46], // %PDF
+      jpeg: [0xFF, 0xD8, 0xFF], // JPEG
+      png: [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A], // PNG
     };
     
-    reader.onerror = () => resolve(false);
-    reader.readAsArrayBuffer(file.slice(0, 8));
-  });
+    const matchesPDF = signatures.pdf.every((byte, i) => bytes[i] === byte);
+    const matchesJPEG = signatures.jpeg.every((byte, i) => bytes[i] === byte);
+    const matchesPNG = signatures.png.every((byte, i) => bytes[i] === byte);
+    
+    return matchesPDF || matchesJPEG || matchesPNG;
+  } catch (error) {
+    console.error('Error validating file header:', error);
+    return false;
+  }
 };
 
 // Generate secure filename for storage

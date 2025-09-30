@@ -46,5 +46,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     )
   }
 
-  return <>{children}</>;
+  return (
+    <div className="w-full">
+      <div className="p-4 space-y-6">
+        {children}
+      </div>
+    </div>
+  );
 }

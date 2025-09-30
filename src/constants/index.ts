@@ -249,7 +249,6 @@ export const CompanyNavItems: NavItem[] = [
 ];
 
 export const AdminNavItems: NavItem[] = [
-    { href: ROUTES.DASHBOARD_ADMIN, label: 'Dashboard', icon: Shield },
-    { href: ROUTES.DASHBOARD_ADMIN_USERS, label: 'Utenti', icon: Users },
-    { href: ROUTES.DASHBOARD_ADMIN_PROJECTS, label: 'Progetti', icon: Briefcase },
+    { href: ROUTES.DASHBOARD_ADMIN_USERS, label: 'Gestisci Utenti', icon: Users },
+    { href: ROUTES.DASHBOARD_ADMIN_PROJECTS, label: 'Gestisci Progetti', icon: Briefcase },
 ];

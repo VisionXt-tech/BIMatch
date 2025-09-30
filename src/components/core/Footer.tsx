@@ -11,8 +11,19 @@ const Footer = () => {
   const isHomePage = pathname === '/';
   
   const getFooterClasses = () => {
+    const isDashboard = pathname.startsWith('/dashboard');
+    const needsScroll = pathname.includes('/profile') || 
+                       pathname.includes('/notifications') || 
+                       pathname.includes('/candidates') || 
+                       pathname.includes('/edit');
     if (isHomePage) {
       return "backdrop-blur-md border-t border-white/10 text-white/80 py-8 homepage-transparent";
+    }
+    if (isDashboard && !needsScroll) {
+      return "bg-muted/50 text-muted-foreground py-3 mt-auto";
+    }
+    if (isDashboard && needsScroll) {
+      return "bg-muted/50 text-muted-foreground py-6 mt-8";
     }
     return "bg-muted/50 text-muted-foreground py-8";
   };

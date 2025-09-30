@@ -4,9 +4,10 @@
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/constants';
-import { SidebarProvider, Sidebar, SidebarInset } from '@/components/ui/sidebar'; // Removed unused Sidebar components
+import { SidebarProvider, Sidebar, SidebarInset } from '@/components/ui/sidebar';
+import EmailVerificationBanner from '@/components/core/EmailVerificationBanner';
 
 const NAVBAR_HEIGHT_CSS_VAR_VALUE = "4rem";
 
@@ -20,7 +21,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     }
   }, [user, loading, router]);
 
-  if (loading || !user) { // Simplified loading state check
+  if (loading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
@@ -36,16 +37,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   return (
     <SidebarProvider defaultOpen={false} forceFullWidthContent={true}>
-      <Sidebar
-        disableDisplay={true} 
-      >
+      <Sidebar disableDisplay={true}>
         {/* Sidebar content is fully removed as it's no longer used */}
       </Sidebar>
       <SidebarInset
         style={{ marginTop: `var(--main-content-area-margin-top, ${NAVBAR_HEIGHT_CSS_VAR_VALUE})` }}
+        className="overflow-y-auto"
       >
-        <div className="px-4 md:px-6 lg:px-8 pt-6 pb-0">
-         {children}
+        <div className="px-4 md:px-6 lg:px-8 pt-4 pb-6 min-h-full">
+          <EmailVerificationBanner />
+          {children}
         </div>
       </SidebarInset>
     </SidebarProvider>

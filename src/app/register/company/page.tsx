@@ -4,6 +4,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { strongPasswordSchema, secureEmailSchema, secureNameSchema } from '@/lib/validation/password';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -27,8 +28,8 @@ const companyRegistrationSchema = z.object({
   companyName: z.string().min(2, { message: 'Il nome azienda deve contenere almeno 2 caratteri.' }),
   companyVat: z.string().regex(/^[0-9]{11}$/, { message: 'La Partita IVA deve essere di 11 cifre.' }),
   companyLocation: z.string().min(1, { message: 'La localizzazione è richiesta.' }),
-  email: z.string().email({ message: 'Inserisci un indirizzo email valido.' }),
-  password: z.string().min(6, { message: 'La password deve contenere almeno 6 caratteri.' }),
+  email: secureEmailSchema,
+  password: strongPasswordSchema,
   confirmPassword: z.string(),
 }).refine(data => data.password === data.confirmPassword, {
   message: 'Le password non coincidono.',

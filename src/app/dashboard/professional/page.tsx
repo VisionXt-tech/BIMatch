@@ -126,7 +126,8 @@ export default function ProfessionalDashboardPage() {
   const isProfileComplete = userProfile.bio && userProfile.bimSkills && userProfile.bimSkills.length > 0;
 
   return (
-    <div className="space-y-4 w-full max-w-4xl mx-auto">
+    <div className="w-full max-w-4xl mx-auto">
+      <div className="space-y-3 pr-2">
       <Card className="shadow-lg">
         <CardHeader className="p-4">
           <CardTitle className="text-2xl font-bold text-primary">{userProfile.firstName ? `Ciao, ${userProfile.firstName}!` : `Ciao, ${userProfile.displayName}!`}</CardTitle>
@@ -250,6 +251,7 @@ export default function ProfessionalDashboardPage() {
             </Link>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

@@ -6,200 +6,225 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ROUTES } from '@/constants';
-import { Users, Briefcase, Shield, BarChart2, HandHeart, TrendingUp, Activity, AlertTriangle } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
-import { useFirebase } from '@/contexts/FirebaseContext';
-import { collection, getDocs, query, where, getCountFromServer } from 'firebase/firestore';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Users, Briefcase, Shield, HandHeart, Bell, FileText, Eye, Settings, MessageSquare } from 'lucide-react';
 
 export default function AdminDashboardPage() {
   const { userProfile } = useAuth();
-  const { db } = useFirebase();
-
-  const [stats, setStats] = useState({
-    totalUsers: null as number | null,
-    totalProfessionals: null as number | null,
-    totalCompanies: null as number | null,
-    totalProjects: null as number | null,
-    totalApplications: null as number | null,
-    pendingApplications: null as number | null,
-    acceptedApplications: null as number | null,
-    rejectedApplications: null as number | null,
-  });
-  const [loadingStats, setLoadingStats] = useState(true);
-
-  const fetchStats = useCallback(async () => {
-    setLoadingStats(true);
-    if (!db) return;
-    try {
-        const usersRef = collection(db, 'users');
-        const projectsRef = collection(db, 'projects');
-        const applicationsRef = collection(db, 'projectApplications');
-
-        const [
-          totalUsersSnapshot,
-          professionalsSnapshot,
-          companiesSnapshot,
-          projectsSnapshot,
-          totalApplicationsSnapshot,
-          pendingApplicationsSnapshot,
-          acceptedApplicationsSnapshot,
-          rejectedApplicationsSnapshot
-        ] = await Promise.all([
-          getCountFromServer(usersRef),
-          getCountFromServer(query(usersRef, where('role', '==', 'professional'))),
-          getCountFromServer(query(usersRef, where('role', '==', 'company'))),
-          getCountFromServer(projectsRef),
-          getCountFromServer(applicationsRef),
-          getCountFromServer(query(applicationsRef, where('status', '==', 'pending'))),
-          getCountFromServer(query(applicationsRef, where('status', '==', 'accepted'))),
-          getCountFromServer(query(applicationsRef, where('status', '==', 'rejected')))
-        ]);
-
-        setStats({
-            totalUsers: totalUsersSnapshot.data().count,
-            totalProfessionals: professionalsSnapshot.data().count,
-            totalCompanies: companiesSnapshot.data().count,
-            totalProjects: projectsSnapshot.data().count,
-            totalApplications: totalApplicationsSnapshot.data().count,
-            pendingApplications: pendingApplicationsSnapshot.data().count,
-            acceptedApplications: acceptedApplicationsSnapshot.data().count,
-            rejectedApplications: rejectedApplicationsSnapshot.data().count
-        });
-    } catch (error) {
-        console.error('Error fetching admin stats:', error);
-    } finally {
-        setLoadingStats(false);
-    }
-  }, [db]);
-
-  useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
 
   return (
-    <div className="space-y-6">
+    <>
       <Card className="shadow-lg">
         <CardHeader>
           <div className="flex items-center gap-3">
              <Shield className="h-8 w-8 text-primary"/>
              <div>
                 <CardTitle className="text-2xl font-bold">Pannello di Amministrazione</CardTitle>
-                <CardDescription>Benvenuto, {userProfile?.displayName || 'Admin'}.</CardDescription>
+                <CardDescription>Benvenuto, {userProfile?.displayName || 'Admin'}. Gestisci la piattaforma BIMatch.</CardDescription>
              </div>
           </div>
         </CardHeader>
       </Card>
 
-      {/* Main Stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Utenti Totali</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+      {/* Main Management Actions */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {/* User Management */}
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-6 w-6 text-blue-600" />
+              Gestione Utenti
+            </CardTitle>
+            <CardDescription>
+              Visualizza, modifica ed elimina utenti registrati
+            </CardDescription>
           </CardHeader>
-          <CardContent>
-            {loadingStats ? <Skeleton className="h-8 w-1/2" /> : <div className="text-2xl font-bold">{stats.totalUsers}</div>}
+          <CardContent className="space-y-3">
+            <Button asChild className="w-full">
+              <Link href={ROUTES.DASHBOARD_ADMIN_USERS}>
+                <Eye className="h-4 w-4 mr-2" />
+                Visualizza Tutti gli Utenti
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link href={ROUTES.DASHBOARD_ADMIN_USERS + "?filter=professional"}>
+                <Users className="h-4 w-4 mr-2" />
+                Solo Professionisti
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link href={ROUTES.DASHBOARD_ADMIN_USERS + "?filter=company"}>
+                <Briefcase className="h-4 w-4 mr-2" />
+                Solo Aziende
+              </Link>
+            </Button>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Professionisti</CardTitle>
-            <Users className="h-4 w-4 text-blue-600" />
+        {/* Project Management */}
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Briefcase className="h-6 w-6 text-green-600" />
+              Gestione Progetti
+            </CardTitle>
+            <CardDescription>
+              Modifica, approva o rimuovi progetti pubblicati
+            </CardDescription>
           </CardHeader>
-          <CardContent>
-            {loadingStats ? <Skeleton className="h-8 w-1/2" /> : <div className="text-2xl font-bold">{stats.totalProfessionals}</div>}
+          <CardContent className="space-y-3">
+            <Button asChild className="w-full">
+              <Link href={ROUTES.DASHBOARD_ADMIN_PROJECTS}>
+                <Eye className="h-4 w-4 mr-2" />
+                Visualizza Tutti i Progetti
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link href={ROUTES.DASHBOARD_ADMIN_PROJECTS + "?status=active"}>
+                <Settings className="h-4 w-4 mr-2" />
+                Progetti Attivi
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link href={ROUTES.DASHBOARD_ADMIN_PROJECTS + "?status=pending"}>
+                <FileText className="h-4 w-4 mr-2" />
+                In Approvazione
+              </Link>
+            </Button>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Aziende</CardTitle>
-            <Briefcase className="h-4 w-4 text-green-600" />
+        {/* Applications & Matches */}
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <HandHeart className="h-6 w-6 text-purple-600" />
+              Candidature & Match
+            </CardTitle>
+            <CardDescription>
+              Monitora candidature e gestisci i match
+            </CardDescription>
           </CardHeader>
-          <CardContent>
-            {loadingStats ? <Skeleton className="h-8 w-1/2" /> : <div className="text-2xl font-bold">{stats.totalCompanies}</div>}
+          <CardContent className="space-y-3">
+            <Button asChild className="w-full">
+              <Link href="/dashboard/admin/applications">
+                <Eye className="h-4 w-4 mr-2" />
+                Tutte le Candidature
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/dashboard/admin/applications?status=pending">
+                <FileText className="h-4 w-4 mr-2" />
+                Candidature Pending
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/dashboard/admin/matches">
+                <HandHeart className="h-4 w-4 mr-2" />
+                Match Riusciti
+              </Link>
+            </Button>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Progetti Attivi</CardTitle>
-            <BarChart2 className="h-4 w-4 text-purple-600" />
+        {/* Notifications */}
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="h-6 w-6 text-orange-600" />
+              Sistema Notifiche
+            </CardTitle>
+            <CardDescription>
+              Gestisci notifiche di sistema e comunicazioni
+            </CardDescription>
           </CardHeader>
-          <CardContent>
-            {loadingStats ? <Skeleton className="h-8 w-1/2" /> : <div className="text-2xl font-bold">{stats.totalProjects}</div>}
+          <CardContent className="space-y-3">
+            <Button asChild className="w-full">
+              <Link href="/dashboard/admin/notifications">
+                <Eye className="h-4 w-4 mr-2" />
+                Visualizza Notifiche
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/dashboard/admin/notifications/create">
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Invia Notifica
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/dashboard/admin/notifications?unread=true">
+                <Bell className="h-4 w-4 mr-2" />
+                Non Lette
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* System Monitoring */}
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-6 w-6 text-indigo-600" />
+              Monitoraggio Sistema
+            </CardTitle>
+            <CardDescription>
+              Log di audit e monitoraggio attività
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Button asChild className="w-full">
+              <Link href="/dashboard/admin/audit-logs">
+                <Eye className="h-4 w-4 mr-2" />
+                Log di Audit
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/dashboard/admin/security">
+                <Shield className="h-4 w-4 mr-2" />
+                Sicurezza
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/dashboard/admin/analytics">
+                <Settings className="h-4 w-4 mr-2" />
+                Analitiche
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Quick Actions */}
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="h-6 w-6 text-gray-600" />
+              Azioni Rapide
+            </CardTitle>
+            <CardDescription>
+              Strumenti e configurazioni di sistema
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Button asChild className="w-full">
+              <Link href="/dashboard/admin/backup">
+                <FileText className="h-4 w-4 mr-2" />
+                Backup Dati
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/dashboard/admin/settings">
+                <Settings className="h-4 w-4 mr-2" />
+                Configurazioni
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/dashboard/admin/maintenance">
+                <Shield className="h-4 w-4 mr-2" />
+                Manutenzione
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
-
-      {/* Match Stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Candidature Totali</CardTitle>
-            <Activity className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            {loadingStats ? <Skeleton className="h-8 w-1/2" /> : <div className="text-2xl font-bold">{stats.totalApplications}</div>}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">In Attesa</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-yellow-500" />
-          </CardHeader>
-          <CardContent>
-            {loadingStats ? <Skeleton className="h-8 w-1/2" /> : <div className="text-2xl font-bold">{stats.pendingApplications}</div>}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Match Riusciti</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            {loadingStats ? <Skeleton className="h-8 w-1/2" /> : <div className="text-2xl font-bold">{stats.acceptedApplications}</div>}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Candidature Rifiutate</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            {loadingStats ? <Skeleton className="h-8 w-1/2" /> : <div className="text-2xl font-bold">{stats.rejectedApplications}</div>}
-          </CardContent>
-        </Card>
-      </div>
-
-       <Card>
-        <CardHeader>
-            <CardTitle>Azioni Rapide</CardTitle>
-            <CardDescription>Gestisci tutte le sezioni della piattaforma.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-             <Button asChild size="lg">
-                <Link href={ROUTES.DASHBOARD_ADMIN_USERS} className="flex items-center justify-center h-24 text-lg">
-                    <Users className="mr-3 h-6 w-6" /> Gestisci Utenti
-                </Link>
-            </Button>
-            <Button asChild size="lg" variant="secondary">
-                <Link href={ROUTES.DASHBOARD_ADMIN_PROJECTS} className="flex items-center justify-center h-24 text-lg">
-                    <Briefcase className="mr-3 h-6 w-6" /> Gestisci Progetti
-                </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline">
-                <Link href="/dashboard/admin/matches" className="flex items-center justify-center h-24 text-lg">
-                    <HandHeart className="mr-3 h-6 w-6" /> Gestisci Match
-                </Link>
-            </Button>
-        </CardContent>
-       </Card>
-    </div>
+    </>
   );
 }

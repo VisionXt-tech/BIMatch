@@ -16,6 +16,10 @@ export const metadata: Metadata = {
   creator: 'BIMatch',
   publisher: 'BIMatch',
   metadataBase: new URL('https://bimatch.it'),
+  icons: {
+    icon: '/BIM.png',
+    apple: '/BIM.png',
+  },
   alternates: {
     canonical: '/',
   },
@@ -55,6 +59,10 @@ export const metadata: Metadata = {
   category: 'technology',
 };
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+};
 
 const raleway = Raleway({
   subsets: ['latin'],

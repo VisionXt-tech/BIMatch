@@ -93,9 +93,8 @@ export default function LoginPage() {
       <Image
         src="https://images.unsplash.com/photo-1481026469463-66327c86e544?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxCdWlsZGluZyUyMEluZm9ybWF0aW9uJTIwTW9kZWxpbmd8ZW58MHx8fHwxNzQ5NDU1MTY1fDA&ixlib=rb-4.1.0&q=80&w=1080"
         alt="Abstract BIM model background"
-        layout="fill"
-        objectFit="cover"
-        className="-z-10"
+        fill
+        className="object-cover -z-10"
         priority
         data-ai-hint="Building Information"
       />

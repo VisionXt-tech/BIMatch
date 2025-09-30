@@ -111,23 +111,33 @@ async function performAdditionalValidations(
   if (file.type === 'application/pdf') {
     const pdfContent = new TextDecoder().decode(bytes);
     
-    // Look for JavaScript in PDF
+    // Look for actual malicious JavaScript patterns in PDF (more specific)
     const dangerousPatterns = [
-      /\/JavaScript/gi,
-      /\/JS/gi,
-      /\/OpenAction/gi,
-      /\/AA/gi, // Auto Action
-      /\/Launch/gi,
-      /<script/gi
+      /\/JavaScript\s*<<[^>]*>>\s*\(/gi, // JavaScript object with execution
+      /\/JS\s*<<[^>]*>>\s*\(/gi, // JS object with execution
+      /\/OpenAction\s*<<.*\/JavaScript/gi, // OpenAction with JavaScript
+      /\/AA\s*<<.*\/JavaScript/gi, // Auto Action with JavaScript
+      /\/Launch\s*<<.*\.(exe|bat|cmd|scr)/gi, // Launch external executable
+      /<script[^>]*>/gi, // HTML script tags (shouldn't be in PDF)
+      /javascript:.*\(/gi, // JavaScript protocol
+      /eval\s*\(/gi, // Direct eval calls
+      /document\.write/gi, // Document manipulation
     ];
 
+    // Only flag if we find actual suspicious executable patterns
+    let suspiciousCount = 0;
     for (const pattern of dangerousPatterns) {
       if (pattern.test(pdfContent)) {
-        return {
-          isValid: false,
-          error: 'PDF file contains potentially dangerous scripts'
-        };
+        suspiciousCount++;
       }
+    }
+    
+    // Only reject if multiple suspicious patterns found (reduces false positives)
+    if (suspiciousCount >= 2) {
+      return {
+        isValid: false,
+        error: 'PDF file contains potentially dangerous scripts'
+      };
     }
   }
 

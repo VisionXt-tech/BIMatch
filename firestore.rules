@@ -98,15 +98,15 @@ service cloud.firestore {
     // Notifications collection - enhanced security
     match /notifications/{notificationId} {
       // Read: Only notification owner can read their notifications
-      allow read: if isAuthenticated() && 
+      allow read: if isAuthenticated() &&
         resource.data.userId == request.auth.uid;
-      
+
       // List: Only for owned notifications with proper filtering
-      allow list: if isAuthenticated() && 
+      allow list: if isAuthenticated() &&
         request.auth.uid != null;
-        
+
       // Update: Only owner can mark as read, no other updates allowed
-      allow update: if isAuthenticated() && 
+      allow update: if isAuthenticated() &&
         resource.data.userId == request.auth.uid &&
         // Only allow updating isRead field and updatedAt
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead', 'updatedAt']) &&
@@ -114,42 +114,61 @@ service cloud.firestore {
         request.resource.data.userId == resource.data.userId &&
         request.resource.data.type == resource.data.type &&
         request.resource.data.message == resource.data.message;
-      
-      // Create: Strict validation - only system can create notifications
-      // Users cannot create notifications for other users
-      allow create: if false; // Block direct creation by users
-        
-      // Delete: Not allowed for data retention compliance
-      allow delete: if false;
-    }
-    
-    // System notifications - only admin/system can create
-    match /notifications/{notificationId} {
-      allow create: if hasRole('admin') &&
-        // Validate notification structure
+
+      // Create: Allow authenticated users to create notifications with validation
+      allow create: if isAuthenticated() &&
+        // Validate notification structure has required fields
         request.resource.data.keys().hasAll(['userId', 'type', 'title', 'message', 'isRead', 'createdAt']) &&
-        // Validate timestamp
+        // Validate timestamp is server timestamp
         request.resource.data.createdAt == request.time &&
-        // Validate notification types
+        // Validate notification types from constants
         request.resource.data.type in [
-          'APPLICATION_STATUS_UPDATED', 
-          'NEW_PROJECT_MATCH', 
-          'PROFILE_VIEW', 
+          'APPLICATION_STATUS_UPDATED',
+          'NEW_PROJECT_MATCH',
+          'PROFILE_VIEW',
           'NEW_APPLICATION_RECEIVED',
           'INTERVIEW_PROPOSED',
           'INTERVIEW_ACCEPTED_BY_PRO',
           'INTERVIEW_REJECTED_BY_PRO',
+          'INTERVIEW_RESCHEDULED_BY_PRO',
+          'COLLABORATION_CONFIRMED',
           'GENERIC_INFO'
         ] &&
-        // Validate boolean isRead
-        request.resource.data.isRead is bool &&
-        // Validate string fields
+        // Validate boolean isRead (should be false on creation)
+        request.resource.data.isRead == false &&
+        // Validate string fields are non-empty
         request.resource.data.userId is string &&
+        request.resource.data.userId.size() > 0 &&
         request.resource.data.type is string &&
         request.resource.data.title is string &&
-        request.resource.data.message is string;
+        request.resource.data.title.size() > 0 &&
+        request.resource.data.message is string &&
+        request.resource.data.message.size() > 0;
+
+      // Delete: Not allowed for data retention compliance
+      allow delete: if false;
     }
     
+    // Audit logs - only system can write, only admin can read
+    match /auditLogs/{logId} {
+      allow read: if hasRole('admin');
+      allow list: if hasRole('admin');
+      // Allow system/authenticated users to create audit logs
+      allow create: if isAuthenticated() &&
+        // Validate audit log structure
+        request.resource.data.keys().hasAll(['action', 'severity', 'timestamp']) &&
+        request.resource.data.action in [
+          'LOGIN_SUCCESS', 'LOGIN_FAILED', 'LOGOUT', 'PASSWORD_RESET', 'PROFILE_UPDATE',
+          'FILE_UPLOAD', 'FILE_DELETE', 'PROJECT_CREATE', 'PROJECT_UPDATE', 'PROJECT_DELETE',
+          'APPLICATION_SUBMIT', 'APPLICATION_UPDATE', 'ADMIN_ACTION', 'SECURITY_VIOLATION'
+        ] &&
+        request.resource.data.severity in ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] &&
+        request.resource.data.timestamp == request.time;
+      
+      // No updates or deletes allowed for audit integrity
+      allow update, delete: if false;
+    }
+
     // Admin-only collections
     match /admin/{document=**} {
       allow read, write: if hasRole('admin');

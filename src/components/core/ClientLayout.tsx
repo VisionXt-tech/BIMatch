@@ -1,12 +1,12 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { AuthProvider } from '@/contexts/AuthContext'; 
+import { AuthProvider } from '@/contexts/AuthContext';
 import { Toaster } from '@/components/ui/toaster';
 import Navbar from '@/components/core/Navbar';
 import Footer from '@/components/core/Footer';
 import { FirebaseProvider } from '@/contexts/FirebaseContext';
-import Image from 'next/image';
+import CookieBanner from '@/components/core/CookieBanner';
 import { usePathname } from 'next/navigation';
 
 interface ClientLayoutProps {
@@ -20,17 +20,10 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   return (
     <FirebaseProvider>
       <AuthProvider>
-        <div className="relative min-h-screen flex flex-col">
+        <div className="relative flex flex-col min-h-screen">
           {isHomePage && (
             <>
-              <Image
-                src="https://images.unsplash.com/photo-1635776062360-af423602aff3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxHUkFESUVOVHxlbnwwfHx8fDE3NTI4NDczMTl8MA&ixlib=rb-4.1.0&q=80&w=1080"
-                alt="Abstract BIM model background"
-                fill
-                className="object-cover -z-20"
-                priority
-                data-ai-hint="collaboration handshake"
-              />
+              <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black -z-20"></div>
               <div className="absolute inset-0 bg-black/50 -z-10"></div>
             </>
           )}
@@ -39,6 +32,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
             {children}
           </main>
           <Footer />
+          <CookieBanner />
           <Toaster />
         </div>
       </AuthProvider>

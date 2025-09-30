@@ -19,7 +19,7 @@ import { ROUTES, ROLES, ProfessionalNavItems, CompanyNavItems, AdminNavItems } f
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 const DEFAULT_NAVBAR_PAGE_CONTENT_PADDING = '1rem';
 const DEFAULT_CONTAINER_MAX_WIDTH = 'none';
@@ -291,6 +291,9 @@ const Navbar = () => {
                     </Button>
                   </SheetTrigger>
                   <SheetContent side="left" className="w-[260px] p-4">
+                    <SheetHeader className="sr-only">
+                      <SheetTitle>Menu di navigazione</SheetTitle>
+                    </SheetHeader>
                     <div className="mb-4">
                       <Logo />
                     </div>

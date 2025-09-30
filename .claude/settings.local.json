@@ -69,7 +69,17 @@
       "Bash(npm install:*)",
       "Bash(npm run lint)",
       "Bash(npm run dev:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(cp:*)",
+      "Bash(curl:*)",
+      "Bash(find:*)",
+      "Bash(netstat:*)",
+      "Bash(Get-Process -Name node -ErrorAction SilentlyContinue)",
+      "Bash(Stop-Process -Force)",
+      "Bash(git reset:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\ndocs: Aggiungi documentazione completa sessione e script utility\n\n- Creati 7 report ordinati cronologicamente (01-07)\n- Documentati fix critici, scroll, email verification, password complexity\n- Rollback completo funzionalità cambio email (rimossa perché troppo complessa)\n- Aggiunti script utility: cleanup-user-data.js e find-user-uid.js\n- Rimosso changeEmail da AuthContext (non più necessario)\n- Rimossi tab Sicurezza dai profili company e professional\n\nReport:\n- 01: Critical fixes (notifiche, dashboard, indici Firestore)\n- 02: Firestore indexes documentation\n- 03: Test instructions\n- 04: Scroll fix\n- 05: Test results (tutti passati ✅)\n- 06: High priority fixes (password, email verification)\n- 07: Session summary completo\n\nL''app è ora stabile e pronta per uso.\nEOF\n)\")",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
