@@ -53,6 +53,17 @@ Dove:
 7. **[2025-09-30_07_SESSION-SUMMARY.md](2025-09-30_07_SESSION-SUMMARY.md)** 📋
    Riepilogo completo sessione: implementazione e rollback funzionalità cambio email, pulizia dati utente, stato finale app.
 
+### 2025-10-01
+
+8. **[2025-10-01_08_RATE-LIMITING-IMPLEMENTATION.md](2025-10-01_08_RATE-LIMITING-IMPLEMENTATION.md)** 🔐
+   Implementazione rate limiting server-side con Firestore - non bypassabile, doppio controllo client+server.
+
+9. **[2025-10-01_09_TEST-RATE-LIMITING.md](2025-10-01_09_TEST-RATE-LIMITING.md)** 🧪
+   Istruzioni complete per testare il rate limiting server-side.
+
+10. **[2025-10-01_10_COOKIE-BANNER-GDPR.md](2025-10-01_10_COOKIE-BANNER-GDPR.md)** ✅
+   Verifica implementazione Cookie Banner GDPR - già completo, nessuna modifica richiesta.
+
 ---
 
 ## Come Aggiungere un Nuovo Report
