@@ -13,6 +13,7 @@ import { ROLES, ROUTES } from '@/constants';
 import { useRouter } from 'next/navigation';
 import { useRateLimit } from '@/hooks/useRateLimit';
 import { createAuditLogger } from '@/lib/auditLog';
+import { checkRateLimit as checkServerRateLimit } from '@/lib/server/rateLimiter';
 
 interface AuthContextType {
   user: User | null;
@@ -89,8 +90,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (data: LoginFormData) => {
     console.log('Starting login for:', data.email);
-    
-    // Rate limiting check
+
+    // Client-side rate limiting check (primo livello di difesa)
     const rateLimitKey = `login_${data.email}`;
     if (!checkRateLimit(rateLimitKey, { maxAttempts: 5, windowMs: 900000, blockDurationMs: 900000 })) { // 15 min
       const remainingTime = getRemainingTime(rateLimitKey);
@@ -102,7 +103,50 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
       return;
     }
-    
+
+    // Server-side rate limiting check (secondo livello - non bypassabile)
+    const serverRateLimitKey = `login:${data.email}`;
+    console.log('🔍 Checking server rate limit:', { key: serverRateLimitKey, db: !!db });
+
+    try {
+      const serverRateLimit = await checkServerRateLimit(db, serverRateLimitKey, 'login');
+      console.log('📊 Server rate limit result:', serverRateLimit);
+
+      if (!serverRateLimit.allowed) {
+      const minutes = serverRateLimit.retryAfter ? Math.ceil(serverRateLimit.retryAfter / 60000) : 15;
+
+      console.log('🚫 RATE LIMIT TRIGGERED:', {
+        email: data.email,
+        remainingAttempts: serverRateLimit.remainingAttempts,
+        retryAfter: minutes
+      });
+
+      toast({
+        title: "Account temporaneamente bloccato",
+        description: `Troppi tentativi di accesso falliti. Riprova tra ${minutes} minuti.`,
+        variant: "destructive",
+      });
+
+      // Audit log rate limit block
+      console.log('📝 Attempting to write LOGIN_RATE_LIMITED audit log...');
+      try {
+        await auditLog({
+          action: 'LOGIN_RATE_LIMITED',
+          details: { email: data.email, retryAfter: minutes },
+          severity: 'HIGH'
+        });
+        console.log('✅ LOGIN_RATE_LIMITED audit log written successfully');
+      } catch (error) {
+        console.error('❌ Failed to write LOGIN_RATE_LIMITED audit log:', error);
+      }
+
+      return;
+    }
+    } catch (rateLimitError) {
+      console.error('❌ Server rate limit check failed:', rateLimitError);
+      // Continue with login if rate limit check fails (fail-open)
+    }
+
     setIsLoggingIn(true);
     try {
       const result = await signInWithEmailAndPassword(auth, data.email, data.password!);

@@ -4,7 +4,8 @@ import { doc, addDoc, collection, serverTimestamp, Firestore } from 'firebase/fi
 
 export interface AuditLogEntry {
   userId?: string;
-  action: 'LOGIN_SUCCESS' | 'LOGIN_FAILED' | 'LOGOUT' | 'PASSWORD_RESET' | 'PROFILE_UPDATE' | 
+  action: 'LOGIN_SUCCESS' | 'LOGIN_FAILED' | 'LOGIN_RATE_LIMITED' | 'LOGOUT' | 'PASSWORD_RESET' |
+          'EMAIL_CHANGE_INITIATED' | 'EMAIL_SYNC_COMPLETED' | 'PROFILE_UPDATE' |
           'FILE_UPLOAD' | 'FILE_DELETE' | 'PROJECT_CREATE' | 'PROJECT_UPDATE' | 'PROJECT_DELETE' |
           'APPLICATION_SUBMIT' | 'APPLICATION_UPDATE' | 'ADMIN_ACTION' | 'SECURITY_VIOLATION';
   details?: Record<string, any>;
