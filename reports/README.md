@@ -62,7 +62,10 @@ Dove:
    Istruzioni complete per testare il rate limiting server-side.
 
 10. **[2025-10-01_10_COOKIE-BANNER-GDPR.md](2025-10-01_10_COOKIE-BANNER-GDPR.md)** ✅
-   Verifica implementazione Cookie Banner GDPR - già completo, nessuna modifica richiesta.
+   Verifica implementazione Cookie Banner GDPR - Privacy Policy e ToS completamente rinnovati.
+
+11. **[2025-10-01_11_FIREBASE-EMAIL-TEMPLATES.md](2025-10-01_11_FIREBASE-EMAIL-TEMPLATES.md)** 📧
+   Template email Firebase personalizzati per ridurre spam score - implementazione manuale richiesta.
 
 ---
 
