@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Raleway } from 'next/font/google';
 import './globals.css';
 import ClientLayout from '@/components/core/ClientLayout';
+import { Toaster } from 'react-hot-toast';
 
 export const metadata: Metadata = {
   title: 'BIMatch - La Piattaforma N°1 per Professionisti BIM e Aziende in Italia',
@@ -82,6 +83,23 @@ export default function RootLayout({
         <ClientLayout>
           {children}
         </ClientLayout>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: 'hsl(var(--background))',
+              color: 'hsl(var(--foreground))',
+              border: '1px solid hsl(var(--border))',
+            },
+            success: {
+              iconTheme: {
+                primary: 'hsl(var(--primary))',
+                secondary: 'hsl(var(--primary-foreground))',
+              },
+            },
+          }}
+        />
       </body>
     </html>
   );

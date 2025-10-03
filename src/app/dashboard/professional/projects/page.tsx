@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { EmptyStateIllustration } from '@/components/EmptyState';
 import { StatusBadge } from '@/components/StatusBadge';
 import type { ApplicationStatus } from '@/components/StatusBadge';
+import { useCountAnimation } from '@/hooks/useCountAnimation';
 
 const getSkillLabel = (value: string) => BIM_SKILLS_OPTIONS.find(s => s.value === value)?.label || value;
 const getSoftwareLabel = (value: string) => SOFTWARE_PROFICIENCY_OPTIONS.find(s => s.value === value)?.label || value;
@@ -168,6 +169,8 @@ export default function AvailableProjectsPage() {
     });
   }, [projects, filters, userApplicationDetails, userProfile, loadingApplications]);
 
+  // Animated project count
+  const animatedCount = useCountAnimation(filteredProjects.length);
 
   return (
     <div className="space-y-6">
@@ -186,8 +189,8 @@ export default function AvailableProjectsPage() {
               <div className="flex items-center gap-2 mb-3">
                 <ListFilter className="h-4 w-4 text-primary" />
                 <h3 className="text-sm font-semibold">Filtri</h3>
-                <Badge variant="secondary" className="ml-auto text-xs">
-                  {filteredProjects.length} {filteredProjects.length === 1 ? 'progetto' : 'progetti'}
+                <Badge variant="secondary" className="ml-auto text-xs animate-count-up">
+                  {animatedCount} {animatedCount === 1 ? 'progetto' : 'progetti'}
                 </Badge>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -230,7 +233,9 @@ export default function AvailableProjectsPage() {
           {loading || (authLoading && loadingApplications && userProfile?.role === 'professional') ? (
              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
                 {[...Array(12)].map((_, i) => (
-                  <ProjectCardSkeleton key={i} />
+                  <div key={i} className={`animate-fade-in opacity-0 animate-stagger-${(i % 6) + 1}`}>
+                    <ProjectCardSkeleton />
+                  </div>
                 ))}
             </div>
           ) : error ? (
@@ -241,7 +246,7 @@ export default function AvailableProjectsPage() {
             </div>
           ) : filteredProjects.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
-              {filteredProjects.map((project) => {
+              {filteredProjects.map((project, index) => {
                 const applicationDetail = userProfile?.role === 'professional' && !loadingApplications 
                   ? userApplicationDetails.find(app => app.projectId === project.id!) 
                   : undefined;
@@ -250,7 +255,8 @@ export default function AvailableProjectsPage() {
 
                 return (
                   <Card key={project.id} className={cn(
-                    "shadow-md hover:shadow-lg transition-shadow duration-200 relative flex flex-col h-full",
+                    "shadow-md hover:shadow-xl transition-all duration-300 relative flex flex-col h-full hover:-translate-y-1 hover:border-primary/40 animate-fade-in opacity-0",
+                    `animate-stagger-${(index % 6) + 1}`,
                     currentApplicationStatus === 'accettata' && "border-2 border-teal-500 bg-teal-500/5"
                   )}>
                     <CardHeader className="p-3">
