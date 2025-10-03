@@ -57,6 +57,15 @@ export default function AvailableProjectsPage() {
     applicationStatus: ALL_ITEMS_FILTER_VALUE,
   });
 
+  const resetFilters = () => {
+    setFilters({
+      skill: ALL_ITEMS_FILTER_VALUE,
+      software: ALL_ITEMS_FILTER_VALUE,
+      location: ALL_ITEMS_FILTER_VALUE,
+      applicationStatus: ALL_ITEMS_FILTER_VALUE,
+    });
+  };
+
   useEffect(() => {
     const filterParam = searchParams.get('filter');
     if (filterParam === 'applied' && userProfile?.role === 'professional') {
@@ -320,7 +329,7 @@ export default function AvailableProjectsPage() {
               description="Non ci sono progetti che corrispondono ai tuoi criteri di ricerca. Prova a modificare i filtri o controlla più tardi per nuove opportunità."
               action={{
                 label: "Resetta tutti i filtri",
-                href: ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS
+                onClick: resetFilters
               }}
             />
           )}

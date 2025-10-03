@@ -8,7 +8,8 @@ interface EmptyStateProps {
   description: string;
   action?: {
     label: string;
-    href: string;
+    href?: string;
+    onClick?: () => void;
   };
   className?: string;
 }
@@ -47,9 +48,13 @@ export function EmptyState({
 
       {/* Action Button */}
       {action && (
-        <Button asChild>
-          <Link href={action.href}>{action.label}</Link>
-        </Button>
+        action.onClick ? (
+          <Button onClick={action.onClick}>{action.label}</Button>
+        ) : action.href ? (
+          <Button asChild>
+            <Link href={action.href}>{action.label}</Link>
+          </Button>
+        ) : null
       )}
     </div>
   );
@@ -157,9 +162,13 @@ export function EmptyStateIllustration({
 
       {/* Action Button */}
       {action && (
-        <Button asChild size="lg">
-          <Link href={action.href}>{action.label}</Link>
-        </Button>
+        action.onClick ? (
+          <Button onClick={action.onClick} size="lg">{action.label}</Button>
+        ) : action.href ? (
+          <Button asChild size="lg">
+            <Link href={action.href}>{action.label}</Link>
+          </Button>
+        ) : null
       )}
     </div>
   );
