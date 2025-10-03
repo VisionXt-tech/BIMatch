@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, ITALIAN_REGIONS, ROUTES } from '@/constants';
 import { Briefcase, MapPin, Percent, Search, Filter, Construction, Code2, WifiOff, Info, CheckCircle2, ListFilter, XCircle, Star, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import type { Project, ProjectApplication } from '@/types/project';
 import { useFirebase } from '@/contexts/FirebaseContext';
@@ -265,7 +264,7 @@ export default function AvailableProjectsPage() {
                       </CardTitle>
                       <div className="flex items-center text-xs text-muted-foreground mt-1">
                           {project.companyLogo ?
-                              <Image data-ai-hint="company logo" src={project.companyLogo} alt={`${project.companyName} logo`} width={16} height={16} className="mr-1.5 rounded-sm border" />
+                              <img data-ai-hint="company logo" src={project.companyLogo} alt={`${project.companyName} logo`} width={16} height={16} className="mr-1.5 rounded-sm border object-contain" />
                               : <Briefcase className="h-3.5 w-3.5 mr-1.5 flex-shrink-0"/>
                           }
                           <span className="truncate" title={project.companyName}>{project.companyName}</span>

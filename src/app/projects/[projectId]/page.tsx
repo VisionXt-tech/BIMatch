@@ -17,7 +17,6 @@ import { ArrowLeft, MapPin, Briefcase, Settings, Code2, CalendarDays, Wallet, Fi
 import { ROUTES, BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, NOTIFICATION_TYPES } from '@/constants';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
-import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from '@/components/ui/form';
 import { FormTextarea, FormMultiSelect } from '@/components/ProfileFormElements';
@@ -344,7 +343,7 @@ export default function ProjectDetailPage() {
               <CardTitle className="text-2xl md:text-3xl font-bold text-primary mb-1.5">{project.title}</CardTitle>
               <div className="flex items-center text-sm text-muted-foreground mb-1">
                 {project.companyLogo ? (
-                  <Image data-ai-hint="company logo" src={project.companyLogo} alt={`${project.companyName} logo`} width={20} height={20} className="mr-2 rounded-sm border" />
+                  <img data-ai-hint="company logo" src={project.companyLogo} alt={`${project.companyName} logo`} width={20} height={20} className="mr-2 rounded-sm border object-contain" />
                 ) : (
                   <Building className="h-4 w-4 mr-2 flex-shrink-0" />
                 )}
