@@ -98,7 +98,7 @@ export default function LoginPage() {
     >
       <div className="absolute inset-0 bg-black/60"></div>
 
-      <Card className="w-full max-w-md shadow-xl bg-card border-border">
+      <Card className="relative z-10 w-full max-w-md shadow-xl bg-card border-border">
         <CardHeader className="text-center p-6">
           <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-3">
             <LogIn className="h-6 w-6 text-primary" />

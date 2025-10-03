@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
 
+  // Output configuration
+  outputFileTracingRoot: 'c:\\Users\\lucar\\Projects\\BIM\\BIMatch',
+
   // Production optimizations
   compress: true, // Enable gzip compression
   poweredByHeader: false, // Remove X-Powered-By header for security

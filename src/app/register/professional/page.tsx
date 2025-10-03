@@ -71,7 +71,7 @@ export default function ProfessionalRegistrationPage() {
     >
       <div className="absolute inset-0 bg-black/50"></div>
       
-      <Card className="w-full max-w-lg shadow-xl bg-card/90 dark:bg-card/80 backdrop-blur-md border border-white/10 my-auto">
+      <Card className="relative z-10 w-full max-w-lg shadow-xl bg-card/90 dark:bg-card/80 backdrop-blur-md border border-white/10 my-auto">
         <CardHeader className="text-center p-3">
           <CardTitle className="text-lg font-bold text-primary">Registrati come Professionista BIM</CardTitle>
           <CardDescription className="text-xs text-muted-foreground">Unisciti a BIMatch e trova nuove opportunità.</CardDescription>

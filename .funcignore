@@ -1,0 +1,22 @@
+# Exclude from Cloud Functions deployment
+node_modules/
+.next/
+.git/
+.firebase/
+.vscode/
+.claude/
+.idx/
+reports/
+scripts/
+docs/
+*.md
+*.log
+*.bak
+*.backup
+*.old
+.env*
+!.env.local
+tsconfig.tsbuildinfo
+coverage/
+.nyc_output/
+test-results/
