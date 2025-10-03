@@ -19,7 +19,7 @@ BIMatch is a specialized BIM (Building Information Modeling) marketplace platfor
 ### Core Technology Stack
 - **Frontend**: Next.js 15 with App Router, React 18, TypeScript
 - **Styling**: Tailwind CSS with shadcn/ui components
-- **Backend**: Firebase (Firestore, Authentication, Hosting)
+- **Backend**: Firebase (Firestore, Authentication, Hosting, Storage)
 - **AI Integration**: Google Genkit for AI-powered features
 - **Form Handling**: React Hook Form with Zod validation
 - **Security**: Rate limiting, audit logging, input validation, GDPR compliance
@@ -36,6 +36,7 @@ The app follows a role-based architecture with three user types:
 - `src/app/` - Next.js App Router pages and layouts
   - `dashboard/` - Role-specific dashboard pages (professional, company, admin)
   - `register/` - Registration flows for professionals and companies
+  - `verify-email/` - Email verification page
 - `src/components/` - Reusable React components
   - `core/` - Core app components (Navbar, Footer, Logo, ClientLayout)
   - `ui/` - shadcn/ui component library
@@ -43,12 +44,16 @@ The app follows a role-based architecture with three user types:
 - `src/types/` - TypeScript type definitions (auth.ts, project.ts, notification.ts, marketplace.ts)
 - `src/lib/` - Utilities, Firebase configuration, security modules
   - `firebase/` - Firebase client configuration
+  - `server/` - Server-side rate limiting with Firestore
   - `security/` - File validation, input sanitization
   - `notifications/` - Secure notification service
   - `validation/` - Password validation
   - `gdpr/` - Privacy utilities
 - `src/constants/` - Application constants (routes, roles, BIM skills, software options)
 - `src/hooks/` - Custom React hooks (useRateLimit, useSessionTimeout)
+- `scripts/` - Utility and deployment scripts
+  - `deployment/` - Deployment automation (deploy.ps1, use-node-20.ps1)
+  - `utils/` - Utility scripts (cleanup-user-data.js, find-user-uid.js, security-test-script.js)
 
 ### Authentication & User Management
 
@@ -56,8 +61,13 @@ The app uses Firebase Authentication with custom user profiles stored in Firesto
 - Professional profiles include BIM skills, software proficiency, certifications (with self-certification support), portfolio links, CV URLs, and availability
 - Company profiles include business details, contact information, VAT numbers, and project types
 - Role-based access control enforced throughout the application via `AuthContext`
-- Login includes rate limiting (5 attempts per 15 minutes) to prevent brute force attacks
-- Audit logging tracks authentication events for security monitoring
+- **Email Verification**: Users must verify email before accessing dashboard (enforced at login)
+- **Rate Limiting**: Dual-layer protection (client + server-side via Firestore)
+  - Login: 5 attempts per 15 minutes
+  - Register: 3 attempts per 1 hour
+  - Password Reset: 3 attempts per 1 hour
+- **Audit Logging**: All authentication events tracked with severity levels
+- **Session Management**: Automatic logout after inactivity (useSessionTimeout hook)
 - Profile updates are secured to only allow authenticated users to modify their own data
 
 ### Routing and Navigation
@@ -81,7 +91,7 @@ Projects have a detailed application lifecycle managed through Firestore:
 - Development server runs on port 9002 to avoid conflicts
 - TypeScript and ESLint errors are ignored during builds (configured in next.config.ts)
 - Firebase configuration uses environment variables from .env.local
-- Image optimization configured for external domains (Unsplash, placeholder services, Firebase Storage)
+- **Image handling**: Background images use CSS `backgroundImage`, content images use standard `<img>` tags (not Next.js Image optimization to avoid Cloud Function timeouts)
 - Security headers are configured in next.config.ts (CSP temporarily disabled for debugging)
 - Turbopack is used for faster development builds
 
@@ -91,7 +101,7 @@ Ensure `.env.local` contains all required Firebase configuration variables:
 - `NEXT_PUBLIC_FIREBASE_API_KEY`
 - `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
 - `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
-- `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
+- `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` (must be `.firebasestorage.app` format)
 - `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
 - `NEXT_PUBLIC_FIREBASE_APP_ID`
 - `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID`
@@ -108,9 +118,55 @@ User profiles extend a base interface with role-specific fields:
 
 ### Security Considerations
 
-- File uploads are validated in `src/lib/security/fileValidation.ts` with type, size, and content checks
-- Input sanitization is performed via `src/lib/validation.ts` using isomorphic-dompurify
-- Rate limiting implemented in `src/hooks/useRateLimit.ts` for login and sensitive operations
-- Audit logging in `src/lib/auditLog.ts` tracks security events with severity levels
-- Profile updates enforce that users can only modify their own data via uid verification
-- Session timeouts are managed via `src/hooks/useSessionTimeout.ts`
+- **File Uploads**: Validated in `src/lib/security/fileValidation.ts` with type, size, and content checks
+- **Input Sanitization**: Performed via `src/lib/validation.ts` using isomorphic-dompurify
+- **Rate Limiting**: Dual-layer implementation
+  - Client-side: `src/hooks/useRateLimit.ts` (fast, bypassable)
+  - Server-side: `src/lib/server/rateLimiter.ts` (secure, Firestore-based, non-bypassable)
+- **Audit Logging**: `src/lib/auditLog.ts` tracks security events with severity levels (LOW, MEDIUM, HIGH, CRITICAL)
+- **Profile Updates**: Enforce that users can only modify their own data via uid verification
+- **Session Timeouts**: Managed via `src/hooks/useSessionTimeout.ts`
+- **GDPR Compliance**: Privacy policy, Terms of Service, Cookie banner
+
+### Firebase Deployment
+
+**Production URL**: https://bimatch-cd100.web.app
+
+**Deployment Process**:
+1. Ensure Node.js 20 is active: `scripts/deployment/use-node-20.ps1`
+2. Build production: `npm run build`
+3. Deploy: `firebase deploy --only hosting,storage` or use `scripts/deployment/deploy.ps1`
+
+**Firebase Configuration**:
+- Hosting: SSR with Cloud Functions Gen2, Node 20 runtime
+- Firestore: Production indexes defined in `firestore.indexes.json`
+- Storage: Public read for profileImages, private for CV/certificates
+- Authentication: Email/password with email verification enforcement
+
+**Important Notes**:
+- Storage bucket: `bimatch-cd100.firebasestorage.app` (NOT `.appspot.com`)
+- Firestore indexes must be deployed before production use
+- Email verification templates can be customized in Firebase Console
+- Rate limiting uses Firestore collection `rateLimits` with TTL cleanup
+
+### Troubleshooting
+
+**Images Not Loading in Production**:
+- Unsplash images use direct URLs with CSS/HTML (not Next.js Image)
+- Check Storage rules allow public read for `profileImages/`
+- Verify `.env.local` has correct Storage bucket (`.firebasestorage.app`)
+
+**Build Errors**:
+- Close dev server before building (port 9002 conflict)
+- Delete `.next/` folder if build fails with EPERM errors
+- Check Node version is 20.x: `node -v`
+
+**Rate Limiting Issues**:
+- Server-side rate limits stored in Firestore `rateLimits` collection
+- Check Firestore rules allow write for authenticated users
+- Rate limit data auto-expires via Firestore TTL
+
+**Email Verification**:
+- Users redirected to `/verify-email` if email not verified
+- Resend email available after 60-second cooldown
+- Check Firebase Console > Authentication > Templates for email customization

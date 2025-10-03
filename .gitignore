@@ -27,7 +27,7 @@ yarn-error.log*
 pnpm-debug.log*
 
 # local env files
-.env.local
+.env*.local
 .env.development.local
 .env.test.local
 .env.production.local
@@ -37,11 +37,87 @@ pnpm-debug.log*
 
 # typescript
 *.tsbuildinfo
-tsconfig.tsbuildinfo
+next-env.d.ts
 
-# general
+# turbo
+.turbo
+
+# Firebase
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+.firebaserc.local
+
+# IDEs and editors
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+.cache
+.temp/
+.modified
+
+# ESLint cache
 .eslintcache
 eslint.config.mjs
 
-#turbo
-.turbo
+# Logs
+logs/
+*.log
+
+# Script deployment temporanei
+deploy.ps1.bak
+use-node-20.ps1.bak
+
+# Node version manager
+.nvmrc.bak
+
+# Claude Code local settings
+.claude/settings.local.json
+.claude/*.local.*
+
+# Google Project IDX
+.idx/
+
+# Scripts backup
+scripts/**/*.bak
+scripts/**/*.backup
+scripts/**/*.old
+
+# Coverage and test reports
+coverage/
+.nyc_output/
+test-results/
+
+# Build info
+.build-info.json
+
+# Storybook
+storybook-static/
+.storybook-out/

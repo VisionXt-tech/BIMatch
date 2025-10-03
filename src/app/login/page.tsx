@@ -23,7 +23,6 @@ import { ROUTES } from '@/constants';
 import type { LoginFormData } from '@/types/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
-import Image from 'next/image';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Inserisci un indirizzo email valido.' }),
@@ -89,16 +88,15 @@ export default function LoginPage() {
   const isSubmitting = form.formState.isSubmitting || authLoading;
 
   return (
-    <div className="relative flex flex-grow items-center justify-center w-full px-4">
-      <Image
-        src="https://images.unsplash.com/photo-1481026469463-66327c86e544?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxCdWlsZGluZyUyMEluZm9ybWF0aW9uJTIwTW9kZWxpbmd8ZW58MHx8fHwxNzQ5NDU1MTY1fDA&ixlib=rb-4.1.0&q=80&w=1080"
-        alt="Abstract BIM model background"
-        fill
-        className="object-cover -z-10"
-        priority
-        data-ai-hint="Building Information"
-      />
-      <div className="absolute inset-0 bg-black/60 -z-10"></div>
+    <div
+      className="relative flex flex-grow items-center justify-center w-full px-4"
+      style={{
+        backgroundImage: 'url(https://images.unsplash.com/photo-1481026469463-66327c86e544?w=1920&q=80)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
+      <div className="absolute inset-0 bg-black/60"></div>
 
       <Card className="w-full max-w-md shadow-xl bg-card border-border">
         <CardHeader className="text-center p-6">

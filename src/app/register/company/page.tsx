@@ -22,7 +22,6 @@ import { useRouter } from 'next/navigation';
 import type { CompanyRegistrationFormData } from '@/types/auth';
 import { ROUTES, ITALIAN_REGIONS } from '@/constants';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import Image from 'next/image';
 
 const companyRegistrationSchema = z.object({
   companyName: z.string().min(2, { message: 'Il nome azienda deve contenere almeno 2 caratteri.' }),
@@ -62,17 +61,15 @@ export default function CompanyRegistrationPage() {
   };
 
   return (
-    <div className="relative flex flex-grow flex-col items-center justify-center w-full px-4 py-4">
-      <Image
-        src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxjb21wYW55JTIwb2ZmaWNlfGVufDB8fHx8MTc0NzY3NjUyN3ww&ixlib=rb-4.1.0&q=80&w=1080"
-        alt="Company office building"
-        fill
-        style={{ objectFit: 'cover' }}
-        className="-z-10"
-        priority
-        data-ai-hint="company office"
-      />
-      <div className="absolute inset-0 bg-black/50 -z-10"></div> {/* Overlay */}
+    <div
+      className="relative flex flex-grow flex-col items-center justify-center w-full px-4 py-4"
+      style={{
+        backgroundImage: 'url(https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1920&q=80)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
+      <div className="absolute inset-0 bg-black/50"></div>
 
       <Card className="w-full max-w-lg shadow-xl bg-card/90 dark:bg-card/80 backdrop-blur-md border border-white/10 my-auto">
         <CardHeader className="text-center p-3">

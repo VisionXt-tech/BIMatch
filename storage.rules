@@ -11,12 +11,20 @@ service firebase.storage {
     function isValidDocumentType(contentType) {
       return contentType == 'application/pdf';
     }
-    // User files - each user can only access their own files
+    // User profile images - publicly readable for marketplace
+    match /users/{userId}/profileImages/{imageName} {
+      allow read: if true; // Public read access for marketplace
+      allow write: if request.auth != null && request.auth.uid == userId
+        && request.resource.size < 5 * 1024 * 1024 // 5MB limit
+        && isValidImageType(request.resource.contentType);
+    }
+
+    // User files - each user can only access their own files (except profileImages)
     match /users/{userId}/{allPaths=**} {
       allow read: if request.auth != null && request.auth.uid == userId;
       allow write: if request.auth != null && request.auth.uid == userId
         && request.resource.size < 5 * 1024 * 1024 // 5MB limit
-        && (isValidImageType(request.resource.contentType) || 
+        && (isValidImageType(request.resource.contentType) ||
             isValidDocumentType(request.resource.contentType));
     }
     
@@ -33,6 +41,14 @@ service firebase.storage {
       allow read: if request.auth != null; // Require authentication
       allow write: if request.auth != null && request.auth.uid == companyId
         && request.resource.size < 2 * 1024 * 1024 // Consistent 2MB limit
+        && isValidImageType(request.resource.contentType);
+    }
+
+    // Profile images - publicly readable for marketplace
+    match /profileImages/{userId}/{allPaths=**} {
+      allow read: if true; // Public read access for marketplace
+      allow write: if request.auth != null && request.auth.uid == userId
+        && request.resource.size < 5 * 1024 * 1024 // 5MB limit
         && isValidImageType(request.resource.contentType);
     }
   }

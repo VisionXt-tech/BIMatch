@@ -151,7 +151,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const result = await signInWithEmailAndPassword(auth, data.email, data.password!);
       console.log('Firebase authentication successful:', result.user.uid);
-      
+
+      // CHECK: Blocca login se email non verificata
+      if (!result.user.emailVerified) {
+        console.warn('Login blocked: Email not verified for user:', result.user.uid);
+
+        // Audit log blocked login attempt
+        await auditLog({
+          userId: result.user.uid,
+          action: 'LOGIN_BLOCKED_EMAIL_NOT_VERIFIED',
+          details: { email: data.email },
+          severity: 'MEDIUM'
+        });
+
+        // Sign out immediately
+        await signOut(auth);
+
+        toast({
+          title: "Email non verificata",
+          description: "Devi verificare la tua email prima di accedere. Controlla la tua casella di posta.",
+          variant: "destructive",
+        });
+
+        // Redirect to email verification page
+        router.push('/verify-email?email=' + encodeURIComponent(data.email));
+        return;
+      }
+
       // Audit log successful login
       await auditLog({
         userId: result.user.uid,
@@ -159,7 +185,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         details: { email: data.email },
         severity: 'LOW'
       });
-      
+
       // No toast here, direct redirect
       router.push(ROUTES.DASHBOARD); 
     } catch (error: any) {
@@ -234,10 +260,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       };
       await setDoc(userDocRef, professionalProfile);
       setUserProfile(professionalProfile);
+
+      // Logout immediately after registration to force email verification
+      await signOut(auth);
+
       toast({
         title: "Registrazione Completata",
-        description: "Controlla la tua email per verificare l'account. Completa poi il tuo profilo."
+        description: "Ti abbiamo inviato un'email di verifica. Controlla la tua casella di posta."
       });
+
+      // Redirect to email verification page
+      router.push('/verify-email?email=' + encodeURIComponent(data.email));
     } catch (error: any) {
       console.error("Professional registration error:", error);
       toast({ title: "Errore di Registrazione", description: error.message || "Impossibile registrarsi.", variant: "destructive" });
@@ -278,10 +311,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       };
       await setDoc(userDocRef, companyProfile);
       setUserProfile(companyProfile);
+
+      // Logout immediately after registration to force email verification
+      await signOut(auth);
+
       toast({
         title: "Registrazione Azienda Completata",
-        description: "Controlla la tua email per verificare l'account. Crea poi il profilo della tua azienda."
+        description: "Ti abbiamo inviato un'email di verifica. Controlla la tua casella di posta."
       });
+
+      // Redirect to email verification page
+      router.push('/verify-email?email=' + encodeURIComponent(data.email));
     } catch (error: any) {
       console.error("Company registration error:", error);
       toast({ title: "Errore di Registrazione", description: error.message || "Impossibile registrarsi.", variant: "destructive" });
@@ -354,40 +394,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const resendVerificationEmail = async () => {
-    if (!user) {
-      toast({
-        title: "Errore",
-        description: "Devi essere loggato per richiedere la verifica email.",
-        variant: "destructive",
-      });
-      return;
+    // Usa currentUser invece di user per evitare problemi di stato
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      throw new Error("Devi effettuare il login per richiedere la verifica email.");
     }
 
-    if (user.emailVerified) {
-      toast({
-        title: "Email Già Verificata",
-        description: "La tua email è già stata verificata.",
-      });
-      return;
+    if (currentUser.emailVerified) {
+      throw new Error("La tua email è già stata verificata.");
     }
 
     try {
-      await sendEmailVerification(user);
-      toast({
-        title: "Email Inviata",
-        description: "Controlla la tua casella email per il link di verifica.",
-      });
+      await sendEmailVerification(currentUser);
+      console.log('Email verification resent to:', currentUser.email);
     } catch (error: any) {
       console.error("Email verification resend error:", error);
-      let errorMessage = "Impossibile inviare l'email di verifica.";
       if (error.code === 'auth/too-many-requests') {
-        errorMessage = "Troppi tentativi. Riprova tra qualche minuto.";
+        throw new Error("Troppi tentativi. Riprova tra qualche minuto.");
       }
-      toast({
-        title: "Errore",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      throw error;
     }
   };
 

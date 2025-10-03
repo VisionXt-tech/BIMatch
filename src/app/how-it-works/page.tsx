@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { ROUTES } from "@/constants";
 import { ArrowRight, UserPlus, Search, Users, Briefcase, FileText, Building, Zap, Brain, MapPin, ChevronDown, Lightbulb, CheckCircle, MessageSquare, Link as LinkIcon, Sparkles as SparklesIcon, ChevronRight, FolderPlus, Send, ClipboardList, CalendarCheck } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import React from "react"; // Import React
@@ -17,7 +16,12 @@ const StepCard = ({ icon: Icon, title, description, imageSrc, imageHint, index }
     style={{ animationDelay: `${index * 0.15}s` }}
   >
     <div className="relative aspect-[16/9] overflow-hidden">
-      <Image src={imageSrc} alt={title} fill style={{ objectFit: 'cover' }} className="group-hover:scale-105 transition-transform duration-500" data-ai-hint={imageHint}/>
+      <img
+        src={imageSrc}
+        alt={title}
+        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        loading="lazy"
+      />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
        <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
          <div className="flex items-center text-primary-foreground mb-1">

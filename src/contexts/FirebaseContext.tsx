@@ -9,7 +9,9 @@ import type { Firestore } from 'firebase/firestore';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import type { FirebaseStorage } from 'firebase/storage';
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
-import { createContext, useContext, ReactNode, useMemo } from 'react';
+import type { Analytics } from 'firebase/analytics';
+import { getAnalytics, isSupported } from 'firebase/analytics';
+import { createContext, useContext, ReactNode, useMemo, useEffect, useState } from 'react';
 import { firebaseConfig } from '@/lib/firebase/config';
 
 interface FirebaseContextType {
@@ -17,6 +19,7 @@ interface FirebaseContextType {
   auth: Auth;
   db: Firestore;
   storage: FirebaseStorage;
+  analytics: Analytics | null;
 }
 
 const FirebaseContext = createContext<FirebaseContextType | null>(null);
@@ -116,13 +119,34 @@ if (process.env.NODE_ENV === 'development' && firebaseApp.name) {
 
 export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({ children }) => {
   const firebaseAppInitializationError = !configIsValid;
+  const [analytics, setAnalytics] = useState<Analytics | null>(null);
 
-  const value = useMemo(() => ({ 
-    app: firebaseApp, 
-    auth: authInstance, 
-    db: dbInstance, 
-    storage: storageInstance 
-  }), []); 
+  // Initialize Analytics only on client-side in production
+  useEffect(() => {
+    const initAnalytics = async () => {
+      if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
+        const supported = await isSupported();
+        if (supported && firebaseApp.name) {
+          try {
+            const analyticsInstance = getAnalytics(firebaseApp);
+            setAnalytics(analyticsInstance);
+            console.log('Firebase Analytics initialized');
+          } catch (error) {
+            console.error('Analytics initialization failed:', error);
+          }
+        }
+      }
+    };
+    initAnalytics();
+  }, []);
+
+  const value = useMemo(() => ({
+    app: firebaseApp,
+    auth: authInstance,
+    db: dbInstance,
+    storage: storageInstance,
+    analytics
+  }), [analytics]);
 
   if (firebaseAppInitializationError) {
     return (
