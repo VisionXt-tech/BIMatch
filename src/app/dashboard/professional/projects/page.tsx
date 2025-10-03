@@ -35,7 +35,7 @@ const applicationStatusOptions = [
     { value: APPLICATION_STATUS_REJECTED, label: "Solo Rifiutate" },
 ];
 
-const MAX_ITEMS_PREVIEW = 2; 
+const MAX_ITEMS_PREVIEW = 4; // Increased from 2 for better information density 
 
 export default function AvailableProjectsPage() {
   const { db } = useFirebase();
@@ -217,7 +217,7 @@ export default function AvailableProjectsPage() {
             </Accordion>
 
           {loading || (authLoading && loadingApplications && userProfile?.role === 'professional') ? (
-             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
                 {[...Array(8)].map((_, i) => (
                   <Card key={i} className="shadow-md relative flex flex-col h-full">
                     <CardHeader className="p-3">
@@ -245,7 +245,7 @@ export default function AvailableProjectsPage() {
               <p className="text-muted-foreground text-sm">{error}</p>
             </div>
           ) : filteredProjects.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
               {filteredProjects.map((project) => {
                 const applicationDetail = userProfile?.role === 'professional' && !loadingApplications 
                   ? userApplicationDetails.find(app => app.projectId === project.id!) 

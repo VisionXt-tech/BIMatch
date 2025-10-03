@@ -30,8 +30,8 @@ export default function HomePage() {
   return (
     <div className="relative flex flex-col items-center justify-center flex-grow text-center px-4 w-full">
       
-      <div className="w-full max-w-4xl 2xl:max-w-5xl py-12 px-6 bg-card/10 backdrop-blur-sm border border-white/10 rounded-xl shadow-2xl">
-        <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-8 tracking-tight leading-tight">
+      <div className="w-full max-w-5xl 2xl:max-w-6xl py-8 px-6 bg-card/10 backdrop-blur-sm border border-white/10 rounded-xl shadow-2xl">
+        <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-6 tracking-tight leading-tight">
           <span className="block sm:inline">Fai Match con{' '}</span>
           <Button
             variant="ghost"
@@ -56,7 +56,7 @@ export default function HomePage() {
           <span className="block sm:inline mt-1 sm:mt-0">{' '}e Progetti BIM.</span>
         </h1>
 
-        <p className="text-md sm:text-lg md:text-xl text-primary-foreground/90 mb-10 max-w-xl mx-auto">
+        <p className="text-md sm:text-lg md:text-xl text-primary-foreground/90 mb-6 max-w-xl mx-auto">
           La piattaforma N°1 in Italia per professionisti BIM e aziende. Trova opportunità o i migliori talenti.
         </p>
 
@@ -90,7 +90,7 @@ export default function HomePage() {
           </Button>
         </div>
         
-         <p className="mt-10 text-sm md:text-base text-primary-foreground opacity-80">
+         <p className="mt-6 text-sm md:text-base text-primary-foreground opacity-80">
           Entra in BIMatch: dove le competenze incontrano le opportunità.
         </p>
 
@@ -98,7 +98,7 @@ export default function HomePage() {
             asChild
             size="default" 
             variant="link"
-            className="mt-8 text-primary-foreground/80 hover:text-white group"
+            className="mt-6 text-primary-foreground/80 hover:text-white group"
           >
             <Link href={ROUTES.HOW_IT_WORKS}>
               <HelpCircle className="mr-2 h-4 w-4" /> Come Funziona BIMatch?

@@ -111,7 +111,7 @@ export default function ProfessionalDashboardPage() {
 
   if (authLoading) {
     return (
-      <div className="space-y-4 w-full max-w-4xl mx-auto">
+      <div className="space-y-3 w-full max-w-7xl mx-auto">
         <Card className="shadow-lg"><CardHeader className="p-4"><Skeleton className="h-8 w-3/4" /><Skeleton className="h-6 w-1/2 mt-1" /></CardHeader></Card>
         <Card className="shadow-lg"><CardHeader className="p-4"><Skeleton className="h-7 w-1/3" /></CardHeader><CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">{[...Array(4)].map((_,i) => <Skeleton key={i} className="h-28 w-full" />)}</CardContent></Card>
         <Card className="shadow-lg"><CardHeader className="p-4"><Skeleton className="h-7 w-1/4" /></CardHeader><CardContent className="p-4"><Skeleton className="h-10 w-1/3" /></CardContent></Card>
@@ -126,8 +126,8 @@ export default function ProfessionalDashboardPage() {
   const isProfileComplete = userProfile.bio && userProfile.bimSkills && userProfile.bimSkills.length > 0;
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      <div className="space-y-3 pr-2">
+    <div className="w-full max-w-7xl mx-auto">
+      <div className="space-y-3">
       <Card className="shadow-lg">
         <CardHeader className="p-4">
           <CardTitle className="text-2xl font-bold text-primary">{userProfile.firstName ? `Ciao, ${userProfile.firstName}!` : `Ciao, ${userProfile.displayName}!`}</CardTitle>
@@ -158,11 +158,11 @@ export default function ProfessionalDashboardPage() {
             <CardTitle className="text-xl font-semibold">Le Tue Attività</CardTitle>
             <CardDescription className="text-sm">Monitora le tue interazioni e scopri nuove possibilità.</CardDescription>
         </CardHeader>
-        <CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3">
+        <CardContent className="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             <Button
               asChild
               size="lg"
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 flex flex-col items-center justify-center h-28 p-3 text-center"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 flex flex-col items-center justify-center h-24 p-3 text-center"
             >
               <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS}>
                 <Search className="h-6 w-6 mb-1 text-primary-foreground" />
@@ -176,7 +176,7 @@ export default function ProfessionalDashboardPage() {
               asChild
               size="lg"
               className={cn(
-                "w-full text-primary-foreground flex flex-col items-center justify-center h-28 p-3 text-center",
+                "w-full text-primary-foreground flex flex-col items-center justify-center h-24 p-3 text-center",
                 loadingCounts ? "bg-secondary hover:bg-secondary/80" : 
                 (userActiveApplicationsCount && userActiveApplicationsCount > 0
                   ? "bg-green-600 hover:bg-green-700"
@@ -195,7 +195,7 @@ export default function ProfessionalDashboardPage() {
                 asChild
                 size="lg"
                 className={cn(
-                    "w-full text-primary-foreground flex flex-col items-center justify-center h-28 p-3 text-center",
+                    "w-full text-primary-foreground flex flex-col items-center justify-center h-24 p-3 text-center",
                     loadingCounts ? "bg-secondary hover:bg-secondary/80" :
                     (acceptedMatchesCount && acceptedMatchesCount > 0 
                         ? "bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 hover:opacity-90" 
@@ -215,7 +215,7 @@ export default function ProfessionalDashboardPage() {
                 asChild
                 size="lg"
                 className={cn(
-                    "w-full text-primary-foreground flex flex-col items-center justify-center h-28 p-3 text-center",
+                    "w-full text-primary-foreground flex flex-col items-center justify-center h-24 p-3 text-center",
                     loadingCounts ? "bg-secondary hover:bg-secondary/80" :
                     (unreadNotificationsCount && unreadNotificationsCount > 0 
                         ? "bg-orange-500 hover:bg-orange-600" 

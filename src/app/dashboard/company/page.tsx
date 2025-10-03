@@ -100,7 +100,7 @@ function CompanyDashboardPage() {
 
   if (authLoading && !userProfile) {
      return (
-      <div className="space-y-4 w-full max-w-4xl mx-auto">
+      <div className="space-y-3 w-full max-w-7xl mx-auto">
         <Card className="shadow-lg"><CardHeader className="p-4"><Skeleton className="h-8 w-3/4" /><Skeleton className="h-6 w-1/2 mt-1" /></CardHeader></Card>
         <Card className="shadow-lg"><CardHeader className="p-4"><Skeleton className="h-7 w-1/3" /></CardHeader><CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">{[...Array(3)].map((_,i) => <Skeleton key={i} className="h-28 w-full" />)}</CardContent></Card>
         <Card className="shadow-lg"><CardHeader className="p-4"><Skeleton className="h-7 w-1/4" /></CardHeader><CardContent className="p-4"><Skeleton className="h-10 w-1/3" /></CardContent></Card>
@@ -115,8 +115,8 @@ function CompanyDashboardPage() {
   const isProfileComplete = userProfile.companyDescription && userProfile.industry;
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      <div className="space-y-2 sm:space-y-4 px-3 sm:px-6 pb-2 sm:pb-4">
+    <div className="w-full max-w-7xl mx-auto">
+      <div className="space-y-3">
       <Card className="shadow-lg">
         <CardHeader className="p-4 sm:p-6">
           <CardTitle className="text-xl sm:text-2xl font-bold text-primary break-words">Benvenuta, {userProfile.companyName || userProfile.displayName}!</CardTitle>
@@ -147,9 +147,9 @@ function CompanyDashboardPage() {
             <CardTitle className="text-lg sm:text-xl font-semibold">Azioni Rapide</CardTitle>
             <CardDescription className="text-sm">Gestisci le attività principali della tua azienda.</CardDescription>
         </CardHeader>
-        <CardContent className="p-2 sm:p-6 grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
+        <CardContent className="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
             <Button asChild size="lg" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                <Link href={ROUTES.DASHBOARD_COMPANY_POST_PROJECT} className="flex flex-col items-center justify-center h-16 sm:h-28 p-1.5 sm:p-3 text-center">
+                <Link href={ROUTES.DASHBOARD_COMPANY_POST_PROJECT} className="flex flex-col items-center justify-center h-24 p-1.5 sm:p-3 text-center">
                     <FolderPlus className="h-5 w-5 sm:h-6 sm:w-6 mb-1 text-primary-foreground" />
                     <span className="text-xs sm:text-sm font-medium leading-tight">Nuovo Progetto</span>
                     <span className="text-xs text-primary-foreground/80 mt-0.5 hidden sm:block">Crea e lancia nuove offerte</span>
@@ -159,7 +159,7 @@ function CompanyDashboardPage() {
                 asChild 
                 size="lg" 
                 className={cn(
-                    "w-full flex flex-col items-center justify-center h-16 sm:h-28 p-1.5 sm:p-3 text-center text-primary-foreground",
+                    "w-full flex flex-col items-center justify-center h-24 p-1.5 sm:p-3 text-center text-primary-foreground",
                     loadingCounts ? "bg-secondary hover:bg-secondary/80" :
                     activeProjectsCount && activeProjectsCount > 0 ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700" 
                 )}
@@ -176,7 +176,7 @@ function CompanyDashboardPage() {
                 asChild 
                 size="lg" 
                 className={cn(
-                    "w-full flex flex-col items-center justify-center h-16 sm:h-28 p-1.5 sm:p-3 text-center text-primary-foreground",
+                    "w-full flex flex-col items-center justify-center h-24 p-1.5 sm:p-3 text-center text-primary-foreground",
                     loadingCounts ? "bg-secondary hover:bg-secondary/80" :
                     newCandidatesCount && newCandidatesCount > 0 ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"
                 )}
@@ -193,7 +193,7 @@ function CompanyDashboardPage() {
                 asChild 
                 size="lg" 
                 className={cn(
-                    "w-full flex flex-col items-center justify-center h-16 sm:h-28 p-1.5 sm:p-3 text-center text-primary-foreground col-span-1 xs:col-span-2 sm:col-span-1",
+                    "w-full flex flex-col items-center justify-center h-24 p-1.5 sm:p-3 text-center text-primary-foreground col-span-1 xs:col-span-2 sm:col-span-1",
                     loadingCounts ? "bg-secondary hover:bg-secondary/80" :
                     (acceptedMatchesCount && acceptedMatchesCount > 0 
                         ? "bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 hover:opacity-90" 
@@ -212,7 +212,7 @@ function CompanyDashboardPage() {
                 asChild 
                 size="lg" 
                 className={cn(
-                    "w-full flex flex-col items-center justify-center h-16 sm:h-28 p-1.5 sm:p-3 text-center text-primary-foreground col-span-1 xs:col-span-2 sm:col-span-1",
+                    "w-full flex flex-col items-center justify-center h-24 p-1.5 sm:p-3 text-center text-primary-foreground col-span-1 xs:col-span-2 sm:col-span-1",
                     loadingCounts ? "bg-secondary hover:bg-secondary/80" :
                     unreadCompanyNotificationsCount && unreadCompanyNotificationsCount > 0 ? "bg-orange-500 hover:bg-orange-600" : "bg-muted-foreground hover:bg-muted-foreground/80"
                 )}
