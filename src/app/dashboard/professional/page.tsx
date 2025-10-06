@@ -134,15 +134,15 @@ export default function ProfessionalDashboardPage() {
 
   return (
     <div className="w-full max-w-7xl mx-auto">
-      <div className="space-y-3">
+      <div className="space-y-4">
       <Card className="shadow-lg">
-        <CardHeader className="p-4">
+        <CardHeader className="p-5">
           <CardTitle className="text-2xl font-bold text-primary">{userProfile.firstName ? `Ciao, ${userProfile.firstName}!` : `Ciao, ${userProfile.displayName}!`}</CardTitle>
           <CardDescription className="text-md text-muted-foreground">La tua dashboard per esplorare opportunità e gestire la tua carriera BIM.</CardDescription>
         </CardHeader>
         {!isProfileComplete && (
-          <CardContent className="px-4 pt-0 pb-3"> 
-             <div className="bg-secondary border-l-4 border-primary text-secondary-foreground p-3 rounded-md" role="alert">
+          <CardContent className="px-5 pt-0 pb-4">
+             <div className="bg-secondary border-l-4 border-primary text-secondary-foreground p-4 rounded-md" role="alert">
                 <p className="font-bold text-sm">Completa il tuo profilo!</p>
                 <p className="text-xs">Un profilo completo aumenta le tue possibilità di trovare il progetto giusto. <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROFILE} className="font-semibold underline hover:text-primary">Aggiorna ora</Link>.</p>
             </div>
@@ -152,7 +152,7 @@ export default function ProfessionalDashboardPage() {
 
       {errorCounts && (
         <Card className="shadow-md bg-destructive/10 border-destructive">
-            <CardContent className="p-4 text-center text-destructive">
+            <CardContent className="p-5 text-center text-destructive">
                 <WifiOff className="mx-auto h-8 w-8 mb-2" />
                 <p className="font-semibold">Errore nel caricamento delle attività</p>
                 <p className="text-sm">{errorCounts}</p>
@@ -161,16 +161,16 @@ export default function ProfessionalDashboardPage() {
       )}
 
       <Card className="shadow-lg">
-        <CardHeader className="p-4">
+        <CardHeader className="p-5">
             <CardTitle className="text-xl font-semibold">Le Tue Attività</CardTitle>
             <CardDescription className="text-sm">Monitora le tue interazioni e scopri nuove possibilità.</CardDescription>
         </CardHeader>
-        <CardContent className="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        <CardContent className="p-5 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <div className="animate-fade-in opacity-0 animate-stagger-1">
             <Button
               asChild
               size="lg"
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 flex flex-col items-center justify-center h-24 p-3 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 flex flex-col items-center justify-center h-28 p-4 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
             >
               <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS}>
                 <Search className="h-6 w-6 mb-1 text-primary-foreground" />
@@ -186,7 +186,7 @@ export default function ProfessionalDashboardPage() {
               asChild
               size="lg"
               className={cn(
-                "w-full text-primary-foreground flex flex-col items-center justify-center h-24 p-3 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
+                "w-full text-primary-foreground flex flex-col items-center justify-center h-28 p-4 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
                 loadingCounts ? "bg-secondary hover:bg-secondary/80" :
                 (userActiveApplicationsCount && userActiveApplicationsCount > 0
                   ? "bg-green-600 hover:bg-green-700"
@@ -207,7 +207,7 @@ export default function ProfessionalDashboardPage() {
                 asChild
                 size="lg"
                 className={cn(
-                    "w-full text-primary-foreground flex flex-col items-center justify-center h-24 p-3 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
+                    "w-full text-primary-foreground flex flex-col items-center justify-center h-28 p-4 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
                     loadingCounts ? "bg-secondary hover:bg-secondary/80" :
                     (acceptedMatchesCount && acceptedMatchesCount > 0
                         ? "bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 hover:opacity-90"
@@ -229,7 +229,7 @@ export default function ProfessionalDashboardPage() {
                 asChild
                 size="lg"
                 className={cn(
-                    "w-full text-primary-foreground flex flex-col items-center justify-center h-24 p-3 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
+                    "w-full text-primary-foreground flex flex-col items-center justify-center h-28 p-4 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
                     loadingCounts ? "bg-secondary hover:bg-secondary/80" :
                     (unreadNotificationsCount && unreadNotificationsCount > 0
                         ? "bg-orange-500 hover:bg-orange-600"
@@ -249,10 +249,10 @@ export default function ProfessionalDashboardPage() {
       </Card>
 
       <Card className="shadow-lg">
-        <CardHeader className="p-4">
+        <CardHeader className="p-5">
           <CardTitle className="text-xl font-semibold">Il Tuo Profilo</CardTitle>
         </CardHeader>
-        <CardContent className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <CardContent className="p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
            <div>
                 <p className="text-sm text-muted-foreground">Stato del profilo: <span className={isProfileComplete ? "font-semibold text-green-600" : "font-semibold text-yellow-600"}>{isProfileComplete ? "Completo" : "Incompleto"}</span></p>
                 <p className="text-xs text-muted-foreground mt-0.5">Un profilo curato è il tuo miglior biglietto da visita.</p>

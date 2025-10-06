@@ -255,6 +255,3 @@ export default function CompanyProjectsPage() {
     </div>
   );
 }
-
-export default CompanyProjectsPage;
-

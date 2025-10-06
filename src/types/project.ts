@@ -7,6 +7,7 @@ export interface Project {
   companyId: string; // UID of the company that posted the project
   companyName: string;
   companyLogo?: string; // URL to company logo
+  projectImage?: string; // URL to project hero image (Firebase Storage)
   location: string; // Region or City, State
   description: string; // Detailed project description
   requiredSkills: string[]; // Array of skill IDs/tags

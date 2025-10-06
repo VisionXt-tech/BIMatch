@@ -123,25 +123,25 @@ function CompanyDashboardPage() {
 
   return (
     <div className="w-full max-w-7xl mx-auto">
-      <div className="space-y-3">
+      <div className="space-y-4">
       <Card className="shadow-lg">
-        <CardHeader className="p-4 sm:p-6">
+        <CardHeader className="p-5 sm:p-6">
           <CardTitle className="text-xl sm:text-2xl font-bold text-primary break-words">Benvenuta, {userProfile.companyName || userProfile.displayName}!</CardTitle>
           <CardDescription className="text-sm sm:text-base text-muted-foreground">Questa è la tua dashboard BIMatch per gestire progetti e talenti.</CardDescription>
         </CardHeader>
          {!isProfileComplete && (
-          <CardContent className="px-4 pt-0 pb-3"> 
-             <div className="bg-secondary border-l-4 border-primary text-secondary-foreground p-3 rounded-md" role="alert">
+          <CardContent className="px-5 pt-0 pb-4"> 
+             <div className="bg-secondary border-l-4 border-primary text-secondary-foreground p-4 rounded-md" role="alert">
                 <p className="font-bold text-sm">Completa il profilo aziendale!</p>
                 <p className="text-xs">Un profilo dettagliato attira i migliori professionisti. <Link href={ROUTES.DASHBOARD_COMPANY_PROFILE} className="font-semibold underline hover:text-primary">Aggiorna ora</Link>.</p>
             </div>
           </CardContent>
         )}
       </Card>
-      
+
        {errorCounts && (
         <Card className="shadow-md bg-destructive/10 border-destructive">
-            <CardContent className="p-4 text-center text-destructive">
+            <CardContent className="p-5 text-center text-destructive">
                 <WifiOff className="mx-auto h-8 w-8 mb-2" />
                 <p className="font-semibold">Errore nel caricamento delle attività</p>
                 <p className="text-sm">{errorCounts}</p>
@@ -150,14 +150,14 @@ function CompanyDashboardPage() {
       )}
 
       <Card className="shadow-lg">
-        <CardHeader className="p-4 sm:p-6">
+        <CardHeader className="p-5 sm:p-6">
             <CardTitle className="text-lg sm:text-xl font-semibold">Azioni Rapide</CardTitle>
             <CardDescription className="text-sm">Gestisci le attività principali della tua azienda.</CardDescription>
         </CardHeader>
-        <CardContent className="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+        <CardContent className="p-5 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             <div className="animate-fade-in opacity-0 animate-stagger-1">
             <Button asChild size="lg" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
-                <Link href={ROUTES.DASHBOARD_COMPANY_POST_PROJECT} className="flex flex-col items-center justify-center h-24 p-1.5 sm:p-3 text-center">
+                <Link href={ROUTES.DASHBOARD_COMPANY_POST_PROJECT} className="flex flex-col items-center justify-center h-28 p-2 sm:p-4 text-center">
                     <FolderPlus className="h-5 w-5 sm:h-6 sm:w-6 mb-1 text-primary-foreground" />
                     <span className="text-xs sm:text-sm font-medium leading-tight">Nuovo Progetto</span>
                     <span className="text-xs text-primary-foreground/80 mt-0.5 hidden sm:block">Crea e lancia nuove offerte</span>
@@ -169,7 +169,7 @@ function CompanyDashboardPage() {
                 asChild
                 size="lg"
                 className={cn(
-                    "w-full flex flex-col items-center justify-center h-24 p-1.5 sm:p-3 text-center text-primary-foreground transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
+                    "w-full flex flex-col items-center justify-center h-28 p-2 sm:p-4 text-center text-primary-foreground transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
                     loadingCounts ? "bg-secondary hover:bg-secondary/80" :
                     activeProjectsCount && activeProjectsCount > 0 ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"
                 )}
@@ -188,7 +188,7 @@ function CompanyDashboardPage() {
                 asChild
                 size="lg"
                 className={cn(
-                    "w-full flex flex-col items-center justify-center h-24 p-1.5 sm:p-3 text-center text-primary-foreground transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
+                    "w-full flex flex-col items-center justify-center h-28 p-2 sm:p-4 text-center text-primary-foreground transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
                     loadingCounts ? "bg-secondary hover:bg-secondary/80" :
                     newCandidatesCount && newCandidatesCount > 0 ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"
                 )}
@@ -207,7 +207,7 @@ function CompanyDashboardPage() {
                 asChild
                 size="lg"
                 className={cn(
-                    "w-full flex flex-col items-center justify-center h-24 p-1.5 sm:p-3 text-center text-primary-foreground col-span-1 xs:col-span-2 sm:col-span-1 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
+                    "w-full flex flex-col items-center justify-center h-28 p-2 sm:p-4 text-center text-primary-foreground col-span-1 xs:col-span-2 sm:col-span-1 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
                     loadingCounts ? "bg-secondary hover:bg-secondary/80" :
                     (acceptedMatchesCount && acceptedMatchesCount > 0
                         ? "bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 hover:opacity-90"
@@ -228,7 +228,7 @@ function CompanyDashboardPage() {
                 asChild
                 size="lg"
                 className={cn(
-                    "w-full flex flex-col items-center justify-center h-24 p-1.5 sm:p-3 text-center text-primary-foreground col-span-1 xs:col-span-2 sm:col-span-1 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
+                    "w-full flex flex-col items-center justify-center h-28 p-2 sm:p-4 text-center text-primary-foreground col-span-1 xs:col-span-2 sm:col-span-1 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
                     loadingCounts ? "bg-secondary hover:bg-secondary/80" :
                     unreadCompanyNotificationsCount && unreadCompanyNotificationsCount > 0 ? "bg-orange-500 hover:bg-orange-600" : "bg-muted-foreground hover:bg-muted-foreground/80"
                 )}
@@ -246,10 +246,10 @@ function CompanyDashboardPage() {
       </Card>
       
       <Card className="shadow-lg">
-        <CardHeader className="p-4 sm:p-6">
+        <CardHeader className="p-5 sm:p-6">
           <CardTitle className="text-lg sm:text-xl font-semibold">Profilo Aziendale</CardTitle>
         </CardHeader>
-        <CardContent className="p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <CardContent className="p-5 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
            <div className="flex-1 min-w-0">
                 <p className="text-sm text-muted-foreground break-words">Stato del profilo: <span className={isProfileComplete ? "font-semibold text-green-600" : "font-semibold text-yellow-600"}>{isProfileComplete ? "Completo" : "Incompleto"}</span></p>
                 <p className="text-xs text-muted-foreground mt-0.5">Mantieni aggiornate le informazioni per massimizzare la visibilità.</p>

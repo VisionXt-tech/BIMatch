@@ -19,6 +19,12 @@ import { useEffect, useState, useCallback } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Project } from '@/types/project';
+// Storage imports for image upload
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { X } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 // TODO: Consider moving this schema to a shared location if it's used in multiple places.
 const projectSchema = z.object({
@@ -47,10 +53,10 @@ const formatDateForInput = (timestamp: Timestamp | Date | null | undefined): str
 
 export default function EditProjectPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
-  const { db } = useFirebase();
+  const { db, storage } = useFirebase();
   const router = useRouter();
   const params = useParams();
-  const { toast } = useToast();
+  const { toast: showToast } = useToast();
 
   const projectId = typeof params?.projectId === 'string' ? params.projectId : null;
 
@@ -58,6 +64,12 @@ export default function EditProjectPage() {
   const [projectTitle, setProjectTitle] = useState<string>('');
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Image upload state
+  const [currentProjectImageUrl, setCurrentProjectImageUrl] = useState<string | null>(null);
+  const [projectImageFile, setProjectImageFile] = useState<File | null>(null);
+  const [projectImagePreview, setProjectImagePreview] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const form = useForm<ProjectFormData>({
     resolver: zodResolver(projectSchema),
@@ -73,6 +85,69 @@ export default function EditProjectPage() {
       applicationDeadline: '',
     },
   });
+
+  // Image validation function
+  const validateImage = (file: File): string | null => {
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+
+    if (!validTypes.includes(file.type)) {
+      return 'Formato non supportato. Usa JPG, PNG o WebP';
+    }
+    if (file.size > maxSize) {
+      return 'Immagine troppo grande. Massimo 5MB';
+    }
+    return null;
+  };
+
+  // Image file change handler
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validationError = validateImage(file);
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+
+    setProjectImageFile(file);
+    setProjectImagePreview(URL.createObjectURL(file));
+  };
+
+  // Remove new image (revert to current or none)
+  const handleRemoveImage = () => {
+    setProjectImageFile(null);
+    if (projectImagePreview) {
+      URL.revokeObjectURL(projectImagePreview);
+    }
+    setProjectImagePreview(null);
+  };
+
+  // Delete current image from project
+  const handleDeleteCurrentImage = async () => {
+    if (!currentProjectImageUrl || !projectId) return;
+
+    try {
+      // Delete from Storage if it's a Firebase Storage URL
+      if (currentProjectImageUrl.includes('firebase') && storage) {
+        const imageRef = ref(storage, currentProjectImageUrl);
+        await deleteObject(imageRef).catch((err) => {
+          console.warn('Could not delete old image from storage:', err);
+        });
+      }
+
+      // Update Firestore to remove image URL
+      const projectRef = doc(db, "projects", projectId);
+      await updateDoc(projectRef, { projectImage: null, updatedAt: serverTimestamp() });
+
+      setCurrentProjectImageUrl(null);
+      toast.success('Immagine eliminata');
+    } catch (err: any) {
+      console.error('Error deleting image:', err);
+      toast.error('Errore eliminazione immagine');
+    }
+  };
 
   const fetchProjectData = useCallback(async () => {
     if (!projectId || !db || !user) {
@@ -90,6 +165,7 @@ export default function EditProjectPage() {
       if (projectDocSnap.exists() && projectDocSnap.data()?.companyId === user.uid) {
         const project = projectDocSnap.data() as Project;
         setProjectTitle(project.title);
+        setCurrentProjectImageUrl(project.projectImage || null); // Load current image
         const formData: ProjectFormData = {
           title: project.title || '',
           location: project.location || '',
@@ -126,24 +202,55 @@ export default function EditProjectPage() {
 
   const onSubmit = async (data: ProjectFormData) => {
     if (!user || !userProfile || userProfile.role !== 'company' || !projectId) {
-      toast({ title: "Errore", description: "Azione non permessa.", variant: "destructive" });
+      showToast({ title: "Errore", description: "Azione non permessa.", variant: "destructive" });
       return;
     }
 
     try {
+      let projectImageUrl = currentProjectImageUrl; // Keep current by default
+
+      // Upload new image if one was selected
+      if (projectImageFile && storage) {
+        setUploadingImage(true);
+        toast.loading('Caricamento immagine...', { id: 'upload-image' });
+
+        try {
+          const storageRef = ref(storage, `projectImages/${user.uid}/${Date.now()}_${projectImageFile.name}`);
+          const uploadResult = await uploadBytes(storageRef, projectImageFile);
+          projectImageUrl = await getDownloadURL(uploadResult.ref);
+
+          // Delete old image if exists
+          if (currentProjectImageUrl && currentProjectImageUrl.includes('firebase')) {
+            const oldImageRef = ref(storage, currentProjectImageUrl);
+            await deleteObject(oldImageRef).catch((err) => {
+              console.warn('Could not delete old image:', err);
+            });
+          }
+
+          toast.success('Immagine aggiornata!', { id: 'upload-image' });
+        } catch (uploadError) {
+          console.error('Error uploading project image:', uploadError);
+          toast.error('Errore durante upload immagine', { id: 'upload-image' });
+          setUploadingImage(false);
+          return;
+        }
+        setUploadingImage(false);
+      }
+
       const projectRef = doc(db, "projects", projectId);
       const dataToUpdate: Partial<Project> = {
         ...data,
+        projectImage: projectImageUrl || undefined, // Add updated image URL
         applicationDeadline: data.applicationDeadline && data.applicationDeadline !== '' ? new Date(data.applicationDeadline) : null,
         updatedAt: serverTimestamp(),
       };
 
       await updateDoc(projectRef, dataToUpdate);
-      toast({ title: "Progetto Aggiornato!", description: `Il progetto "${data.title}" è stato modificato.` });
+      showToast({ title: "Progetto Aggiornato!", description: `Il progetto "${data.title}" è stato modificato.` });
       router.push(ROUTES.DASHBOARD_COMPANY_PROJECTS);
     } catch (error: any) {
       console.error("Error updating project:", error);
-      toast({ title: "Errore Aggiornamento", description: error.message || "Impossibile aggiornare il progetto.", variant: "destructive" });
+      showToast({ title: "Errore Aggiornamento", description: error.message || "Impossibile aggiornare il progetto.", variant: "destructive" });
     }
   };
   
@@ -239,6 +346,75 @@ export default function EditProjectPage() {
                     options={ITALIAN_REGIONS.map(r => ({ value: r, label: r }))}
                     placeholder="Seleziona la regione del progetto"
                   />
+
+                  {/* Project Image Upload/Edit */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">
+                      Immagine Progetto (opzionale)
+                      <span className="text-xs text-muted-foreground ml-2 font-normal">
+                        Consigliata: 1200×630px
+                      </span>
+                    </Label>
+
+                    {/* Show current image if exists and no new preview */}
+                    {currentProjectImageUrl && !projectImagePreview && (
+                      <div className="relative w-full h-48 mt-2 rounded-lg overflow-hidden border border-border bg-muted">
+                        <img
+                          src={currentProjectImageUrl}
+                          alt="Immagine progetto corrente"
+                          className="w-full h-full object-cover"
+                        />
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="absolute top-2 right-2 shadow-lg"
+                          onClick={handleDeleteCurrentImage}
+                          type="button"
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          Elimina
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Show new image preview if exists */}
+                    {projectImagePreview && (
+                      <div className="relative w-full h-48 mt-2 rounded-lg overflow-hidden border border-primary bg-muted">
+                        <img
+                          src={projectImagePreview}
+                          alt="Anteprima nuova immagine"
+                          className="w-full h-full object-cover"
+                        />
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="absolute top-2 right-2 shadow-lg"
+                          onClick={handleRemoveImage}
+                          type="button"
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          Rimuovi
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* File input */}
+                    <Input
+                      id="projectImage"
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/webp"
+                      onChange={handleImageChange}
+                      disabled={uploadingImage}
+                      className="cursor-pointer"
+                    />
+
+                    <p className="text-xs text-muted-foreground">
+                      {currentProjectImageUrl && !projectImagePreview
+                        ? 'Seleziona una nuova immagine per sostituire quella corrente'
+                        : 'Formato: JPG, PNG, WebP. Max 5MB. Dimensioni consigliate: 1200×630px (ratio 1.91:1)'}
+                    </p>
+                  </div>
+
                   <FormTextarea control={form.control} name="description" label="Descrizione Dettagliata del Progetto" placeholder="Descrivi gli obiettivi, le responsabilità, il contesto del progetto..." rows={6} />
                 </TabsContent>
 

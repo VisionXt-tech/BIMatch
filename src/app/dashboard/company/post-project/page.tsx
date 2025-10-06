@@ -17,6 +17,13 @@ import { useToast } from '@/hooks/use-toast';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// Storage imports for image upload
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { X, Upload, Image as ImageIcon } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 
 const projectSchema = z.object({
@@ -35,9 +42,14 @@ type ProjectFormData = z.infer<typeof projectSchema>;
 
 export default function PostProjectPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
-  const { db } = useFirebase(); // Get Firestore instance
+  const { db, storage } = useFirebase(); // Get Firestore and Storage instances
   const router = useRouter();
-  const { toast } = useToast();
+  const { toast: showToast } = useToast();
+
+  // Image upload state
+  const [projectImageFile, setProjectImageFile] = useState<File | null>(null);
+  const [projectImagePreview, setProjectImagePreview] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const form = useForm<ProjectFormData>({
     resolver: zodResolver(projectSchema),
@@ -54,30 +66,91 @@ export default function PostProjectPage() {
     },
   });
 
+  // Image validation function
+  const validateImage = (file: File): string | null => {
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+
+    if (!validTypes.includes(file.type)) {
+      return 'Formato non supportato. Usa JPG, PNG o WebP';
+    }
+    if (file.size > maxSize) {
+      return 'Immagine troppo grande. Massimo 5MB';
+    }
+    return null;
+  };
+
+  // Image file change handler
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const error = validateImage(file);
+    if (error) {
+      toast.error(error);
+      return;
+    }
+
+    setProjectImageFile(file);
+    setProjectImagePreview(URL.createObjectURL(file));
+  };
+
+  // Remove image
+  const handleRemoveImage = () => {
+    setProjectImageFile(null);
+    if (projectImagePreview) {
+      URL.revokeObjectURL(projectImagePreview);
+    }
+    setProjectImagePreview(null);
+  };
+
   const onSubmit = async (data: ProjectFormData) => {
     if (!user || !userProfile || userProfile.role !== 'company') {
-      toast({ title: "Errore", description: "Devi essere un'azienda autenticata per pubblicare un progetto.", variant: "destructive" });
+      showToast({ title: "Errore", description: "Devi essere un'azienda autenticata per pubblicare un progetto.", variant: "destructive" });
       return;
     }
 
     try {
+      let projectImageUrl: string | undefined = undefined;
+
+      // Upload image if present
+      if (projectImageFile && storage) {
+        setUploadingImage(true);
+        toast.loading('Caricamento immagine...', { id: 'upload-image' });
+
+        try {
+          const storageRef = ref(storage, `projectImages/${user.uid}/${Date.now()}_${projectImageFile.name}`);
+          const uploadResult = await uploadBytes(storageRef, projectImageFile);
+          projectImageUrl = await getDownloadURL(uploadResult.ref);
+
+          toast.success('Immagine caricata!', { id: 'upload-image' });
+        } catch (uploadError) {
+          console.error('Error uploading project image:', uploadError);
+          toast.error('Errore durante upload immagine', { id: 'upload-image' });
+          setUploadingImage(false);
+          return;
+        }
+        setUploadingImage(false);
+      }
+
       const projectData = {
         ...data,
         companyId: user.uid,
         companyName: userProfile.companyName || userProfile.displayName,
-        companyLogo: (userProfile as any).logoUrl || '', // Assuming logoUrl is on company profile
-        status: 'attivo', // Default status
+        companyLogo: (userProfile as any).logoUrl || '',
+        projectImage: projectImageUrl, // Add project image URL
+        status: 'attivo',
         postedAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         applicationDeadline: data.applicationDeadline && data.applicationDeadline !== '' ? new Date(data.applicationDeadline) : null,
       };
 
       const docRef = await addDoc(collection(db, "projects"), projectData);
-      toast({ title: "Progetto Pubblicato!", description: `Il tuo progetto "${data.title}" è ora online.` });
-      router.push(ROUTES.DASHBOARD_COMPANY_PROJECTS); 
+      showToast({ title: "Progetto Pubblicato!", description: `Il tuo progetto "${data.title}" è ora online.` });
+      router.push(ROUTES.DASHBOARD_COMPANY_PROJECTS);
     } catch (error: any) {
       console.error("Error posting project:", error);
-      toast({ title: "Errore Pubblicazione", description: error.message || "Impossibile pubblicare il progetto.", variant: "destructive" });
+      showToast({ title: "Errore Pubblicazione", description: error.message || "Impossibile pubblicare il progetto.", variant: "destructive" });
     }
   };
 
@@ -129,6 +202,50 @@ export default function PostProjectPage() {
                     options={ITALIAN_REGIONS.map(r => ({ value: r, label: r }))}
                     placeholder="Seleziona la regione del progetto"
                   />
+
+                  {/* Project Image Upload */}
+                  <div className="space-y-2">
+                    <Label htmlFor="projectImage" className="text-sm font-medium">
+                      Immagine Progetto (opzionale)
+                      <span className="text-xs text-muted-foreground ml-2 font-normal">
+                        Consigliata: 1200×630px
+                      </span>
+                    </Label>
+                    <Input
+                      id="projectImage"
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/webp"
+                      onChange={handleImageChange}
+                      disabled={uploadingImage}
+                      className="cursor-pointer"
+                    />
+
+                    {/* Image Preview */}
+                    {projectImagePreview && (
+                      <div className="relative w-full h-48 mt-2 rounded-lg overflow-hidden border border-border bg-muted">
+                        <img
+                          src={projectImagePreview}
+                          alt="Anteprima immagine progetto"
+                          className="w-full h-full object-cover"
+                        />
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="absolute top-2 right-2 shadow-lg"
+                          onClick={handleRemoveImage}
+                          type="button"
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          Rimuovi
+                        </Button>
+                      </div>
+                    )}
+
+                    <p className="text-xs text-muted-foreground">
+                      Formato: JPG, PNG, WebP. Max 5MB. Dimensioni consigliate: 1200×630px (ratio 1.91:1)
+                    </p>
+                  </div>
+
                   <FormTextarea control={form.control} name="description" label="Descrizione Dettagliata del Progetto" placeholder="Descrivi gli obiettivi, le responsabilità, il contesto del progetto..." rows={6} />
                 </TabsContent>
 

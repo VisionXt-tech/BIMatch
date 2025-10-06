@@ -21,6 +21,7 @@ import { EmptyStateIllustration } from '@/components/EmptyState';
 import { StatusBadge } from '@/components/StatusBadge';
 import type { ApplicationStatus } from '@/components/StatusBadge';
 import { useCountAnimation } from '@/hooks/useCountAnimation';
+import { ProjectCard } from '@/components/ProjectCard';
 
 const getSkillLabel = (value: string) => BIM_SKILLS_OPTIONS.find(s => s.value === value)?.label || value;
 const getSoftwareLabel = (value: string) => SOFTWARE_PROFICIENCY_OPTIONS.find(s => s.value === value)?.label || value;
@@ -245,7 +246,7 @@ export default function AvailableProjectsPage() {
               <p className="text-muted-foreground text-sm">{error}</p>
             </div>
           ) : filteredProjects.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredProjects.map((project, index) => {
                 const applicationDetail = userProfile?.role === 'professional' && !loadingApplications 
                   ? userApplicationDetails.find(app => app.projectId === project.id!) 
@@ -254,77 +255,35 @@ export default function AvailableProjectsPage() {
                 const currentApplicationStatus = applicationDetail?.status;
 
                 return (
-                  <Card key={project.id} className={cn(
-                    "shadow-md hover:shadow-xl transition-all duration-300 relative flex flex-col h-full hover:-translate-y-1 hover:border-primary/40 animate-fade-in opacity-0",
+                  <div key={project.id} className={cn(
+                    "animate-fade-in opacity-0",
                     `animate-stagger-${(index % 6) + 1}`,
-                    currentApplicationStatus === 'accettata' && "border-2 border-teal-500 bg-teal-500/5"
+                    currentApplicationStatus === 'accettata' && "[&>div]:border-2 [&>div]:border-teal-500 [&>div]:bg-teal-500/5"
                   )}>
-                    <CardHeader className="p-3">
-                      <CardTitle className="text-base font-semibold hover:text-primary transition-colors line-clamp-2 leading-tight">
-                          <Link href={ROUTES.PROJECT_DETAILS(project.id!)}>{project.title}</Link>
-                      </CardTitle>
-                      <div className="flex items-center text-xs text-muted-foreground mt-1">
-                          {project.companyLogo ?
-                              <img data-ai-hint="company logo" src={project.companyLogo} alt={`${project.companyName} logo`} width={16} height={16} className="mr-1.5 rounded-sm border object-contain" />
-                              : <Briefcase className="h-3.5 w-3.5 mr-1.5 flex-shrink-0"/>
-                          }
-                          <span className="truncate" title={project.companyName}>{project.companyName}</span>
-                      </div>
-                       <div className="flex items-center text-xs text-muted-foreground">
-                            <MapPin className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
-                            <span>{project.location}</span>
+                    <ProjectCard
+                      project={project}
+                      actionButton={
+                        <div className="flex items-center gap-2">
+                          {hasApplied && currentApplicationStatus && (
+                            <StatusBadge
+                              status={currentApplicationStatus as ApplicationStatus}
+                              type="application"
+                              showIcon
+                              size="sm"
+                            />
+                          )}
+                          {currentApplicationStatus !== 'accettata' && (
+                            <Button size="sm" asChild>
+                              <Link href={ROUTES.PROJECT_DETAILS(project.id!)}>
+                                <ExternalLink className="mr-1.5 h-3.5 w-3.5"/>
+                                {hasApplied ? 'Vedi' : 'Candidati'}
+                              </Link>
+                            </Button>
+                          )}
                         </div>
-                    </CardHeader>
-                    <CardContent className="p-3 flex-grow space-y-2">
-                      {project.requiredSkills && project.requiredSkills.length > 0 && (
-                        <div>
-                            <h4 className="text-xs font-medium text-muted-foreground mb-1 flex items-center"><Construction className="h-3 w-3 mr-1 text-primary/80"/>Competenze:</h4>
-                            <div className="flex flex-wrap gap-1">
-                                {project.requiredSkills.slice(0,MAX_ITEMS_PREVIEW).map(skillKey => (
-                                    <Badge key={skillKey} variant="secondary" className="text-xs px-1.5 py-0.5 bg-primary/10 text-primary border-primary/20">{getSkillLabel(skillKey)}</Badge>
-                                ))}
-                                {project.requiredSkills.length > MAX_ITEMS_PREVIEW && <Badge variant="outline" className="text-xs px-1.5 py-0.5">+{project.requiredSkills.length - MAX_ITEMS_PREVIEW}</Badge>}
-                            </div>
-                        </div>
-                      )}
-                       {project.requiredSoftware && project.requiredSoftware.length > 0 && (
-                          <div>
-                              <h4 className="text-xs font-medium text-muted-foreground mb-1 flex items-center"><Code2 className="h-3 w-3 mr-1 text-primary/80"/>Software:</h4>
-                              <div className="flex flex-wrap gap-1">
-                                  {project.requiredSoftware.slice(0,MAX_ITEMS_PREVIEW).map(swKey => (
-                                      <Badge key={swKey} variant="outline" className="text-xs px-1.5 py-0.5">{getSoftwareLabel(swKey)}</Badge>
-                                  ))}
-                                  {project.requiredSoftware.length > MAX_ITEMS_PREVIEW && <Badge variant="outline" className="text-xs px-1.5 py-0.5">+{project.requiredSoftware.length - MAX_ITEMS_PREVIEW}</Badge>}
-                              </div>
-                          </div>
-                      )}
-                    </CardContent>
-                     <CardFooter className="p-3 border-t mt-auto">
-                         <div className="flex justify-between items-center w-full gap-2">
-                            <p className="text-xs text-muted-foreground">
-                                {project.postedAt && (project.postedAt as Timestamp).toDate ? (project.postedAt as Timestamp).toDate().toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'2-digit'}) : 'N/A'}
-                            </p>
-                            <div className="flex items-center gap-2">
-                              {hasApplied && currentApplicationStatus && (
-                                <StatusBadge
-                                  status={currentApplicationStatus as ApplicationStatus}
-                                  type="application"
-                                  showIcon
-                                  size="sm"
-                                />
-                              )}
-                              {currentApplicationStatus !== 'accettata' && (
-                                <Button size="sm" asChild className="text-xs h-7 px-2 py-1">
-                                  <Link href={ROUTES.PROJECT_DETAILS(project.id!)}>
-                                    <ExternalLink className="mr-1 h-3 w-3"/>
-                                    {hasApplied ? 'Vedi' : 'Dettagli'}
-                                  </Link>
-                                </Button>
-                              )}
-                            </div>
-                         </div>
-                    </CardFooter>
-                  </Card>
+                      }
+                    />
+                  </div>
                 );
               })}
             </div>
