@@ -7,11 +7,12 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ROUTES } from '@/constants';
 import { User, Search, Edit2, ListChecks, Bell, WifiOff, Loader2, Star } from 'lucide-react';
-import { useEffect, useState, useCallback } from 'react'; 
+import { useEffect, useState, useCallback } from 'react';
 import { useFirebase } from '@/contexts/FirebaseContext';
-import { collection, query, where, getDocs, Timestamp, limit } from 'firebase/firestore'; 
+import { collection, query, where, getDocs, Timestamp, limit } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { useCountAnimation } from '@/hooks/useCountAnimation';
 
 export default function ProfessionalDashboardPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
@@ -107,7 +108,13 @@ export default function ProfessionalDashboardPage() {
 
   useEffect(() => {
     fetchCounts();
-  }, [fetchCounts]); 
+  }, [fetchCounts]);
+
+  // Animated counters
+  const animatedNewProjects = useCountAnimation(newProjectsCount ?? 0);
+  const animatedActiveApplications = useCountAnimation(userActiveApplicationsCount ?? 0);
+  const animatedAcceptedMatches = useCountAnimation(acceptedMatchesCount ?? 0);
+  const animatedUnreadNotifications = useCountAnimation(unreadNotificationsCount ?? 0);
 
   if (authLoading) {
     return (
@@ -159,66 +166,73 @@ export default function ProfessionalDashboardPage() {
             <CardDescription className="text-sm">Monitora le tue interazioni e scopri nuove possibilità.</CardDescription>
         </CardHeader>
         <CardContent className="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="animate-fade-in opacity-0 animate-stagger-1">
             <Button
               asChild
               size="lg"
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 flex flex-col items-center justify-center h-24 p-3 text-center"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 flex flex-col items-center justify-center h-24 p-3 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
             >
               <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS}>
                 <Search className="h-6 w-6 mb-1 text-primary-foreground" />
                 <span className="text-sm font-semibold text-primary-foreground">Cerca Nuovi Progetti</span>
                 {loadingCounts ? <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-primary-foreground/80" /> :
-                  <span className="text-xs text-primary-foreground/80 mt-0.5">{newProjectsCount ?? 0} disponibili</span>}
+                  <span className="text-xs text-primary-foreground/80 mt-0.5 animate-count-up">{animatedNewProjects} disponibili</span>}
               </Link>
             </Button>
-            
+            </div>
+
+            <div className="animate-fade-in opacity-0 animate-stagger-2">
             <Button
               asChild
               size="lg"
               className={cn(
-                "w-full text-primary-foreground flex flex-col items-center justify-center h-24 p-3 text-center",
-                loadingCounts ? "bg-secondary hover:bg-secondary/80" : 
+                "w-full text-primary-foreground flex flex-col items-center justify-center h-24 p-3 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
+                loadingCounts ? "bg-secondary hover:bg-secondary/80" :
                 (userActiveApplicationsCount && userActiveApplicationsCount > 0
                   ? "bg-green-600 hover:bg-green-700"
-                  : "bg-blue-600 hover:bg-blue-700") 
+                  : "bg-blue-600 hover:bg-blue-700")
               )}
             >
               <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS + "?filter=applied"}>
                 <ListChecks className="h-6 w-6 mb-1 text-primary-foreground" />
                 <span className="text-sm font-semibold text-primary-foreground">Le Mie Candidature</span>
                 {loadingCounts ? <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-primary-foreground/80" /> :
-                  <span className="text-xs text-primary-foreground/80 mt-0.5">{userActiveApplicationsCount ?? 0} attive</span>}
+                  <span className="text-xs text-primary-foreground/80 mt-0.5 animate-count-up">{animatedActiveApplications} attive</span>}
               </Link>
             </Button>
+            </div>
 
+            <div className="animate-fade-in opacity-0 animate-stagger-3">
             <Button
                 asChild
                 size="lg"
                 className={cn(
-                    "w-full text-primary-foreground flex flex-col items-center justify-center h-24 p-3 text-center",
+                    "w-full text-primary-foreground flex flex-col items-center justify-center h-24 p-3 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
                     loadingCounts ? "bg-secondary hover:bg-secondary/80" :
-                    (acceptedMatchesCount && acceptedMatchesCount > 0 
-                        ? "bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 hover:opacity-90" 
-                        : "bg-muted-foreground hover:bg-muted-foreground/80") 
+                    (acceptedMatchesCount && acceptedMatchesCount > 0
+                        ? "bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 hover:opacity-90"
+                        : "bg-muted-foreground hover:bg-muted-foreground/80")
                 )}
             >
                 <Link href={`${ROUTES.DASHBOARD_PROFESSIONAL_PROJECTS}?filter=accepted`}>
                     <Star className="h-6 w-6 mb-1 text-primary-foreground" />
                     <span className="text-sm font-semibold">I Miei BIMatch</span>
                     {loadingCounts ? <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-primary-foreground/80" /> :
-                      <span className="text-xs text-primary-foreground/80 mt-0.5">{acceptedMatchesCount ?? 0} attivi</span>
+                      <span className="text-xs text-primary-foreground/80 mt-0.5 animate-count-up">{animatedAcceptedMatches} attivi</span>
                     }
                 </Link>
             </Button>
+            </div>
 
+            <div className="animate-fade-in opacity-0 animate-stagger-4">
             <Button
                 asChild
                 size="lg"
                 className={cn(
-                    "w-full text-primary-foreground flex flex-col items-center justify-center h-24 p-3 text-center",
+                    "w-full text-primary-foreground flex flex-col items-center justify-center h-24 p-3 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
                     loadingCounts ? "bg-secondary hover:bg-secondary/80" :
-                    (unreadNotificationsCount && unreadNotificationsCount > 0 
-                        ? "bg-orange-500 hover:bg-orange-600" 
+                    (unreadNotificationsCount && unreadNotificationsCount > 0
+                        ? "bg-orange-500 hover:bg-orange-600"
                         : "bg-muted-foreground hover:bg-muted-foreground/80")
                 )}
             >
@@ -226,10 +240,11 @@ export default function ProfessionalDashboardPage() {
                     <Bell className="h-6 w-6 mb-1 text-primary-foreground" />
                     <span className="text-sm font-semibold">Notifiche</span>
                     {loadingCounts ? <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-primary-foreground/80" /> :
-                      <span className="text-xs text-primary-foreground/80 mt-0.5">{unreadNotificationsCount ?? 0} non lette</span>
+                      <span className="text-xs text-primary-foreground/80 mt-0.5 animate-count-up">{animatedUnreadNotifications} non lette</span>
                     }
                 </Link>
             </Button>
+            </div>
         </CardContent>
       </Card>
 

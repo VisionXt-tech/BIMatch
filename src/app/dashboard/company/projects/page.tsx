@@ -14,6 +14,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { collection, getDocs, query, where, Timestamp, orderBy, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { StatusBadge } from '@/components/StatusBadge';
+import type { ProjectStatus } from '@/components/StatusBadge';
+import { EmptyStateIllustration } from '@/components/EmptyState';
+import { cn } from '@/lib/utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,27 +30,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useSearchParams } from 'next/navigation';
-
-const getStatusBadgeVariant = (status: Project['status']) => {
-  switch (status) {
-    case 'attivo': return 'default';
-    case 'in_revisione': return 'secondary';
-    case 'completato': return 'outline';
-    case 'chiuso': return 'destructive';
-    case 'bozza': return 'secondary';
-    default: return 'default';
-  }
-};
-const getStatusBadgeText = (status: Project['status']) => {
-  switch (status) {
-    case 'attivo': return 'Attivo';
-    case 'in_revisione': return 'In Revisione';
-    case 'completato': return 'Completato';
-    case 'chiuso': return 'Chiuso';
-    case 'bozza': return 'Bozza';
-    default: return status;
-  }
-};
 
 export default function CompanyProjectsPage() {
   const { db } = useFirebase();
@@ -174,8 +157,11 @@ export default function CompanyProjectsPage() {
             </div>
           ) : displayedProjects.length > 0 ? (
             <div className="space-y-3">
-              {displayedProjects.map((project) => (
-                <Card key={project.id} className="shadow-lg hover:shadow-xl transition-shadow duration-300">
+              {displayedProjects.map((project, index) => (
+                <Card key={project.id} className={cn(
+                  "shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 animate-fade-in opacity-0",
+                  `animate-stagger-${(index % 6) + 1}`
+                )}>
                   <CardHeader className="px-3 pt-2 pb-1">
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                         <div>
@@ -186,9 +172,12 @@ export default function CompanyProjectsPage() {
                                 Pubblicato: {project.postedAt && (project.postedAt as Timestamp).toDate ? (project.postedAt as Timestamp).toDate().toLocaleDateString('it-IT') : 'N/A'} - Località: {project.location}
                             </div>
                         </div>
-                        <Badge variant={getStatusBadgeVariant(project.status)} className="mt-1 sm:mt-0 text-xs">
-                            {getStatusBadgeText(project.status)}
-                        </Badge>
+                        <StatusBadge
+                          status={project.status as ProjectStatus}
+                          type="project"
+                          showIcon
+                          size="sm"
+                        />
                     </div>
                   </CardHeader>
                   <CardContent className="px-3 py-2">
@@ -241,27 +230,31 @@ export default function CompanyProjectsPage() {
               ))}
             </div>
           ) : isFilteringByCandidates ? (
-             <div className="text-center py-8 border-2 border-dashed border-border rounded-lg">
-              <Users className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
-              <p className="text-lg font-semibold mb-1">Nessun Progetto con Candidature</p>
-              <p className="text-muted-foreground text-sm mb-3">Al momento, nessuno dei tuoi progetti attivi ha candidature.</p>
-              <Button size="md" variant="outline" asChild>
-                <Link href={ROUTES.DASHBOARD_COMPANY_PROJECTS}><Briefcase className="mr-2 h-5 w-5" /> Vedi Tutti i Progetti</Link>
-              </Button>
-            </div>
+            <EmptyStateIllustration
+              illustration="applications"
+              title="Nessun Progetto con Candidature"
+              description="Al momento, nessuno dei tuoi progetti attivi ha ricevuto candidature. Controlla più tardi o rivedi i dettagli dei tuoi progetti."
+              action={{
+                label: "Vedi Tutti i Progetti",
+                href: ROUTES.DASHBOARD_COMPANY_PROJECTS
+              }}
+            />
           ) : (
-            <div className="text-center py-8 border-2 border-dashed border-border rounded-lg">
-              <Info className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
-              <p className="text-lg font-semibold mb-1">Non hai ancora pubblicato nessun progetto.</p>
-              <p className="text-muted-foreground text-sm mb-3">Inizia ora per trovare i talenti BIM di cui hai bisogno.</p>
-              <Button size="md" asChild>
-                <Link href={ROUTES.DASHBOARD_COMPANY_POST_PROJECT}><PlusCircle className="mr-2 h-5 w-5" /> Pubblica il Tuo Primo Progetto</Link>
-              </Button>
-            </div>
+            <EmptyStateIllustration
+              illustration="projects"
+              title="Nessun Progetto Pubblicato"
+              description="Non hai ancora pubblicato nessun progetto sulla piattaforma. Inizia ora a trovare i migliori talenti BIM per i tuoi progetti."
+              action={{
+                label: "Pubblica il Tuo Primo Progetto",
+                href: ROUTES.DASHBOARD_COMPANY_POST_PROJECT
+              }}
+            />
           )}
         </CardContent>
       </Card>
     </div>
   );
 }
+
+export default CompanyProjectsPage;
 

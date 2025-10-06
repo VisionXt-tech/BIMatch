@@ -12,6 +12,7 @@ import { useFirebase } from '@/contexts/FirebaseContext';
 import { collection, query, where, getDocs, Timestamp, type DocumentData } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { useCountAnimation } from '@/hooks/useCountAnimation';
 
 function CompanyDashboardPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
@@ -98,6 +99,12 @@ function CompanyDashboardPage() {
   }, [fetchDashboardCounts]);
 
 
+  // Animated counters
+  const animatedActiveProjects = useCountAnimation(activeProjectsCount ?? 0);
+  const animatedNewCandidates = useCountAnimation(newCandidatesCount ?? 0);
+  const animatedAcceptedMatches = useCountAnimation(acceptedMatchesCount ?? 0);
+  const animatedUnreadNotifications = useCountAnimation(unreadCompanyNotificationsCount ?? 0);
+
   if (authLoading && !userProfile) {
      return (
       <div className="space-y-3 w-full max-w-7xl mx-auto">
@@ -148,35 +155,40 @@ function CompanyDashboardPage() {
             <CardDescription className="text-sm">Gestisci le attività principali della tua azienda.</CardDescription>
         </CardHeader>
         <CardContent className="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-            <Button asChild size="lg" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+            <div className="animate-fade-in opacity-0 animate-stagger-1">
+            <Button asChild size="lg" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                 <Link href={ROUTES.DASHBOARD_COMPANY_POST_PROJECT} className="flex flex-col items-center justify-center h-24 p-1.5 sm:p-3 text-center">
                     <FolderPlus className="h-5 w-5 sm:h-6 sm:w-6 mb-1 text-primary-foreground" />
                     <span className="text-xs sm:text-sm font-medium leading-tight">Nuovo Progetto</span>
                     <span className="text-xs text-primary-foreground/80 mt-0.5 hidden sm:block">Crea e lancia nuove offerte</span>
                 </Link>
             </Button>
-             <Button 
-                asChild 
-                size="lg" 
+            </div>
+            <div className="animate-fade-in opacity-0 animate-stagger-2">
+             <Button
+                asChild
+                size="lg"
                 className={cn(
-                    "w-full flex flex-col items-center justify-center h-24 p-1.5 sm:p-3 text-center text-primary-foreground",
+                    "w-full flex flex-col items-center justify-center h-24 p-1.5 sm:p-3 text-center text-primary-foreground transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
                     loadingCounts ? "bg-secondary hover:bg-secondary/80" :
-                    activeProjectsCount && activeProjectsCount > 0 ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700" 
+                    activeProjectsCount && activeProjectsCount > 0 ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"
                 )}
             >
                  <Link href={ROUTES.DASHBOARD_COMPANY_PROJECTS}>
                     <Briefcase className="h-5 w-5 sm:h-6 sm:w-6 mb-1 text-primary-foreground" />
                     <span className="text-xs sm:text-sm font-medium leading-tight">Progetti</span>
                     {loadingCounts ? <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mt-0.5 animate-spin text-primary-foreground/80" /> :
-                        <span className="text-xs text-primary-foreground/80 mt-0.5">{activeProjectsCount ?? 0} attivi</span>
+                        <span className="text-xs text-primary-foreground/80 mt-0.5 animate-count-up">{animatedActiveProjects} attivi</span>
                     }
                 </Link>
             </Button>
-             <Button 
-                asChild 
-                size="lg" 
+            </div>
+            <div className="animate-fade-in opacity-0 animate-stagger-3">
+             <Button
+                asChild
+                size="lg"
                 className={cn(
-                    "w-full flex flex-col items-center justify-center h-24 p-1.5 sm:p-3 text-center text-primary-foreground",
+                    "w-full flex flex-col items-center justify-center h-24 p-1.5 sm:p-3 text-center text-primary-foreground transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
                     loadingCounts ? "bg-secondary hover:bg-secondary/80" :
                     newCandidatesCount && newCandidatesCount > 0 ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"
                 )}
@@ -185,34 +197,38 @@ function CompanyDashboardPage() {
                     <Users className="h-5 w-5 sm:h-6 sm:w-6 mb-1 text-primary-foreground" />
                     <span className="text-xs sm:text-sm font-medium leading-tight">Candidati</span>
                      {loadingCounts ? <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mt-0.5 animate-spin text-primary-foreground/80" /> :
-                        <span className="text-xs text-primary-foreground/80 mt-0.5">{newCandidatesCount ?? 0} nuovi</span>
+                        <span className="text-xs text-primary-foreground/80 mt-0.5 animate-count-up">{animatedNewCandidates} nuovi</span>
                     }
                 </Link>
             </Button>
-            <Button 
-                asChild 
-                size="lg" 
+            </div>
+            <div className="animate-fade-in opacity-0 animate-stagger-4">
+            <Button
+                asChild
+                size="lg"
                 className={cn(
-                    "w-full flex flex-col items-center justify-center h-24 p-1.5 sm:p-3 text-center text-primary-foreground col-span-1 xs:col-span-2 sm:col-span-1",
+                    "w-full flex flex-col items-center justify-center h-24 p-1.5 sm:p-3 text-center text-primary-foreground col-span-1 xs:col-span-2 sm:col-span-1 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
                     loadingCounts ? "bg-secondary hover:bg-secondary/80" :
-                    (acceptedMatchesCount && acceptedMatchesCount > 0 
-                        ? "bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 hover:opacity-90" 
+                    (acceptedMatchesCount && acceptedMatchesCount > 0
+                        ? "bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 hover:opacity-90"
                         : "bg-muted-foreground hover:bg-muted-foreground/80")
                 )}
             >
-                <Link href={`${ROUTES.DASHBOARD_COMPANY_PROJECTS}?filter=active_collaborations`}> 
+                <Link href={`${ROUTES.DASHBOARD_COMPANY_PROJECTS}?filter=active_collaborations`}>
                     <Star className="h-5 w-5 sm:h-6 sm:w-6 mb-1 text-primary-foreground" />
                     <span className="text-xs sm:text-sm font-medium leading-tight">Collaborazioni</span>
                      {loadingCounts ? <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mt-0.5 animate-spin text-primary-foreground/80" /> :
-                        <span className="text-xs text-primary-foreground/80 mt-0.5">{acceptedMatchesCount ?? 0} attive</span>
+                        <span className="text-xs text-primary-foreground/80 mt-0.5 animate-count-up">{animatedAcceptedMatches} attive</span>
                     }
                 </Link>
             </Button>
-            <Button 
-                asChild 
-                size="lg" 
+            </div>
+            <div className="animate-fade-in opacity-0 animate-stagger-5">
+            <Button
+                asChild
+                size="lg"
                 className={cn(
-                    "w-full flex flex-col items-center justify-center h-24 p-1.5 sm:p-3 text-center text-primary-foreground col-span-1 xs:col-span-2 sm:col-span-1",
+                    "w-full flex flex-col items-center justify-center h-24 p-1.5 sm:p-3 text-center text-primary-foreground col-span-1 xs:col-span-2 sm:col-span-1 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
                     loadingCounts ? "bg-secondary hover:bg-secondary/80" :
                     unreadCompanyNotificationsCount && unreadCompanyNotificationsCount > 0 ? "bg-orange-500 hover:bg-orange-600" : "bg-muted-foreground hover:bg-muted-foreground/80"
                 )}
@@ -221,10 +237,11 @@ function CompanyDashboardPage() {
                     <Bell className="h-5 w-5 sm:h-6 sm:w-6 mb-1 text-primary-foreground" />
                     <span className="text-xs sm:text-sm font-medium leading-tight">Notifiche</span>
                      {loadingCounts ? <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mt-0.5 animate-spin text-primary-foreground/80" /> :
-                        <span className="text-xs text-primary-foreground/80 mt-0.5">{unreadCompanyNotificationsCount ?? 0} non lette</span>
+                        <span className="text-xs text-primary-foreground/80 mt-0.5 animate-count-up">{animatedUnreadNotifications} non lette</span>
                     }
                 </Link>
             </Button>
+            </div>
         </CardContent>
       </Card>
       
