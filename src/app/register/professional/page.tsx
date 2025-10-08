@@ -71,23 +71,23 @@ export default function ProfessionalRegistrationPage() {
     >
       <div className="absolute inset-0 bg-black/50"></div>
       
-      <Card className="relative z-10 w-full max-w-lg shadow-xl bg-card/90 dark:bg-card/80 backdrop-blur-md border border-white/10 my-auto">
-        <CardHeader className="text-center p-3">
-          <CardTitle className="text-lg font-bold text-primary">Registrati come Professionista BIM</CardTitle>
-          <CardDescription className="text-xs text-muted-foreground">Unisciti a BIMatch e trova nuove opportunità.</CardDescription>
+      <Card className="relative z-10 w-full max-w-lg lg:max-w-xl shadow-2xl bg-card/95 dark:bg-card/85 backdrop-blur-md border border-white/10 my-auto">
+        <CardHeader className="text-center p-4">
+          <CardTitle className="text-xl font-bold text-primary">Registrati come Professionista BIM</CardTitle>
+          <CardDescription className="text-sm text-foreground/70">Unisciti a BIMatch e trova nuove opportunità.</CardDescription>
         </CardHeader>
-        <CardContent className="p-3">
+        <CardContent className="p-4 pt-0">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="firstName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs text-foreground">Nome</FormLabel>
+                      <FormLabel className="text-sm font-medium text-foreground">Nome</FormLabel>
                       <FormControl>
-                        <Input placeholder="Mario" {...field} className="h-9 text-foreground placeholder:text-muted-foreground" />
+                        <Input placeholder="Mario" {...field} className="h-10 text-foreground placeholder:text-muted-foreground/60 focus:ring-2 focus:ring-primary" />
                       </FormControl>
                       <FormMessage className="text-xs" />
                     </FormItem>
@@ -98,9 +98,9 @@ export default function ProfessionalRegistrationPage() {
                   name="lastName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs text-foreground">Cognome</FormLabel>
+                      <FormLabel className="text-sm font-medium text-foreground">Cognome</FormLabel>
                       <FormControl>
-                        <Input placeholder="Rossi" {...field} className="h-9 text-foreground placeholder:text-muted-foreground" />
+                        <Input placeholder="Rossi" {...field} className="h-10 text-foreground placeholder:text-muted-foreground/60 focus:ring-2 focus:ring-primary" />
                       </FormControl>
                       <FormMessage className="text-xs" />
                     </FormItem>
@@ -112,9 +112,9 @@ export default function ProfessionalRegistrationPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs text-foreground">Email</FormLabel>
+                    <FormLabel className="text-sm font-medium text-foreground">Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="mario.rossi@esempio.com" {...field} className="h-9 text-foreground placeholder:text-muted-foreground" />
+                      <Input type="email" placeholder="mario.rossi@esempio.com" {...field} className="h-10 text-foreground placeholder:text-muted-foreground/60 focus:ring-2 focus:ring-primary" />
                     </FormControl>
                     <FormMessage className="text-xs" />
                   </FormItem>
@@ -125,10 +125,10 @@ export default function ProfessionalRegistrationPage() {
                 name="location"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs text-foreground">Localizzazione (Regione)</FormLabel>
+                    <FormLabel className="text-sm font-medium text-foreground">Localizzazione (Regione)</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger className="h-9 text-foreground">
+                        <SelectTrigger className="h-10 text-foreground focus:ring-2 focus:ring-primary">
                           <SelectValue placeholder="Seleziona la tua regione" />
                         </SelectTrigger>
                       </FormControl>
@@ -144,44 +144,46 @@ export default function ProfessionalRegistrationPage() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs text-foreground">Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="Min. 6 caratteri" {...field} className="h-9 text-foreground placeholder:text-muted-foreground" />
-                    </FormControl>
-                    <FormMessage className="text-xs" />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs text-foreground">Conferma Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="Ripeti la password" {...field} className="h-9 text-foreground placeholder:text-muted-foreground" />
-                    </FormControl>
-                    <FormMessage className="text-xs" />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" className="w-full" size="sm" disabled={authLoading}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-foreground">Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" placeholder="Min. 6 caratteri" {...field} className="h-10 text-foreground placeholder:text-muted-foreground/60 focus:ring-2 focus:ring-primary" />
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-foreground">Conferma Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" placeholder="Ripeti la password" {...field} className="h-10 text-foreground placeholder:text-muted-foreground/60 focus:ring-2 focus:ring-primary" />
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <Button type="submit" className="w-full mt-2" size="default" disabled={authLoading}>
                 {authLoading ? 'Registrazione in corso...' : 'Registrati'}
               </Button>
             </form>
           </Form>
-          <p className="mt-3 text-center text-xs text-muted-foreground">
+          <p className="mt-4 text-center text-sm text-muted-foreground">
             Hai già un account?{' '}
             <Link href={ROUTES.LOGIN} className="font-medium text-primary hover:underline">
               Accedi
             </Link>
           </p>
-          <p className="mt-1 text-center text-xs text-muted-foreground">
+          <p className="mt-2 text-center text-sm text-muted-foreground">
             Sei un'azienda?{' '}
             <Link href={ROUTES.REGISTER_COMPANY} className="font-medium text-primary hover:underline">
               Registrati qui

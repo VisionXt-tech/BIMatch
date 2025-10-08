@@ -42,9 +42,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       </Sidebar>
       <SidebarInset
         style={{ marginTop: `var(--main-content-area-margin-top, ${NAVBAR_HEIGHT_CSS_VAR_VALUE})` }}
-        className="overflow-y-auto"
+        className="min-h-[calc(100vh-4rem)]"
       >
-        <div className="px-4 md:px-6 lg:px-8 pt-4 pb-6 min-h-full">
+        <div className="px-4 md:px-6 lg:px-8 pt-4 pb-8">
           <EmailVerificationBanner />
           {children}
         </div>

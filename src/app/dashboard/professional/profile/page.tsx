@@ -13,6 +13,8 @@ import { Save, UserCircle2, Upload, FileText, Link as LinkIcon, Award, Trash2, L
 import type { ProfessionalProfile as FullProfessionalProfile } from '@/types/auth';
 import { FormInput, FormTextarea, FormMultiSelect, FormSingleSelect } from '@/components/ProfileFormElements';
 import { BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, AVAILABILITY_OPTIONS, ITALIAN_REGIONS, EXPERIENCE_LEVEL_OPTIONS } from '@/constants';
+import { BIM_SKILLS_CATEGORIES, SOFTWARE_CATEGORIES } from '@/constants/skillsCategories';
+import { SkillsSelector } from '@/components/SkillsSelector';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useSecureFileUpload } from '@/hooks/useSecureFileUpload';
@@ -447,53 +449,52 @@ export default function ProfessionalProfilePage() {
     const hasPendingFile = !!fileState;
 
     return (
-      <FormItem className="border p-3 sm:p-4 rounded-md shadow-sm bg-muted/30">
-        <FormLabel className="text-sm sm:text-md font-semibold text-primary flex items-center">
-          <IconComponent className="mr-1 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" /> 
+      <FormItem className="border p-2.5 sm:p-3 rounded-md shadow-sm bg-muted/30">
+        <FormLabel className="text-sm font-semibold text-primary flex items-center">
+          <IconComponent className="mr-1.5 h-4 w-4" />
           <span className="text-xs sm:text-sm">{title}</span>
         </FormLabel>
         
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()} disabled={isUploadingAnyFile || selfCertified} className="w-full sm:w-auto text-xs sm:text-sm">
-            <Upload className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" /> {hasExistingFile ? 'Modifica PDF' : 'Carica PDF'}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1.5 mt-1.5">
+          <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()} disabled={isUploadingAnyFile || selfCertified} className="w-full sm:w-auto text-xs h-8">
+            <Upload className="mr-1.5 h-3.5 w-3.5" /> {hasExistingFile ? 'Modifica' : 'Carica'}
           </Button>
           {hasExistingFile && (
             <Button
               type="button"
               variant="destructive"
               size="sm"
-              className="h-8 px-2 py-1 text-xs w-full sm:w-auto"
+              className="h-8 px-2.5 py-1 text-xs w-full sm:w-auto"
               onClick={() => onDelete(certType)}
               disabled={isUploadingAnyFile || selfCertified}
             >
-              <Trash2 className="mr-1 sm:mr-1.5 h-3 w-3 sm:h-3.5 sm:w-3.5" />
-              <span className="hidden sm:inline">Elimina PDF</span>
-              <span className="sm:hidden">Elimina</span>
+              <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+              <span>Elimina</span>
             </Button>
           )}
         </div>
         
-        <div className="mt-2 text-xs sm:text-sm text-muted-foreground">
+        <div className="mt-1.5 text-xs text-muted-foreground">
           {hasPendingFile && (
             <span className="truncate block">Selezionato: {fileState.name}</span>
           )}
           {!hasPendingFile && hasExistingFile && (
             <Link href={currentUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center">
-              <LinkIcon className="mr-1 h-4 w-4" /> Visualizza PDF Caricato
+              <LinkIcon className="mr-1 h-3.5 w-3.5" /> Visualizza PDF
             </Link>
           )}
         </div>
 
         {isUploadingThisFile && progressState !== null && (
-          <div className="mt-2"><Progress value={progressState} className="w-full h-1.5" /><p className="text-xs text-muted-foreground mt-1">Caricamento: {Math.round(progressState)}%</p></div>
+          <div className="mt-1.5"><Progress value={progressState} className="w-full h-1.5" /><p className="text-xs text-muted-foreground mt-1">Caricamento: {Math.round(progressState)}%</p></div>
         )}
         {hasPendingFile && (
-           <p className="text-xs text-green-600 mt-1">Nuovo file "{fileState.name}" pronto. Clicca "Salva Profilo" per completare.</p>
+           <p className="text-xs text-green-600 mt-1">Nuovo file pronto. Clicca "Salva Profilo".</p>
         )}
-        <FormDescription className="text-xs mt-1">Max {MAX_PDF_SIZE_MB}MB (solo PDF).</FormDescription>
-        
+        <FormDescription className="text-xs mt-1">Max {MAX_PDF_SIZE_MB}MB (PDF).</FormDescription>
+
         {showSelfCertify && (
-            <div className="flex items-start space-x-2 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-border/50">
+            <div className="flex items-start space-x-2 mt-2.5 pt-2.5 border-t border-border/50">
                <FormField
                   control={form.control}
                   name={`${certType}SelfCertified`}
@@ -524,9 +525,9 @@ export default function ProfessionalProfilePage() {
 
   return (
     <>
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Card className="shadow-xl">
-        <CardHeader className="p-4 sm:p-6 border-b">
+        <CardHeader className="p-4 border-b">
           <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
             <UserCircle2 className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
             <div>
@@ -535,18 +536,18 @@ export default function ProfessionalProfilePage() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-4 sm:p-6">
+        <CardContent className="p-4">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
                <Tabs defaultValue="personal-info" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 sm:grid-cols-2 md:grid-cols-4 mb-4 sm:mb-6 h-auto">
-                  <TabsTrigger value="personal-info" className="text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2">Info Personali</TabsTrigger>
-                  <TabsTrigger value="skills-details" className="text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2">Competenze</TabsTrigger>
-                  <TabsTrigger value="certifications" className="text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2">CV e Cert.</TabsTrigger>
-                  <TabsTrigger value="links-rate" className="text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2">Link e Pay</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 sm:grid-cols-2 md:grid-cols-4 mb-3 h-auto">
+                  <TabsTrigger value="personal-info" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Info Personali</TabsTrigger>
+                  <TabsTrigger value="skills-details" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Competenze</TabsTrigger>
+                  <TabsTrigger value="certifications" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">CV e Cert.</TabsTrigger>
+                  <TabsTrigger value="links-rate" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Link e Pay</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="personal-info" className="space-y-3 sm:space-y-4">
+                <TabsContent value="personal-info" className="space-y-3">
                   <FormItem>
                       <FormLabel className="text-sm font-semibold text-primary">Immagine del Profilo</FormLabel>
                       <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 pt-2">
@@ -594,7 +595,7 @@ export default function ProfessionalProfilePage() {
                       )}
                       <FormMessage className="text-xs" />
                   </FormItem>
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <FormInput control={form.control} name="firstName" label="Nome" placeholder="Mario" />
                       <FormInput control={form.control} name="lastName" label="Cognome" placeholder="Rossi" />
                   </div>
@@ -606,8 +607,8 @@ export default function ProfessionalProfilePage() {
                     options={ITALIAN_REGIONS.map(r => ({ value: r, label: r }))}
                     placeholder="Seleziona la tua regione principale"
                   />
-                  <FormTextarea control={form.control} name="bio" label="Breve Bio Professionale" placeholder="Descrivi la tua esperienza, specializzazioni e obiettivi..." rows={5} />
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <FormTextarea control={form.control} name="bio" label="Breve Bio Professionale" placeholder="Descrivi la tua esperienza, specializzazioni e obiettivi..." rows={4} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <FormSingleSelect
                       key={`experienceLevel-${form.watch('experienceLevel') || 'default'}`}
                       control={form.control}
@@ -627,71 +628,76 @@ export default function ProfessionalProfilePage() {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="skills-details" className="space-y-3 sm:space-y-4">
-                  <FormMultiSelect
-                    control={form.control}
-                    name="bimSkills"
+                <TabsContent value="skills-details" className="space-y-5">
+                  <SkillsSelector
+                    categories={BIM_SKILLS_CATEGORIES}
+                    selectedSkills={form.watch('bimSkills') || []}
+                    onChange={(skills) => form.setValue('bimSkills', skills)}
                     label="Competenze BIM Specialistiche"
-                    options={BIM_SKILLS_OPTIONS}
-                    placeholder="Seleziona le tue competenze BIM di maggiore specializzazione"
+                    description="Seleziona le tue competenze BIM organizzate per categoria"
                   />
-                  <FormMultiSelect
-                    control={form.control}
-                    name="softwareProficiency"
+
+                  <div className="border-t pt-5"></div>
+
+                  <SkillsSelector
+                    categories={SOFTWARE_CATEGORIES}
+                    selectedSkills={form.watch('softwareProficiency') || []}
+                    onChange={(skills) => form.setValue('softwareProficiency', skills)}
                     label="Software di Piena Competenza"
-                    options={SOFTWARE_PROFICIENCY_OPTIONS}
-                    placeholder="Seleziona solo i software che padroneggi completamente"
+                    description="Seleziona solo i software che padroneggi completamente"
                   />
                 </TabsContent>
                 
-                <TabsContent value="certifications" className="space-y-3 sm:space-y-4">
+                <TabsContent value="certifications" className="space-y-3">
                    <Input type="file" className="hidden" ref={cvInputRef} accept="application/pdf" onChange={(e) => handleGenericFileChange(e, setCvPdfFile, 'cv')} />
                    <Input type="file" className="hidden" ref={alboInputRef} accept="application/pdf" onChange={(e) => handleGenericFileChange(e, setAlboPdfFile, 'albo')} />
                    <Input type="file" className="hidden" ref={uniInputRef} accept="application/pdf" onChange={(e) => handleGenericFileChange(e, setUniPdfFile, 'uni')} />
                    <Input type="file" className="hidden" ref={otherCertInputRef} accept="application/pdf" onChange={(e) => handleGenericFileChange(e, setOtherCertPdfFile, 'other')} />
 
-                  <CertificationSection
-                    certType="cv"
-                    title="Curriculum Vitae"
-                    icon={FileText}
-                    fileState={cvPdfFile}
-                    progressState={cvUploadProgress}
-                    inputRef={cvInputRef}
-                    onDelete={openDeleteConfirmation}
-                    showSelfCertify={false}
-                  />
-                  <CertificationSection
-                    certType="albo"
-                    title="Iscrizione Albo Professionale (ove applicabile)"
-                    icon={Award}
-                    fileState={alboPdfFile}
-                    progressState={alboUploadProgress}
-                    inputRef={alboInputRef}
-                    onDelete={openDeleteConfirmation}
-                  />
-                  <CertificationSection
-                    certType="uni"
-                    title="Certificazione UNI 11337 (o equivalenti)"
-                    icon={BadgeCheck}
-                    fileState={uniPdfFile}
-                    progressState={uniUploadProgress}
-                    inputRef={uniInputRef}
-                    onDelete={openDeleteConfirmation}
-                  />
-                  <CertificationSection
-                    certType="other"
-                    title="Altre Certificazioni Rilevanti"
-                    icon={FileText}
-                    fileState={otherCertPdfFile}
-                    progressState={otherCertUploadProgress}
-                    inputRef={otherCertInputRef}
-                    onDelete={openDeleteConfirmation}
-                    showSelfCertify={false}
-                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                    <CertificationSection
+                      certType="cv"
+                      title="Curriculum Vitae"
+                      icon={FileText}
+                      fileState={cvPdfFile}
+                      progressState={cvUploadProgress}
+                      inputRef={cvInputRef}
+                      onDelete={openDeleteConfirmation}
+                      showSelfCertify={false}
+                    />
+                    <CertificationSection
+                      certType="albo"
+                      title="Iscrizione Albo Professionale (ove applicabile)"
+                      icon={Award}
+                      fileState={alboPdfFile}
+                      progressState={alboUploadProgress}
+                      inputRef={alboInputRef}
+                      onDelete={openDeleteConfirmation}
+                    />
+                    <CertificationSection
+                      certType="uni"
+                      title="Certificazione UNI 11337 (o equivalenti)"
+                      icon={BadgeCheck}
+                      fileState={uniPdfFile}
+                      progressState={uniUploadProgress}
+                      inputRef={uniInputRef}
+                      onDelete={openDeleteConfirmation}
+                    />
+                    <CertificationSection
+                      certType="other"
+                      title="Altre Certificazioni Rilevanti"
+                      icon={FileText}
+                      fileState={otherCertPdfFile}
+                      progressState={otherCertUploadProgress}
+                      inputRef={otherCertInputRef}
+                      onDelete={openDeleteConfirmation}
+                      showSelfCertify={false}
+                    />
+                  </div>
                 </TabsContent>
 
 
-                <TabsContent value="links-rate" className="space-y-3 sm:space-y-4">
+                <TabsContent value="links-rate" className="space-y-3">
                   <FormItem>
                     <FormLabel className="text-xs">Retribuzione Mensile Lorda (€) (Opzionale)</FormLabel>
                     <FormControl>
@@ -719,7 +725,7 @@ export default function ProfessionalProfilePage() {
                 </TabsContent>
               </Tabs>
 
-              <Button type="submit" className="w-full md:w-auto mt-4 sm:mt-6" size="default" disabled={authLoading || form.formState.isSubmitting || isUploadingAnyFile}>
+              <Button type="submit" className="w-full md:w-auto mt-3" size="default" disabled={authLoading || form.formState.isSubmitting || isUploadingAnyFile}>
                 <Save className="mr-2 h-5 w-5" />
                 {isUploadingAnyFile ? `Caricamento File...` : (form.formState.isSubmitting ? 'Salvataggio Profilo...' : 'Salva Profilo Professionale')}
               </Button>

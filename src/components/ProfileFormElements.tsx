@@ -13,7 +13,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from './ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
@@ -121,14 +120,14 @@ export function FormMultiSelect<TFieldValues extends FieldValues>({
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel className="text-xs">{label}</FormLabel>
+          <FormLabel className="text-sm font-semibold text-primary">{label}</FormLabel>
           <FormControl>
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">{placeholder}</p>
-              <ScrollArea className="h-40 w-full rounded-md border p-4">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <p className="text-xs text-muted-foreground">{placeholder}</p>
+              <div className="w-full rounded-md border p-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2">
                 {options.map((option) => (
-                  <div key={option.value} className="flex items-center space-x-2">
+                  <div key={option.value} className="flex items-start space-x-2">
                     <Checkbox
                       id={`${String(name)}-${option.value}`}
                       checked={field.value?.includes(option.value)}
@@ -140,18 +139,19 @@ export function FormMultiSelect<TFieldValues extends FieldValues>({
                           field.onChange(currentValue.filter((v: string) => v !== option.value));
                         }
                       }}
+                      className="mt-0.5"
                     />
-                    <Label htmlFor={`${String(name)}-${option.value}`} className="font-normal text-sm">
+                    <Label htmlFor={`${String(name)}-${option.value}`} className="font-normal text-xs leading-tight cursor-pointer">
                       {option.label}
                     </Label>
                   </div>
                 ))}
                 </div>
-              </ScrollArea>
-               <div className="flex flex-wrap gap-1 mt-1">
+              </div>
+               <div className="flex flex-wrap gap-1.5 mt-2">
                 {(Array.isArray(field.value) ? field.value : []).map((val) => {
                   const currentOption = options.find(opt => opt.value === val);
-                  return currentOption ? <Badge key={val} variant="secondary">{currentOption.label}</Badge> : null;
+                  return currentOption ? <Badge key={val} variant="secondary" className="text-xs">{currentOption.label}</Badge> : null;
                 })}
               </div>
             </div>

@@ -149,7 +149,7 @@ export default function HowItWorksPage() {
   return (
     <div className="bg-gradient-to-br from-background via-sky-50 to-teal-50 min-h-screen animate-fadeIn">
       {/* Hero Section */}
-      <section className="py-20 md:py-28 text-center bg-transparent relative overflow-hidden">
+      <section className="py-12 md:py-16 text-center bg-transparent relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 Sbg-grid-pattern"></div>
         <div className="container mx-auto px-4 relative z-10">
           
@@ -189,7 +189,7 @@ export default function HowItWorksPage() {
       </section>
 
       {/* Diagramma di Flusso BIMatch */}
-      <section className="py-16 md:py-24 bg-muted/40">
+      <section className="py-10 md:py-14 bg-muted/40">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12 md:mb-16">
             <Badge variant="default" className="text-base py-2 px-6 mb-4 font-semibold bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 text-primary-foreground border-none shadow-lg tracking-wide animate-fadeIn" style={{animationDelay: '0.1s'}}>
@@ -231,7 +231,7 @@ export default function HowItWorksPage() {
 
 
       {/* For Professionals Section */}
-      <section className="py-16 md:py-24 bg-background">
+      <section className="py-10 md:py-14 bg-background">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12 md:mb-16">
             <Badge 
@@ -244,7 +244,7 @@ export default function HowItWorksPage() {
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight animate-fadeIn" style={{animationDelay: '0.2s'}}>Trova il Progetto Perfetto <br className="hidden sm:block"/> e Fai Brillare le Tue Competenze</h2>
             <p className="text-md md:text-lg text-muted-foreground mt-4 max-w-2xl mx-auto animate-fadeIn" style={{animationDelay: '0.3s'}}>Dai slancio alla tua carriera connettendoti con opportunità su misura, valorizzando la tua expertise nel mondo del Building Information Modeling.</p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
             {professionalSteps.map((step, index) => (
               <StepCard key={step.title} {...step} index={index} />
             ))}
@@ -253,7 +253,7 @@ export default function HowItWorksPage() {
       </section>
 
       {/* For Companies Section */}
-      <section className="py-16 md:py-24 bg-muted/40">
+      <section className="py-10 md:py-14 bg-muted/40">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12 md:mb-16">
              <Badge 
@@ -266,7 +266,7 @@ export default function HowItWorksPage() {
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight animate-fadeIn" style={{animationDelay: '0.2s'}}>Trova i Talenti BIM Ideali <br className="hidden sm:block"/> per i Tuoi Progetti</h2>
             <p className="text-md md:text-lg text-muted-foreground mt-4 max-w-2xl mx-auto animate-fadeIn" style={{animationDelay: '0.3s'}}>Accedi a un network di professionisti altamente qualificati, pronti a contribuire al successo e all'innovazione delle tue iniziative BIM.</p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
             {companySteps.map((step, index) => (
               <StepCard key={step.title} {...step} index={index} />
             ))}
@@ -275,7 +275,7 @@ export default function HowItWorksPage() {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-16 md:py-24 bg-background">
+      <section className="py-10 md:py-14 bg-background">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12 md:mb-16">
              <Badge 
@@ -288,7 +288,7 @@ export default function HowItWorksPage() {
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight animate-fadeIn" style={{animationDelay: '0.2s'}}>Perché Scegliere la Nostra Piattaforma?</h2>
             <p className="text-md md:text-lg text-muted-foreground mt-4 max-w-2xl mx-auto animate-fadeIn" style={{animationDelay: '0.3s'}}>BIMatch è progettato per offrirti un'esperienza mirata, efficiente e ricca di opportunità, trasformando il modo in cui professionisti e aziende si connettono nel settore BIM.</p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
             {benefits.map((benefit, index) => (
                 <BenefitItem key={benefit.title} {...benefit} index={index}/>
             ))}
@@ -298,7 +298,7 @@ export default function HowItWorksPage() {
 
 
       {/* Call to Action Section */}
-      <section className="py-20 md:py-28 bg-gradient-to-tr from-sky-100 via-teal-50 to-background">
+      <section className="py-12 md:py-16 bg-gradient-to-tr from-sky-100 via-teal-50 to-background">
         <div className="container mx-auto px-4 text-center">
           <h2 
             className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary mb-6 animate-fadeIn"

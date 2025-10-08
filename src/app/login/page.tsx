@@ -96,17 +96,17 @@ export default function LoginPage() {
         backgroundPosition: 'center',
       }}
     >
-      <div className="absolute inset-0 bg-black/60"></div>
+      <div className="absolute inset-0 bg-black/50"></div>
 
-      <Card className="relative z-10 w-full max-w-md shadow-xl bg-card border-border">
-        <CardHeader className="text-center p-6">
-          <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-3">
+      <Card className="relative z-10 w-full max-w-md lg:max-w-lg shadow-2xl bg-card border-border">
+        <CardHeader className="text-center p-5">
+          <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-2">
             <LogIn className="h-6 w-6 text-primary" />
           </div>
           <CardTitle className="text-2xl font-bold text-primary">Accedi a BIMatch</CardTitle>
-          <CardDescription className="text-sm text-muted-foreground">Bentornato! Inserisci le tue credenziali.</CardDescription>
+          <CardDescription className="text-sm text-foreground/70">Bentornato! Inserisci le tue credenziali.</CardDescription>
         </CardHeader>
-        <CardContent className="p-6">
+        <CardContent className="p-5 pt-0">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
@@ -114,12 +114,12 @@ export default function LoginPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs text-foreground">Email</FormLabel>
+                    <FormLabel className="text-sm font-medium text-foreground">Email</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="iltuonome@esempio.com" 
-                        {...field} 
-                        className="h-9 text-foreground placeholder:text-muted-foreground" 
+                      <Input
+                        placeholder="iltuonome@esempio.com"
+                        {...field}
+                        className="h-10 text-foreground placeholder:text-muted-foreground/60 focus:ring-2 focus:ring-primary"
                         disabled={isSubmitting || isResettingPassword}
                       />
                     </FormControl>
@@ -132,13 +132,13 @@ export default function LoginPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs text-foreground">Password</FormLabel>
+                    <FormLabel className="text-sm font-medium text-foreground">Password</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="********" 
-                        {...field} 
-                        className="h-9 text-foreground placeholder:text-muted-foreground" 
+                      <Input
+                        type="password"
+                        placeholder="********"
+                        {...field}
+                        className="h-10 text-foreground placeholder:text-muted-foreground/60 focus:ring-2 focus:ring-primary"
                         disabled={isSubmitting || isResettingPassword}
                       />
                     </FormControl>
@@ -157,17 +157,17 @@ export default function LoginPage() {
                   {isResettingPassword ? 'Invio in corso...' : 'Password dimenticata?'}
                 </Button>
               </div>
-              <Button 
-                type="submit" 
-                className="w-full" 
-                size="sm" 
+              <Button
+                type="submit"
+                className="w-full mt-2"
+                size="default"
                 disabled={isSubmitting || isResettingPassword}
               >
                 {isSubmitting ? 'Accesso in corso...' : 'Accedi'}
               </Button>
             </form>
           </Form>
-          <p className="mt-6 text-center text-sm text-muted-foreground">
+          <p className="mt-5 text-center text-sm text-muted-foreground">
             Non hai un account?{' '}
             <Link href={ROUTES.REGISTER_PROFESSIONAL} className="font-medium text-primary hover:underline">
               Registrati come Professionista

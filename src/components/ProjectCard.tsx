@@ -40,7 +40,7 @@ export function ProjectCard({ project, showActions = true, actionButton, classNa
   return (
     <Card className={`overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 flex flex-col h-full ${className}`}>
       {/* Hero Image Section */}
-      <div className="relative h-48 w-full overflow-hidden bg-gradient-to-br from-primary/20 via-primary/10 to-accent/20">
+      <div className="relative h-40 w-full overflow-hidden bg-gradient-to-br from-primary/20 via-primary/10 to-accent/20">
         {hasImage ? (
           <img
             src={project.projectImage}
