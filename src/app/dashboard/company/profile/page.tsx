@@ -15,7 +15,7 @@ import { FormInput, FormTextarea, FormSingleSelect } from '@/components/ProfileF
 import { COMPANY_SIZE_OPTIONS, INDUSTRY_SECTORS, ITALIAN_REGIONS } from '@/constants';
 import { useEffect, useState, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, type FirebaseStorageError } from 'firebase/storage';
+import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -39,7 +39,7 @@ const companyProfileSchema = z.object({
 type CompanyProfileFormData = z.infer<typeof companyProfileSchema>;
 
 const mapProfileToFormData = (profile?: CompanyProfile | null): CompanyProfileFormData => {
-  const p = profile || {};
+  const p = (profile || {}) as CompanyProfile;
   return {
     companyName: p.companyName || '',
     companyVat: p.companyVat || '',
@@ -152,7 +152,7 @@ export default function CompanyProfilePage() {
                 : 0;
               setUploadProgress(progressPercentage);
             },
-            (error: FirebaseStorageError) => {
+            (error: any) => {
               let userFriendlyMessage = "Errore durante il caricamento del logo.";
               switch (error.code) {
                 case 'storage/unauthorized':

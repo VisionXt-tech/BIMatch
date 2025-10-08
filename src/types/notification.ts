@@ -20,7 +20,8 @@ export interface UserNotification {
   message: string; 
   linkTo?: string; 
   isRead: boolean;
-  createdAt: Timestamp;
+  // createdAt can be a Firestore Timestamp or a serverTimestamp FieldValue during writes
+  createdAt: Timestamp | any;
   relatedEntityId?: string; // e.g., projectId, applicationId
   icon?: string; 
   companyName?: string; 

@@ -6,13 +6,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ROUTES } from '@/constants';
-import { User, Search, Edit2, ListChecks, Bell, WifiOff, Loader2, Star } from 'lucide-react';
+import { User, Search, Edit2, ListChecks, Bell, WifiOff, Loader2, Star, TrendingUp } from 'lucide-react';
 import { useEffect, useState, useCallback } from 'react';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { collection, query, where, getDocs, Timestamp, limit } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useCountAnimation } from '@/hooks/useCountAnimation';
+import { useProfileStrength } from '@/hooks/useProfileStrength';
+import { ProfileStrengthMeter, ProfileStrengthBar } from '@/components/ProfileStrengthMeter';
+import { QuickActionsChecklist } from '@/components/QuickActionsChecklist';
+import type { ProfessionalProfile } from '@/types/auth';
 
 export default function ProfessionalDashboardPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
@@ -116,6 +120,9 @@ export default function ProfessionalDashboardPage() {
   const animatedAcceptedMatches = useCountAnimation(acceptedMatchesCount ?? 0);
   const animatedUnreadNotifications = useCountAnimation(unreadNotificationsCount ?? 0);
 
+  // Profile strength calculation
+  const strengthData = useProfileStrength(userProfile as ProfessionalProfile);
+
   if (authLoading) {
     return (
       <div className="space-y-3 w-full max-w-7xl mx-auto">
@@ -135,21 +142,62 @@ export default function ProfessionalDashboardPage() {
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6">
 
-      {/* Welcome Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">
-            {userProfile.firstName ? `Ciao, ${userProfile.firstName}!` : `Ciao, ${userProfile.displayName}!`}
-          </h1>
-          <p className="text-muted-foreground mt-1">Ecco un riepilogo della tua attività BIM</p>
-        </div>
-        <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROFILE}>
-          <Button variant="outline" size="sm" className="gap-2">
-            <Edit2 className="h-4 w-4" />
-            Profilo
-          </Button>
-        </Link>
-      </div>
+      {/* Hero Section - Digital Avatar Card */}
+      <Card className="relative overflow-hidden border-2 shadow-xl bg-gradient-to-br from-background via-background to-muted/30">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
+        <CardContent className="p-6 relative">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+            {/* Avatar with Progress Ring */}
+            <div className="flex-shrink-0">
+              <ProfileStrengthMeter strengthData={strengthData} size="lg" showDetails={false} />
+            </div>
+
+            {/* User Info */}
+            <div className="flex-1 space-y-3">
+              <div>
+                <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+                  {userProfile.firstName ? `Ciao, ${userProfile.firstName}!` : `Ciao, ${userProfile.displayName}!`}
+                  <span className="text-2xl">{strengthData.levelEmoji}</span>
+                </h1>
+                <p className="text-muted-foreground mt-1">Ecco un riepilogo della tua attività BIM</p>
+              </div>
+
+              {/* Stats Row */}
+              <div className="flex flex-wrap items-center gap-4 text-sm">
+                <div className="flex items-center gap-2 bg-primary/10 text-primary px-3 py-1.5 rounded-full font-semibold">
+                  <TrendingUp className="h-4 w-4" />
+                  <span>{strengthData.levelLabel}</span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <span className="font-semibold">💎 {strengthData.powerPoints} Power Points</span>
+                </div>
+                {strengthData.nextMilestone && (
+                  <div className="text-muted-foreground">
+                    <span className="text-xs">Prossimo: </span>
+                    <span className="font-semibold text-foreground">{strengthData.nextMilestone.label}</span>
+                    <span className="text-xs ml-1">({strengthData.nextMilestone.missing} pts)</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Progress Bar */}
+              <div className="max-w-md">
+                <ProfileStrengthBar strengthData={strengthData} />
+              </div>
+            </div>
+
+            {/* Action Button */}
+            <div className="flex-shrink-0">
+              <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROFILE}>
+                <Button size="lg" className="gap-2 shadow-lg hover:shadow-xl transition-shadow">
+                  <Edit2 className="h-5 w-5" />
+                  Modifica Profilo
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Profile Incomplete Alert */}
       {!isProfileComplete && (
@@ -342,74 +390,100 @@ export default function ProfessionalDashboardPage() {
         </Card>
       </div>
 
-      {/* Profile Summary Card */}
-      <Card className="border-2">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            <div className="h-5 w-1 bg-primary rounded-full"></div>
-            Riepilogo Profilo
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-start gap-4">
-            {/* Avatar */}
-            <div className="relative flex-shrink-0">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center ring-4 ring-primary/20">
-                <User className="h-8 w-8 text-primary-foreground" />
-              </div>
-              {isProfileComplete && (
-                <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-1.5 ring-2 ring-background">
-                  <Star className="h-4 w-4 text-white" />
-                </div>
-              )}
-            </div>
+      {/* Two Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column - Quick Actions */}
+        <div className="lg:col-span-1">
+          <QuickActionsChecklist
+            strengthData={strengthData}
+            profileLink={ROUTES.DASHBOARD_PROFESSIONAL_PROFILE}
+          />
+        </div>
 
-            {/* Info */}
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-1">
-                <h3 className="text-xl font-bold">{userProfile.firstName || userProfile.displayName}</h3>
-                <span className={cn(
-                  "text-xs font-semibold px-2.5 py-1 rounded-full",
-                  isProfileComplete ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                )}>
-                  {isProfileComplete ? "✓ Completo" : "⚠ Incompleto"}
-                </span>
-              </div>
-
-              {userProfile.experienceLevel && (
-                <p className="text-sm text-muted-foreground mb-3">
-                  Livello di esperienza: <span className="font-medium text-foreground">{userProfile.experienceLevel}</span>
-                </p>
-              )}
-
-              {/* Skills */}
-              {userProfile.bimSkills && userProfile.bimSkills.length > 0 ? (
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Competenze Principali</p>
-                  <div className="flex flex-wrap gap-2">
-                    {userProfile.bimSkills.slice(0, 6).map((skill, idx) => (
-                      <span key={idx} className="text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full font-medium border border-primary/20">
-                        {skill}
-                      </span>
-                    ))}
-                    {userProfile.bimSkills.length > 6 && (
-                      <span className="text-xs bg-muted text-muted-foreground px-3 py-1.5 rounded-full font-semibold border">
-                        +{userProfile.bimSkills.length - 6} altre
-                      </span>
-                    )}
+        {/* Right Column - Profile Summary */}
+        <div className="lg:col-span-2">
+          <Card className="border-2">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                <div className="h-5 w-1 bg-primary rounded-full"></div>
+                Riepilogo Profilo
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-start gap-4">
+                {/* Avatar */}
+                <div className="relative flex-shrink-0">
+                  <div className={cn(
+                    "w-16 h-16 rounded-full flex items-center justify-center ring-4 transition-all",
+                    strengthData.level === 'expert' && "bg-gradient-to-br from-amber-500 to-orange-600 ring-amber-500/20",
+                    strengthData.level === 'solid' && "bg-gradient-to-br from-purple-500 to-purple-700 ring-purple-500/20",
+                    strengthData.level === 'growing' && "bg-gradient-to-br from-blue-400 to-blue-600 ring-blue-500/20",
+                    strengthData.level === 'beginner' && "bg-gradient-to-br from-gray-400 to-gray-500 ring-gray-500/20"
+                  )}>
+                    <User className="h-8 w-8 text-white" />
                   </div>
+                  {strengthData.totalStrength === 100 && (
+                    <div className="absolute -bottom-1 -right-1 bg-amber-500 rounded-full p-1.5 ring-2 ring-background">
+                      <Star className="h-4 w-4 text-white" />
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
-                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                    <strong>Suggerimento:</strong> Aggiungi le tue competenze BIM per aumentare la visibilità del tuo profilo.
-                  </p>
+
+                {/* Info */}
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="text-xl font-bold">{userProfile.firstName || userProfile.displayName}</h3>
+                    <span className={cn(
+                      "text-xs font-semibold px-2.5 py-1 rounded-full",
+                      strengthData.totalStrength === 100
+                        ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                        : strengthData.totalStrength >= 50
+                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                        : "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400"
+                    )}>
+                      {strengthData.totalStrength}% {strengthData.levelEmoji}
+                    </span>
+                  </div>
+
+                  {userProfile.experienceLevel && (
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Livello di esperienza: <span className="font-medium text-foreground">{userProfile.experienceLevel}</span>
+                    </p>
+                  )}
+
+                  {/* Skills */}
+                  {userProfile.bimSkills && userProfile.bimSkills.length > 0 ? (
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-2">
+                        Competenze Principali
+                        <span className="text-primary">💡 {userProfile.bimSkills.length * 3} pts</span>
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {userProfile.bimSkills.slice(0, 8).map((skill, idx) => (
+                          <span key={idx} className="text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full font-medium border border-primary/20 hover:bg-primary/20 transition-colors">
+                            {skill}
+                          </span>
+                        ))}
+                        {userProfile.bimSkills.length > 8 && (
+                          <span className="text-xs bg-muted text-muted-foreground px-3 py-1.5 rounded-full font-semibold border">
+                            +{userProfile.bimSkills.length - 8} altre
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                      <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                        <strong>Suggerimento:</strong> Aggiungi le tue competenze BIM per guadagnare Power Points e aumentare la visibilità.
+                      </p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

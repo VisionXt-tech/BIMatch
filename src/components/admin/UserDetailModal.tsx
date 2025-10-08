@@ -150,9 +150,10 @@ export default function UserDetailModal({ user, isOpen, onClose, onUserUpdated }
                 <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-blue-50 to-blue-100">
                   {isProfessional && <User className="h-6 w-6 text-blue-600" />}
                   {isCompany && <Building className="h-6 w-6 text-green-600" />}
-                  {user.role === 'admin' && <User className="h-6 w-6 text-red-600" />}
+                  {(user.role as any) === 'admin' && <User className="h-6 w-6 text-red-600" />}
                 </div>
                 <div className="space-y-2">
+                      {(user.role as any) === 'admin' && <User className="h-6 w-6 text-red-600" />}
                   <DialogTitle className="text-xl font-semibold">
                     {isProfessional 
                       ? `${(user as ProfessionalProfile).firstName} ${(user as ProfessionalProfile).lastName}`
@@ -160,7 +161,7 @@ export default function UserDetailModal({ user, isOpen, onClose, onUserUpdated }
                     }
                   </DialogTitle>
                   <div className="flex items-center gap-3">
-                    <Badge variant={isProfessional ? 'secondary' : user.role === 'admin' ? 'destructive' : 'default'} className="font-medium">
+                    <Badge variant={isProfessional ? 'secondary' : (user.role as any) === 'admin' ? 'destructive' : 'default'} className="font-medium">
                       {user.role === 'professional' && <User className="mr-1 h-3 w-3" />}
                       {user.role === 'company' && <Building className="mr-1 h-3 w-3" />}
                       {user.role === 'professional' ? 'Professionista' : user.role === 'company' ? 'Azienda' : 'Amministratore'}
@@ -233,7 +234,7 @@ export default function UserDetailModal({ user, isOpen, onClose, onUserUpdated }
                           {isEditing ? (
                             <Input
                               id="email"
-                              value={editedUser.email}
+                                value={editedUser.email || ''}
                               onChange={(e) => setEditedUser({ ...editedUser, email: e.target.value })}
                               className="border-0 bg-transparent p-0 h-auto focus-visible:ring-0"
                             />
@@ -314,7 +315,7 @@ export default function UserDetailModal({ user, isOpen, onClose, onUserUpdated }
                           {isEditing ? (
                             <Select
                               value={editedUser.role}
-                              onValueChange={(value) => setEditedUser({ ...editedUser, role: value as 'professional' | 'company' | 'admin' })}
+                              onValueChange={(value) => setEditedUser({ ...editedUser, role: value as any } as any)}
                             >
                               <SelectTrigger className="border-0 bg-transparent p-0 h-auto focus-visible:ring-0">
                                 <SelectValue />
@@ -326,8 +327,8 @@ export default function UserDetailModal({ user, isOpen, onClose, onUserUpdated }
                               </SelectContent>
                             </Select>
                           ) : (
-                            <Badge variant={isProfessional ? 'secondary' : user.role === 'admin' ? 'destructive' : 'default'}>
-                              {user.role === 'professional' ? 'Professionista' : user.role === 'company' ? 'Azienda' : 'Amministratore'}
+                            <Badge variant={isProfessional ? 'secondary' : (user.role as any) === 'admin' ? 'destructive' : 'default'}>
+                              {(user.role as any) === 'professional' ? 'Professionista' : (user.role as any) === 'company' ? 'Azienda' : 'Amministratore'}
                             </Badge>
                           )}
                         </div>
@@ -340,15 +341,15 @@ export default function UserDetailModal({ user, isOpen, onClose, onUserUpdated }
                         {isEditing ? (
                           <Textarea
                             id="bio"
-                            value={editedUser.bio || ''}
-                            onChange={(e) => setEditedUser({ ...editedUser, bio: e.target.value })}
+                            value={(editedUser as any).bio || ''}
+                            onChange={(e) => setEditedUser({ ...editedUser, bio: e.target.value } as any)}
                             rows={3}
                             className="border-0 bg-transparent p-0 resize-none focus-visible:ring-0"
                             placeholder="Inserisci una descrizione..."
                           />
                         ) : (
                           <p className="text-sm text-muted-foreground min-h-[60px]">
-                            {user.bio || 'Nessuna descrizione disponibile'}
+                            {(user as any).bio || 'Nessuna descrizione disponibile'}
                           </p>
                         )}
                       </div>
@@ -462,7 +463,7 @@ export default function UserDetailModal({ user, isOpen, onClose, onUserUpdated }
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        {user.lastLoginAt?.toDate?.()?.toLocaleDateString('it-IT') || 'Mai'}
+                        {(user as any).lastLoginAt?.toDate?.()?.toLocaleDateString('it-IT') || 'Mai'}
                       </div>
                     </CardContent>
                   </Card>

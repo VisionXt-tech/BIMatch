@@ -301,7 +301,8 @@ const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
   React.ComponentProps<typeof Button>
 >(({ className, onClick, ...props }, ref) => {
-  const { toggleSidebar, forceFullWidthContent, isMobile, disableDisplay } = useSidebar() // Assuming disableDisplay comes from context if Sidebar component logic is changed
+  const _sidebar: any = useSidebar();
+  const { toggleSidebar, forceFullWidthContent, isMobile, disableDisplay } = _sidebar; // cast to any to allow optional prop usage
 
   if (disableDisplay || (forceFullWidthContent && !isMobile)) {
     return null;
@@ -331,7 +332,8 @@ const SidebarRail = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<"button">
 >(({ className, ...props }, ref) => {
-  const { toggleSidebar, forceFullWidthContent, isMobile, disableDisplay } = useSidebar() // Assuming disableDisplay from context
+  const _sidebar: any = useSidebar();
+  const { toggleSidebar, forceFullWidthContent, isMobile, disableDisplay } = _sidebar; // cast to any
 
   if (disableDisplay || (forceFullWidthContent && !isMobile)) {
     return null;

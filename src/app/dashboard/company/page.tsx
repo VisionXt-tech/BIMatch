@@ -289,10 +289,10 @@ function CompanyDashboardPage() {
                 )}
 
                 {/* Location */}
-                {userProfile.locations && userProfile.locations.length > 0 && (
+                {(userProfile as any)?.locations && ((userProfile as any).locations || []).length > 0 && (
                   <div className="text-center">
                     <p className="text-xs text-muted-foreground mb-1">Sede</p>
-                    <span className="inline-block text-xs bg-muted text-muted-foreground px-3 py-1 rounded-full">{userProfile.locations[0]}</span>
+                    <span className="inline-block text-xs bg-muted text-muted-foreground px-3 py-1 rounded-full">{(userProfile as any).locations[0]}</span>
                   </div>
                 )}
               </div>

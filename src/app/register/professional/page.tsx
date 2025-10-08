@@ -40,7 +40,7 @@ export default function ProfessionalRegistrationPage() {
   const router = useRouter();
 
   const form = useForm<ProfessionalRegistrationFormData>({
-    resolver: zodResolver(professionalRegistrationSchema),
+  resolver: zodResolver(professionalRegistrationSchema) as any,
     defaultValues: {
       firstName: '',
       lastName: '',

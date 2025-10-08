@@ -41,13 +41,15 @@ export interface ProfessionalProfile extends BaseUserProfile {
   bio?: string;
   bimSkills?: string[]; // Array of skill tags/IDs like "revit-architecture", "navisworks-coordination"
   softwareProficiency?: string[]; // Array of software IDs/names
-  availability?: string; // e.g., "full-time", "part-time", "contract", "immediata"
-  experienceLevel?: string; // e.g., "entry", "mid", "senior"
+  workMode?: string; // e.g., "full-time", "part-time-50", "freelance-progetto"
+  availability?: string; // e.g., "immediata", "1-mese", "2-mesi"
+  locationMode?: string; // e.g., "remoto", "ibrido", "sede"
+  experienceLevel?: string; // e.g., "entry-0-1", "junior-1-3", "senior-5-8", "expert-12-plus"
   certifications?: string[]; // DEPRECATED - keeping for potential data migration if needed, but new fields are below
-  portfolioUrl?: string;
-  cvUrl?: string; // Link to CV/Resume PDF in Firebase Storage
-  monthlyRate?: number | null; // Changed from hourlyRate, allow null for Firestore
-  linkedInProfile?: string;
+  portfolioUrl?: string; // DEPRECATED - no longer used in UI
+  cvUrl?: string; // DEPRECATED - no longer used in UI
+  monthlyRate?: string | number | null; // Changed to string for salary ranges, keeping number for backward compatibility
+  linkedInProfile?: string; // DEPRECATED - no longer used in UI
   preferredProjectTypes?: string[];
   alboRegistrationUrl?: string; // URL to PDF
   alboSelfCertified?: boolean;

@@ -40,7 +40,7 @@ export default function CompanyRegistrationPage() {
   const router = useRouter();
 
   const form = useForm<Omit<CompanyRegistrationFormData, 'companyWebsite'>>({
-    resolver: zodResolver(companyRegistrationSchema),
+  resolver: zodResolver(companyRegistrationSchema) as any,
     defaultValues: {
       companyName: '',
       companyVat: '',

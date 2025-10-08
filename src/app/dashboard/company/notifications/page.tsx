@@ -290,7 +290,7 @@ export default function CompanyNotificationsPage() {
             ))}
         </div>
       ) : (
-         groupedNotifications.get(selectedProjectGroupKey)?.length > 0 ? (
+         (groupedNotifications.get(selectedProjectGroupKey) || []).length > 0 ? (
             <Card className="shadow-md overflow-hidden">
                 <CardContent className="p-0">
                     <div className="space-y-0">

@@ -1,4 +1,4 @@
-import { collection, addDoc, serverTimestamp, DocumentReference } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, DocumentReference, getFirestore } from 'firebase/firestore';
 // Note: This service requires Firebase Admin SDK access or should be called from a server-side API
 import DOMPurify from 'isomorphic-dompurify';
 
@@ -318,3 +318,8 @@ export class NotificationFactory {
     };
   }
 }
+
+// Quick client-side db reference for environments where this module runs in server-like context
+// NOTE: This file originally intended to be server-side (Admin SDK). Using getFirestore() here
+// is a pragmatic compilation-time fix. For production, migrate this to Admin SDK or server API.
+const db = getFirestore();

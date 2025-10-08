@@ -36,7 +36,7 @@ export default function LoginPage() {
   const [isResettingPassword, setIsResettingPassword] = useState(false);
 
   const form = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+  resolver: zodResolver(loginSchema) as any,
     defaultValues: {
       email: '',
       password: '',
@@ -59,7 +59,7 @@ export default function LoginPage() {
     let userEmailToReset = emailFromForm;
 
     if (!userEmailToReset) {
-      userEmailToReset = window.prompt("Inserisci la tua email per reimpostare la password:");
+  userEmailToReset = window.prompt("Inserisci la tua email per reimpostare la password:") || '';
     } else {
       const confirmReset = window.confirm(`Vuoi inviare un'email di reset password a ${userEmailToReset}?`);
       if (!confirmReset) {

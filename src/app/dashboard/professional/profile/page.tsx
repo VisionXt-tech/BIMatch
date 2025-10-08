@@ -9,16 +9,17 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Save, UserCircle2, Upload, FileText, Link as LinkIcon, Award, Trash2, Loader2, ShieldCheck, BadgeCheck } from 'lucide-react';
+import { Save, UserCircle2, Upload, FileText, Link as LinkIcon, Award, Trash2, Loader2, ShieldCheck, BadgeCheck, TrendingUp, Sparkles, MapPin } from 'lucide-react';
 import type { ProfessionalProfile as FullProfessionalProfile } from '@/types/auth';
 import { FormInput, FormTextarea, FormMultiSelect, FormSingleSelect } from '@/components/ProfileFormElements';
-import { BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, AVAILABILITY_OPTIONS, ITALIAN_REGIONS, EXPERIENCE_LEVEL_OPTIONS } from '@/constants';
+import { BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, WORK_MODE_OPTIONS, AVAILABILITY_OPTIONS, LOCATION_MODE_OPTIONS, ITALIAN_REGIONS, EXPERIENCE_LEVEL_OPTIONS, MONTHLY_RATE_OPTIONS } from '@/constants';
+import { ItalyMap } from '@/components/ItalyMap';
 import { BIM_SKILLS_CATEGORIES, SOFTWARE_CATEGORIES } from '@/constants/skillsCategories';
 import { SkillsSelector } from '@/components/SkillsSelector';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useSecureFileUpload } from '@/hooks/useSecureFileUpload';
-import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject, type FirebaseStorageError } from 'firebase/storage';
+import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -28,6 +29,9 @@ import Link from 'next/link';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { doc, updateDoc, deleteField } from 'firebase/firestore';
+import { useProfileStrength } from '@/hooks/useProfileStrength';
+import { ProfileStrengthMeter, ProfileStrengthBar } from '@/components/ProfileStrengthMeter';
+import { cn } from '@/lib/utils';
 
 
 const MAX_PDF_SIZE_MB = 5;
@@ -41,24 +45,11 @@ const professionalProfileSchema = z.object({
   bio: z.string().max(1000, "La bio non può superare i 1000 caratteri.").min(1, "La bio è richiesta."),
   bimSkills: z.array(z.string()).min(1, "Seleziona almeno una competenza BIM."),
   softwareProficiency: z.array(z.string()).min(1, "Seleziona almeno un software."),
+  workMode: z.string().min(1, "La modalità lavorativa è richiesta."),
   availability: z.string().min(1, "La disponibilità è richiesta."),
+  locationMode: z.string().min(1, "La modalità di lavoro è richiesta."),
   experienceLevel: z.string().min(1, "Il livello di esperienza è richiesto."),
-  portfolioUrl: z.string().url({ message: 'Inserisci un URL valido per il portfolio.' }).optional().or(z.literal('')),
-  cvUrl: z.string().url({ message: 'Inserisci un URL valido per il CV (es. link a Google Drive, Dropbox).' }).optional().or(z.literal('')),
-  linkedInProfile: z.string().url({message: 'Inserisci un URL valido per LinkedIn.'}).optional().or(z.literal('')),
-  monthlyRate: z.preprocess(
-    (val) => {
-      if (val === "" || val === null || val === undefined) return undefined;
-      const strVal = String(val).trim();
-      if (strVal === "") return undefined;
-      const num = Number(strVal);
-      return isNaN(num) ? undefined : num;
-    },
-    z.number({invalid_type_error: 'La retribuzione mensile deve essere un numero.'})
-      .positive({ message: 'La retribuzione mensile deve essere un numero positivo.' })
-      .optional()
-      .nullable()
-  ),
+  monthlyRate: z.string().min(1, "La fascia retributiva è richiesta."),
   alboRegistrationUrl: z.string().url({ message: 'URL non valido.' }).optional().or(z.literal('')),
   alboSelfCertified: z.boolean().optional(),
   uniCertificationUrl: z.string().url({ message: 'URL non valido.' }).optional().or(z.literal('')),
@@ -72,7 +63,7 @@ type CertificationType = 'albo' | 'uni' | 'other' | 'cv';
 
 
 const mapProfileToFormData = (profile?: FullProfessionalProfile | null): ProfessionalProfileFormData => {
-  const p = profile || {};
+  const p = (profile || {}) as FullProfessionalProfile;
   return {
     firstName: p.firstName || '',
     lastName: p.lastName || '',
@@ -81,12 +72,11 @@ const mapProfileToFormData = (profile?: FullProfessionalProfile | null): Profess
     bio: p.bio || '',
     bimSkills: p.bimSkills || [],
     softwareProficiency: p.softwareProficiency || [],
+    workMode: p.workMode || '',
     availability: p.availability || '',
+    locationMode: p.locationMode || '',
     experienceLevel: p.experienceLevel || '',
-    portfolioUrl: p.portfolioUrl || '',
-    cvUrl: p.cvUrl || '',
-    linkedInProfile: p.linkedInProfile || '',
-    monthlyRate: p.monthlyRate === undefined || p.monthlyRate === null || String(p.monthlyRate).trim() === '' ? undefined : Number(p.monthlyRate),
+    monthlyRate: typeof p.monthlyRate === 'string' ? p.monthlyRate : (p.monthlyRate ? String(p.monthlyRate) : ''),
     alboRegistrationUrl: p.alboRegistrationUrl || '',
     alboSelfCertified: p.alboSelfCertified || false,
     uniCertificationUrl: p.uniCertificationUrl || '',
@@ -96,6 +86,12 @@ const mapProfileToFormData = (profile?: FullProfessionalProfile | null): Profess
   };
 };
 
+const selfCertifiedFieldName = (cert: CertificationType) => {
+  if (cert === 'albo') return 'alboSelfCertified';
+  if (cert === 'uni') return 'uniSelfCertified';
+  return 'otherCertificationsSelfCertified';
+};
+
 
 export default function ProfessionalProfilePage() {
   const { user, userProfile, updateUserProfile, loading: authLoading } = useAuth();
@@ -103,6 +99,9 @@ export default function ProfessionalProfilePage() {
   const { toast } = useToast();
   const { db, storage } = useFirebase();
   const { uploadFile } = useSecureFileUpload();
+
+  // Profile strength calculation
+  const strengthData = useProfileStrength(userProfile as FullProfessionalProfile);
 
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -155,16 +154,16 @@ export default function ProfessionalProfilePage() {
         isOpen: true,
         certType,
         onConfirm: () => {
-          form.setValue(`${certType}SelfCertified`, true);
+          form.setValue(selfCertifiedFieldName(certType) as any, true);
           if (certType === 'albo') setAlboPdfFile(null);
           if (certType === 'uni') setUniPdfFile(null);
           if (certType === 'other') setOtherCertPdfFile(null);
-          form.setValue(`${certType === 'albo' ? 'alboRegistrationUrl' : certType === 'uni' ? 'uniCertificationUrl' : 'otherCertificationsUrl'}`, '');
+          form.setValue((certType === 'albo' ? 'alboRegistrationUrl' : certType === 'uni' ? 'uniCertificationUrl' : 'otherCertificationsUrl') as any, '');
           setCertDialogState({ isOpen: false, certType: null, onConfirm: () => {} });
         },
       });
     } else {
-      form.setValue(`${certType}SelfCertified`, false);
+      form.setValue(selfCertifiedFieldName(certType) as any, false);
     }
   };
 
@@ -195,7 +194,7 @@ export default function ProfessionalProfilePage() {
         setImagePreview(URL.createObjectURL(file));
         setImageUploadProgress(null);
       } else {
-        form.setValue(`${certType}SelfCertified`, false);
+    form.setValue(`${certType}SelfCertified` as any, false as any);
       }
     }
   };
@@ -328,11 +327,11 @@ export default function ProfessionalProfilePage() {
     try {
         let photoURLToUpdate = (userProfile as FullProfessionalProfile).photoURL || '';
         
-        const dataToUpdate: {[key: string]: any} = {
-            ...data,
-            displayName: `${data.firstName || ''} ${data.lastName || ''}`.trim(),
-            monthlyRate: data.monthlyRate === undefined || data.monthlyRate === null ? null : Number(data.monthlyRate),
-        };
+    const dataToUpdate: {[key: string]: any} = {
+      ...data,
+      displayName: `${data.firstName || ''} ${data.lastName || ''}`.trim(),
+      monthlyRate: data.monthlyRate ?? '',
+    };
 
         if (profileImageFile) {
             setIsUploadingImage(true);
@@ -355,7 +354,7 @@ export default function ProfessionalProfilePage() {
         for (const cert of certs) {
             const urlKey = urlKeyMap[cert];
             const file = fileMap[cert];
-            const selfCertified = cert !== 'cv' ? data[`${cert}SelfCertified`] : false;
+            const selfCertified = cert !== 'cv' ? (data as any)[`${cert}SelfCertified`] : false;
 
             if (file) {
                 const folderPath = cert === 'cv' ? 'cvs' : `certifications/${cert}`;
@@ -368,8 +367,8 @@ export default function ProfessionalProfilePage() {
                 dataToUpdate[urlKey] = deleteField();
                 dataToUpdate[`${cert}SelfCertified`] = true;
             } else {
-                 if (data[urlKey] === '' || data[urlKey] === null || data[urlKey] === undefined) {
-                    dataToUpdate[urlKey] = deleteField();
+            if ((data as any)[urlKey] === '' || (data as any)[urlKey] === null || (data as any)[urlKey] === undefined) {
+              dataToUpdate[urlKey] = deleteField();
                     if (cert !== 'cv') {
                         dataToUpdate[`${cert}SelfCertified`] = deleteField();
                     }
@@ -444,7 +443,7 @@ export default function ProfessionalProfilePage() {
     };
     const urlKey = urlKeyMap[certType];
     const currentUrl = (userProfile as FullProfessionalProfile)?.[urlKey] as string | undefined;
-    const selfCertified = certType !== 'cv' ? form.watch(`${certType}SelfCertified`) : false;
+  const selfCertified = certType !== 'cv' ? (form.watch(`${certType}SelfCertified` as any) as boolean) : false;
     const hasExistingFile = !!currentUrl;
     const hasPendingFile = !!fileState;
 
@@ -495,16 +494,16 @@ export default function ProfessionalProfilePage() {
 
         {showSelfCertify && (
             <div className="flex items-start space-x-2 mt-2.5 pt-2.5 border-t border-border/50">
-               <FormField
-                  control={form.control}
-                  name={`${certType}SelfCertified`}
-                  render={({ field }) => (
+          <FormField
+            control={form.control}
+            name={`${certType}SelfCertified` as any}
+            render={({ field }) => (
                     <div className="flex items-start space-x-2">
                       <Checkbox
                         id={`${certType}SelfCertified`}
-                        checked={field.value}
+                        checked={field.value as any}
                         onCheckedChange={(checked) => handleCertificationCheckboxChange(certType, !!checked)}
-                        disabled={isUploadingAnyFile || hasExistingFile || hasPendingFile }
+                        disabled={isUploadingAnyFile || (hasExistingFile as any) || (hasPendingFile as any) }
                         className="mt-0.5 sm:mt-0"
                       />
                       <label
@@ -525,105 +524,234 @@ export default function ProfessionalProfilePage() {
 
   return (
     <>
-    <div className="space-y-4">
-      <Card className="shadow-xl">
-        <CardHeader className="p-4 border-b">
-          <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-            <UserCircle2 className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
-            <div>
-              <CardTitle className="text-xl sm:text-2xl font-bold">Il Mio Profilo Professionale</CardTitle>
-              <CardDescription className="text-xs sm:text-sm text-muted-foreground">Mantieni aggiornate le tue informazioni per attrarre le migliori opportunità.</CardDescription>
+    <div className="space-y-4 w-full max-w-7xl mx-auto">
+      {/* Gamification Header */}
+      <Card className="relative overflow-hidden border-2 shadow-xl bg-gradient-to-br from-background via-background to-primary/5">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
+        <CardContent className="p-6 relative">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+            {/* Progress Ring */}
+            <div className="flex-shrink-0">
+              <ProfileStrengthMeter strengthData={strengthData} size="md" showDetails={true} />
+            </div>
+
+            {/* Info Section */}
+            <div className="flex-1 space-y-3">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+                  <Sparkles className="h-6 w-6 text-primary" />
+                  Il Mio Profilo Professionale
+                </h1>
+                <p className="text-muted-foreground mt-1">
+                  Completa il tuo profilo per sbloccare più opportunità e aumentare la tua visibilità
+                </p>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="max-w-2xl">
+                <ProfileStrengthBar strengthData={strengthData} showBreakdown={false} />
+              </div>
+
+              {/* Next Milestone Hint */}
+              {strengthData.nextMilestone && strengthData.nextMilestone.suggestions.length > 0 && (
+                <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 max-w-2xl">
+                  <p className="text-sm font-semibold text-primary mb-1">💡 Suggerimento Rapido:</p>
+                  <p className="text-xs text-muted-foreground">
+                    {strengthData.nextMilestone.suggestions[0]} per guadagnare punti!
+                  </p>
+                </div>
+              )}
             </div>
           </div>
-        </CardHeader>
+        </CardContent>
+      </Card>
+
+      {/* Main Form Card */}
+      <Card className="shadow-xl">
         <CardContent className="p-4">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
                <Tabs defaultValue="personal-info" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 sm:grid-cols-2 md:grid-cols-4 mb-3 h-auto">
+                <TabsList className="grid w-full grid-cols-3 mb-3 h-auto">
                   <TabsTrigger value="personal-info" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Info Personali</TabsTrigger>
                   <TabsTrigger value="skills-details" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Competenze</TabsTrigger>
-                  <TabsTrigger value="certifications" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">CV e Cert.</TabsTrigger>
-                  <TabsTrigger value="links-rate" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Link e Pay</TabsTrigger>
+                  <TabsTrigger value="certifications" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">CV e Certificazioni</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="personal-info" className="space-y-3">
-                  <FormItem>
-                      <FormLabel className="text-sm font-semibold text-primary">Immagine del Profilo</FormLabel>
-                      <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 pt-2">
-                        <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border self-center sm:self-auto">
-                            <AvatarImage src={imagePreview || undefined} alt={(userProfile as FullProfessionalProfile).displayName || 'User'} data-ai-hint="profile person" />
-                            <AvatarFallback className="text-2xl sm:text-3xl">{getInitials((userProfile as FullProfessionalProfile).displayName)}</AvatarFallback>
+                <TabsContent value="personal-info" className="space-y-4">
+                  {/* Header con Avatar Gamification */}
+                  <div className="relative bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 rounded-xl p-4 border border-primary/20">
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                      <div className="relative">
+                        <Avatar className="h-24 w-24 sm:h-28 sm:w-28 border-4 border-primary/30 shadow-lg">
+                          <AvatarImage src={imagePreview || undefined} alt={(userProfile as FullProfessionalProfile).displayName || 'User'} data-ai-hint="profile person" />
+                          <AvatarFallback className="text-3xl sm:text-4xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
+                            {getInitials((userProfile as FullProfessionalProfile).displayName)}
+                          </AvatarFallback>
                         </Avatar>
-                        <div className="flex flex-col space-y-2 w-full">
-                            <Button
+                        <div className="absolute -bottom-1 -right-1 bg-background border-2 border-primary rounded-full p-1.5">
+                          <span className="text-xl">{strengthData.levelEmoji}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex-1 text-center sm:text-left">
+                        <h3 className="text-lg font-bold flex items-center justify-center sm:justify-start gap-2">
+                          <Sparkles className="h-5 w-5 text-primary" />
+                          Profilo {strengthData.level}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {strengthData.powerPoints} Power Points • {Math.round((strengthData as any).percentage || 0)}% completato
+                        </p>
+                        <div className="mt-2">
+                          <Button
                             type="button"
                             variant="outline"
                             size="sm"
                             onClick={() => profileImageInputRef.current?.click()}
-                            className="bg-accent text-accent-foreground hover:bg-accent/90 w-full sm:w-fit text-xs sm:text-sm"
+                            className="bg-primary/10 hover:bg-primary/20 border-primary/30 text-xs"
                             disabled={isUploadingAnyFile}
-                            >
+                          >
                             <Upload className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                             <span className="hidden sm:inline">Carica / Modifica Immagine</span>
                             <span className="sm:hidden">Carica Immagine</span>
-                            </Button>
-                            {profileImageFile && (
-                            <span className="text-xs sm:text-sm text-muted-foreground truncate">
-                                File: {profileImageFile.name}
+                          </Button>
+                          {profileImageFile && (
+                            <span className="text-xs sm:text-sm text-muted-foreground truncate block mt-1">
+                              File: {profileImageFile.name}
                             </span>
-                            )}
-                            <Input
-                                type="file"
-                                accept="image/jpeg, image/png, image/webp"
-                                onChange={(e) => handleGenericFileChange(e, setProfileImageFile, 'image')}
-                                className="hidden"
-                                ref={profileImageInputRef}
-                                disabled={isUploadingAnyFile}
-                            />
-                            <FormDescription className="text-xs">Max 2MB (JPG, PNG, WEBP).</FormDescription>
+                          )}
+                          <Input
+                            type="file"
+                            accept="image/jpeg, image/png, image/webp"
+                            onChange={(e) => handleGenericFileChange(e, setProfileImageFile, 'image')}
+                            className="hidden"
+                            ref={profileImageInputRef}
+                            disabled={isUploadingAnyFile}
+                          />
+                          <FormDescription className="text-xs mt-1">Max 2MB (JPG, PNG, WEBP)</FormDescription>
                         </div>
                       </div>
-                      {isUploadingImage && imageUploadProgress !== null && (
-                        <div className="mt-2">
-                            <Progress value={imageUploadProgress} className="w-full h-2" />
-                            <p className="text-xs text-muted-foreground mt-1">Caricamento: {Math.round(imageUploadProgress)}%</p>
-                        </div>
-                      )}
-                      {!isUploadingImage && imageUploadProgress === 100 && profileImageFile && (
-                        <p className="text-sm text-green-600 mt-1">Nuova immagine pronta per il salvataggio.</p>
-                      )}
-                      <FormMessage className="text-xs" />
-                  </FormItem>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    </div>
+                    {isUploadingImage && imageUploadProgress !== null && (
+                      <div className="mt-3">
+                        <Progress value={imageUploadProgress} className="w-full h-2" />
+                        <p className="text-xs text-muted-foreground mt-1">Caricamento: {Math.round(imageUploadProgress)}%</p>
+                      </div>
+                    )}
+                    {!isUploadingImage && imageUploadProgress === 100 && profileImageFile && (
+                      <p className="text-sm text-green-600 mt-2">✓ Nuova immagine pronta per il salvataggio</p>
+                    )}
+                  </div>
+
+                  {/* Dati Anagrafici */}
+                  <div className="bg-card rounded-lg border p-4 space-y-3">
+                    <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <UserCircle2 className="h-4 w-4 text-primary" />
+                      Dati Anagrafici
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <FormInput control={form.control} name="firstName" label="Nome" placeholder="Mario" />
                       <FormInput control={form.control} name="lastName" label="Cognome" placeholder="Rossi" />
+                    </div>
                   </div>
-                  <FormSingleSelect
-                    key={`location-${form.watch('location') || 'default'}`}
-                    control={form.control}
-                    name="location"
-                    label="Localizzazione (Regione Principale)"
-                    options={ITALIAN_REGIONS.map(r => ({ value: r, label: r }))}
-                    placeholder="Seleziona la tua regione principale"
-                  />
-                  <FormTextarea control={form.control} name="bio" label="Breve Bio Professionale" placeholder="Descrivi la tua esperienza, specializzazioni e obiettivi..." rows={4} />
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+
+                  {/* Riga a 3 colonne: Localizzazione, Cognome, Regione */}
+                  <div className="bg-card rounded-lg border p-4 mb-4">
+                    <h3 className="text-sm font-semibold text-foreground mb-4">
+                      Localizzazione e Regione
+                    </h3>
+                    <div>
+                      <FormField
+                        control={form.control}
+                        name="location"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Regione</FormLabel>
+                            <FormControl>
+                              <select
+                                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:border-primary"
+                                value={field.value || ''}
+                                onChange={e => field.onChange(e.target.value)}
+                              >
+                                <option value="" disabled>-- Seleziona la regione --</option>
+                                {ITALIAN_REGIONS.map(region => (
+                                  <option key={region} value={region}>{region}</option>
+                                ))}
+                              </select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Bio Professionale */}
+                  <div className="bg-card rounded-lg border p-4">
+                    <FormTextarea
+                      control={form.control}
+                      name="bio"
+                      label="📝 Breve Bio Professionale"
+                      placeholder="Descrivi la tua esperienza, specializzazioni e obiettivi nel settore BIM..."
+                      rows={4}
+                    />
+                  </div>
+
+                  {/* Esperienza e Modalità Lavorativa */}
+                  <div className="bg-card rounded-lg border p-4 space-y-4">
+                    <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-primary" />
+                      Esperienza e Disponibilità
+                    </h3>
+
                     <FormSingleSelect
                       key={`experienceLevel-${form.watch('experienceLevel') || 'default'}`}
                       control={form.control}
                       name="experienceLevel"
                       label="Livello di Esperienza"
                       options={EXPERIENCE_LEVEL_OPTIONS}
-                      placeholder="Seleziona il tuo livello"
+                      placeholder="Seleziona il livello"
                     />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <FormSingleSelect
+                        key={`workMode-${form.watch('workMode') || 'default'}`}
+                        control={form.control}
+                        name="workMode"
+                        label="Modalità Lavorativa"
+                        options={WORK_MODE_OPTIONS}
+                        placeholder="Es: Full-time"
+                      />
+
+                      <FormSingleSelect
+                        key={`availability-${form.watch('availability') || 'default'}`}
+                        control={form.control}
+                        name="availability"
+                        label="Disponibilità Temporale"
+                        options={AVAILABILITY_OPTIONS}
+                        placeholder="Es: Immediata"
+                      />
+                    </div>
+
                     <FormSingleSelect
-                      key={`availability-${form.watch('availability') || 'default'}`}
+                      key={`locationMode-${form.watch('locationMode') || 'default'}`}
                       control={form.control}
-                      name="availability"
-                      label="Disponibilità"
-                      options={AVAILABILITY_OPTIONS}
-                      placeholder="Seleziona la tua disponibilità"
+                      name="locationMode"
+                      label="Preferenza Sede di Lavoro"
+                      options={LOCATION_MODE_OPTIONS}
+                      placeholder="Es: Remoto, Ibrido, In Sede"
+                    />
+                  </div>
+
+                  {/* Retribuzione */}
+                  <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg border border-primary/20 p-4">
+                    <FormSingleSelect
+                      key={`monthlyRate-${form.watch('monthlyRate') || 'default'}`}
+                      control={form.control}
+                      name="monthlyRate"
+                      label="💰 Fascia Retributiva Mensile Lorda"
+                      options={MONTHLY_RATE_OPTIONS}
+                      placeholder="Seleziona la fascia retributiva"
                     />
                   </div>
                 </TabsContent>
@@ -648,80 +776,58 @@ export default function ProfessionalProfilePage() {
                   />
                 </TabsContent>
                 
-                <TabsContent value="certifications" className="space-y-3">
+                <TabsContent value="certifications" className="space-y-4">
                    <Input type="file" className="hidden" ref={cvInputRef} accept="application/pdf" onChange={(e) => handleGenericFileChange(e, setCvPdfFile, 'cv')} />
                    <Input type="file" className="hidden" ref={alboInputRef} accept="application/pdf" onChange={(e) => handleGenericFileChange(e, setAlboPdfFile, 'albo')} />
                    <Input type="file" className="hidden" ref={uniInputRef} accept="application/pdf" onChange={(e) => handleGenericFileChange(e, setUniPdfFile, 'uni')} />
                    <Input type="file" className="hidden" ref={otherCertInputRef} accept="application/pdf" onChange={(e) => handleGenericFileChange(e, setOtherCertPdfFile, 'other')} />
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                    <CertificationSection
-                      certType="cv"
-                      title="Curriculum Vitae"
-                      icon={FileText}
-                      fileState={cvPdfFile}
-                      progressState={cvUploadProgress}
-                      inputRef={cvInputRef}
-                      onDelete={openDeleteConfirmation}
-                      showSelfCertify={false}
-                    />
-                    <CertificationSection
-                      certType="albo"
-                      title="Iscrizione Albo Professionale (ove applicabile)"
-                      icon={Award}
-                      fileState={alboPdfFile}
-                      progressState={alboUploadProgress}
-                      inputRef={alboInputRef}
-                      onDelete={openDeleteConfirmation}
-                    />
-                    <CertificationSection
-                      certType="uni"
-                      title="Certificazione UNI 11337 (o equivalenti)"
-                      icon={BadgeCheck}
-                      fileState={uniPdfFile}
-                      progressState={uniUploadProgress}
-                      inputRef={uniInputRef}
-                      onDelete={openDeleteConfirmation}
-                    />
-                    <CertificationSection
-                      certType="other"
-                      title="Altre Certificazioni Rilevanti"
-                      icon={FileText}
-                      fileState={otherCertPdfFile}
-                      progressState={otherCertUploadProgress}
-                      inputRef={otherCertInputRef}
-                      onDelete={openDeleteConfirmation}
-                      showSelfCertify={false}
-                    />
-                  </div>
-                </TabsContent>
-
-
-                <TabsContent value="links-rate" className="space-y-3">
-                  <FormItem>
-                    <FormLabel className="text-xs">Retribuzione Mensile Lorda (€) (Opzionale)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="Es. 2500"
-                        step="1"
-                        className="h-9"
-                        {...form.register("monthlyRate", {
-                            setValueAs: (value) => {
-                              if (value === "" || value === null || value === undefined) return null;
-                              const strVal = String(value).trim();
-                              if (strVal === "") return null;
-                              const num = parseFloat(strVal);
-                              return isNaN(num) ? undefined : num;
-                            }
-                        })}
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-primary" />
+                      Documenti e Certificazioni
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <CertificationSection
+                        certType="cv"
+                        title="Curriculum Vitae"
+                        icon={FileText}
+                        fileState={cvPdfFile}
+                        progressState={cvUploadProgress}
+                        inputRef={cvInputRef}
+                        onDelete={openDeleteConfirmation}
+                        showSelfCertify={false}
                       />
-                    </FormControl>
-                    <FormMessage className="text-xs" />
-                  </FormItem>
-                  <FormInput control={form.control} name="portfolioUrl" label="Link al Portfolio (Opzionale)" placeholder="https://tuo.portfolio.com" />
-                  <FormInput control={form.control} name="cvUrl" label="Link al CV (Opzionale)" placeholder="Link a Google Drive, Dropbox, etc." description="Assicurati che il link sia accessibile." />
-                  <FormInput control={form.control} name="linkedInProfile" label="Profilo LinkedIn (Opzionale)" placeholder="https://linkedin.com/in/tuoprofilo" />
+                      <CertificationSection
+                        certType="albo"
+                        title="Iscrizione Albo Professionale (ove applicabile)"
+                        icon={Award}
+                        fileState={alboPdfFile}
+                        progressState={alboUploadProgress}
+                        inputRef={alboInputRef}
+                        onDelete={openDeleteConfirmation}
+                      />
+                      <CertificationSection
+                        certType="uni"
+                        title="Certificazione UNI 11337 (o equivalenti)"
+                        icon={BadgeCheck}
+                        fileState={uniPdfFile}
+                        progressState={uniUploadProgress}
+                        inputRef={uniInputRef}
+                        onDelete={openDeleteConfirmation}
+                      />
+                      <CertificationSection
+                        certType="other"
+                        title="Altre Certificazioni Rilevanti"
+                        icon={FileText}
+                        fileState={otherCertPdfFile}
+                        progressState={otherCertUploadProgress}
+                        inputRef={otherCertInputRef}
+                        onDelete={openDeleteConfirmation}
+                        showSelfCertify={false}
+                      />
+                    </div>
+                  </div>
                 </TabsContent>
               </Tabs>
 

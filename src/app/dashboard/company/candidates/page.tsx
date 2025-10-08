@@ -390,17 +390,18 @@ export default function CompanyCandidatesPage() {
     }
   };
   const getStatusText = (status: ProjectApplication['status']) => {
-    const statusMap: Record<ProjectApplication['status'], string> = {
-        inviata: 'Inviata',
-        in_revisione: 'In Revisione',
-        preselezionata: 'Colloquio Proposto (Obsoleto)', 
-        rifiutata: 'Rifiutata',
-        accettata: 'Collaborazione Accettata',
-        colloquio_proposto: 'Colloquio Proposto',
-        colloquio_accettato_prof: 'Colloquio Accettato (Prof.)',
-        colloquio_rifiutato_prof: 'Colloquio Rifiutato (Prof.)',
-        colloquio_ripianificato_prof: 'Nuova Data Proposta (Prof.)'
-    };
+  const statusMap: Record<ProjectApplication['status'], string> = {
+    inviata: 'Inviata',
+    in_revisione: 'In Revisione',
+    preselezionata: 'Preselezionata',
+    rifiutata: 'Rifiutata',
+    ritirata: 'Ritirata',
+    accettata: 'Collaborazione Accettata',
+    colloquio_proposto: 'Colloquio Proposto',
+    colloquio_accettato_prof: 'Colloquio Accettato (Prof.)',
+    colloquio_rifiutato_prof: 'Colloquio Rifiutato (Prof.)',
+    colloquio_ripianificato_prof: 'Nuova Data Proposta (Prof.)'
+  };
     return statusMap[status] || status.replace(/_/g, ' ');
   }
 
@@ -532,7 +533,7 @@ export default function CompanyCandidatesPage() {
                               size="sm" 
                               className="text-xs h-7 px-2 py-1"
                               onClick={() => handleOpenRejectDialog(app)} 
-                              disabled={processingApplicationId === app.id || app.status === 'accettata'}
+                              disabled={processingApplicationId === app.id || (app.status as any) === 'accettata'}
                           >
                               {processingApplicationId === app.id ? <Hourglass className="mr-1.5 h-3 w-3 animate-spin" /> : <X className="mr-1.5 h-3 w-3" />} Rifiuta Candidato
                           </Button>

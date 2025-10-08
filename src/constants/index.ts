@@ -164,12 +164,30 @@ export const SOFTWARE_PROFICIENCY_OPTIONS = [
   { value: "blender", label: "Blender (Open Source)" },
 ];
 
+// Modalità Lavorativa
+export const WORK_MODE_OPTIONS = [
+  { value: "full-time", label: "Full-time" },
+  { value: "part-time-50", label: "Part-time 50%" },
+  { value: "part-time-75", label: "Part-time 75%" },
+  { value: "freelance-progetto", label: "Freelance a progetto" },
+  { value: "freelance-continuativo", label: "Freelance continuativo" },
+  { value: "consulenza", label: "Consulenza" },
+];
+
+// Disponibilità Temporale
 export const AVAILABILITY_OPTIONS = [
   { value: "immediata", label: "Immediata" },
-  { value: "1-settimana", label: "Entro 1 settimana" },
-  { value: "2-settimane", label: "Entro 2 settimane" },
   { value: "1-mese", label: "Entro 1 mese" },
-  { value: "da-concordare", label: "Da concordare" },
+  { value: "2-mesi", label: "Entro 2 mesi" },
+  { value: "3-mesi", label: "Entro 3 mesi" },
+];
+
+// Modalità di Lavoro (Sede)
+export const LOCATION_MODE_OPTIONS = [
+  { value: "remoto", label: "Solo remoto" },
+  { value: "ibrido", label: "Ibrido (remoto + sede)" },
+  { value: "sede", label: "Solo in sede" },
+  { value: "flessibile", label: "Flessibile" },
 ];
 
 export const COMPANY_SIZE_OPTIONS = [
@@ -204,10 +222,23 @@ export const ITALIAN_REGIONS = [
 ];
 
 export const EXPERIENCE_LEVEL_OPTIONS = [
-    { value: "entry", label: "Entry Level (0-2 anni)" },
-    { value: "junior", label: "Junior (2-5 anni)" },
-    { value: "mid", label: "Mid-Level (5-10 anni)" },
-    { value: "senior", label: "Senior (10+ anni)" },
+    { value: "entry-0-1", label: "Entry Level - 0-1 anni" },
+    { value: "junior-1-3", label: "Junior - 1-3 anni" },
+    { value: "intermediate-3-5", label: "Intermediate - 3-5 anni" },
+    { value: "senior-5-8", label: "Senior - 5-8 anni" },
+    { value: "expert-8-plus", label: "Expert - 8+ anni" },
+];
+
+export const MONTHLY_RATE_OPTIONS = [
+    { value: "1000-1500", label: "€1.000 - €1.500" },
+    { value: "1500-2000", label: "€1.500 - €2.000" },
+    { value: "2000-2500", label: "€2.000 - €2.500" },
+    { value: "2500-3000", label: "€2.500 - €3.000" },
+    { value: "3000-3500", label: "€3.000 - €3.500" },
+    { value: "3500-4000", label: "€3.500 - €4.000" },
+    { value: "4000-5000", label: "€4.000 - €5.000" },
+    { value: "5000-6000", label: "€5.000 - €6.000" },
+    { value: "6000-plus", label: "€6.000+" },
 ];
 
 export const NOTIFICATION_TYPES = {

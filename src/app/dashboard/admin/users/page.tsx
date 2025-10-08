@@ -57,7 +57,7 @@ export default function AdminUsersPage() {
           (user.role === 'professional' ? `${(user as ProfessionalProfile).firstName} ${(user as ProfessionalProfile).lastName}` : 
            (user as CompanyProfile).companyName);
         return displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-               user.email.toLowerCase().includes(searchTerm.toLowerCase());
+                (user.email || '').toLowerCase().includes(searchTerm.toLowerCase());
       });
     }
 
@@ -159,7 +159,7 @@ export default function AdminUsersPage() {
                   <TableCell className="font-medium">{user.displayName || (user.role === 'professional' ? `${(user as ProfessionalProfile).firstName} ${(user as ProfessionalProfile).lastName}`: (user as CompanyProfile).companyName)}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
-                    <Badge variant={user.role === 'professional' ? 'secondary' : user.role === 'admin' ? 'destructive' : 'default'}>
+                    <Badge variant={(user.role as any) === 'professional' ? 'secondary' : (user.role as any) === 'admin' ? 'destructive' : 'default'}>
                       {user.role === 'professional' && <User className="mr-1 h-3 w-3" />}
                       {user.role === 'company' && <Building className="mr-1 h-3 w-3" />}
                       {user.role}
