@@ -68,18 +68,14 @@ export function QuickActionsChecklist({
   // If profile is complete, show congratulations
   if (strengthData.totalStrength === 100) {
     return (
-      <Card className={cn('border-2 border-amber-500/50 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20', className)}>
-        <CardContent className="p-6 text-center space-y-3">
-          <div className="text-6xl">🏆</div>
-          <h3 className="text-xl font-bold text-amber-700 dark:text-amber-400">
-            Profilo Completo!
+      <Card className={cn('border border-gray-200 bg-white', className)}>
+        <CardContent className="p-8 text-center space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900">
+            Profilo Completo
           </h3>
-          <p className="text-sm text-muted-foreground">
-            Hai raggiunto il massimo livello. Il tuo profilo è ora al top della visibilità!
+          <p className="text-sm text-gray-600">
+            Il tuo profilo è ora al top della visibilità
           </p>
-          <div className="flex items-center justify-center gap-2 text-sm font-semibold text-amber-600 dark:text-amber-500">
-            <span>💎 {strengthData.powerPoints} Power Points</span>
-          </div>
         </CardContent>
       </Card>
     );
@@ -90,63 +86,40 @@ export function QuickActionsChecklist({
   }
 
   return (
-    <Card className={cn('border-2 hover:border-primary/50 transition-colors', className)}>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold flex items-center gap-2">
-          <div className="h-5 w-1 bg-primary rounded-full"></div>
-          💪 Rafforza il Tuo Profilo
+    <Card className={cn('border border-gray-200 bg-white', className)}>
+      <CardHeader className="p-8 pb-4">
+        <CardTitle className="text-lg font-semibold text-gray-900">
+          Rafforza il Tuo Profilo
         </CardTitle>
         {strengthData.nextMilestone && (
-          <p className="text-xs text-muted-foreground mt-1">
-            Mancano <span className="font-semibold text-foreground">{strengthData.nextMilestone.missing} punti</span> per raggiungere{' '}
-            <span className="font-semibold text-primary">{strengthData.nextMilestone.label}</span>
+          <p className="text-sm text-gray-600 mt-4">
+            Mancano {strengthData.nextMilestone.missing} punti per {strengthData.nextMilestone.label}
           </p>
         )}
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="p-8 pt-4 space-y-4">
         {actions.map((action) => (
           <Link key={action.id} href={action.link} className="block">
-            <div
-              className={cn(
-                'flex items-center justify-between p-3 rounded-lg border transition-all hover:border-primary hover:shadow-md cursor-pointer group',
-                action.completed
-                  ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800'
-                  : 'bg-muted/30 hover:bg-muted/50'
-              )}
-            >
-              <div className="flex items-center gap-3 flex-1">
-                <div
-                  className={cn(
-                    'w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors',
-                    action.completed
-                      ? 'bg-green-500 border-green-500'
-                      : 'border-muted-foreground/30 group-hover:border-primary'
-                  )}
-                >
-                  {action.completed && <Check className="h-4 w-4 text-white" />}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{action.label}</p>
-                </div>
-
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-1 rounded-full">
-                    {action.icon} +{action.points}pts
-                  </span>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                </div>
+            <div className="flex items-center justify-between p-4 border border-gray-200 rounded bg-white">
+              <div className="flex-1">
+                <p className="text-sm text-gray-900">{action.label}</p>
+              </div>
+              <div className="flex items-center gap-4 flex-shrink-0">
+                <span className="text-sm font-semibold text-gray-600">
+                  +{action.points}
+                </span>
+                <ChevronRight className="h-4 w-4 text-gray-600" />
               </div>
             </div>
           </Link>
         ))}
 
         {/* Total potential points */}
-        <div className="mt-4 pt-3 border-t">
+        <div className="pt-4 border-t border-gray-200">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Punti totali disponibili:</span>
-            <span className="font-bold text-primary">
-              +{actions.reduce((sum, action) => sum + (action.completed ? 0 : action.points), 0)} pts
+            <span className="text-gray-600">Punti disponibili</span>
+            <span className="font-semibold text-gray-900">
+              +{actions.reduce((sum, action) => sum + (action.completed ? 0 : action.points), 0)}
             </span>
           </div>
         </div>

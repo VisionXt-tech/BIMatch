@@ -25,14 +25,14 @@ const DEFAULT_NAVBAR_PAGE_CONTENT_PADDING = '1rem';
 const DEFAULT_CONTAINER_MAX_WIDTH = 'none';
 
 const initialNavStyle: React.CSSProperties = {
-  maxWidth: '1280px',
+  maxWidth: '80rem',
   marginInline: 'auto',
   paddingLeft: DEFAULT_NAVBAR_PAGE_CONTENT_PADDING,
   paddingRight: DEFAULT_NAVBAR_PAGE_CONTENT_PADDING,
 };
 
 const dashboardNavStyle: React.CSSProperties = {
-  maxWidth: DEFAULT_CONTAINER_MAX_WIDTH,
+  maxWidth: '80rem',
   marginInline: 'auto',
   paddingLeft: DEFAULT_NAVBAR_PAGE_CONTENT_PADDING,
   paddingRight: DEFAULT_NAVBAR_PAGE_CONTENT_PADDING,
@@ -121,9 +121,9 @@ const Navbar = () => {
   // Dynamic navbar styles based on page
   const getNavbarClasses = () => {
     if (isHomePage) {
-      return "sticky top-0 z-50 backdrop-blur-md border-b border-white/10 homepage-transparent";
+      return "sticky top-0 z-50 backdrop-blur-md homepage-transparent";
     }
-    return "sticky top-0 z-50 border-b border-border bg-card";
+    return "sticky top-0 z-50 bg-gray-50";
   };
 
   const customHeaderStyle = isHomePage ? {

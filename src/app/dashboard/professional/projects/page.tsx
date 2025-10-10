@@ -174,79 +174,80 @@ export default function AvailableProjectsPage() {
   const animatedCount = useCountAnimation(filteredProjects.length);
 
   return (
-    <div className="space-y-6">
-      <Card className="shadow-lg">
-        <CardHeader className="pb-4 pt-5 px-4 md:px-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-            <div>
-              <CardTitle className="text-2xl font-bold">Progetti Disponibili</CardTitle>
-              <CardDescription className="text-base">Esplora le opportunità BIM che corrispondono al tuo profilo.</CardDescription>
-            </div>
+    <div className="space-y-4 w-full max-w-7xl mx-auto px-4">
+      {/* Card for Filters */}
+      <Card className="border border-gray-200 bg-white">
+        <CardHeader>
+          <div className="flex items-center gap-4">
+            <ListFilter className="h-5 w-5 text-gray-700" />
+            <CardTitle className="text-lg font-semibold text-gray-900">Filtra Progetti</CardTitle>
+            <Badge variant="secondary" className="ml-auto text-sm animate-count-up">
+              {animatedCount} {animatedCount === 1 ? 'trovato' : 'trovati'}
+            </Badge>
           </div>
         </CardHeader>
-        <CardContent className="px-3 py-3 md:px-5">
-            {/* Filter Bar - Always Visible */}
-            <div className="mb-4 p-4 border rounded-lg bg-muted/30">
-              <div className="flex items-center gap-2 mb-3">
-                <ListFilter className="h-4 w-4 text-primary" />
-                <h3 className="text-sm font-semibold">Filtri</h3>
-                <Badge variant="secondary" className="ml-auto text-xs animate-count-up">
-                  {animatedCount} {animatedCount === 1 ? 'progetto' : 'progetti'}
-                </Badge>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                <Select onValueChange={(value) => setFilters(prev => ({...prev, skill: value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value}))} value={filters.skill}>
-                    <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Competenza BIM" /></SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value={ALL_ITEMS_FILTER_VALUE}>Tutte le competenze</SelectItem>
-                        {BIM_SKILLS_OPTIONS.map(skill => <SelectItem key={skill.value} value={skill.value} className="text-xs">{skill.label}</SelectItem>)}
-                    </SelectContent>
-                </Select>
-                <Select onValueChange={(value) => setFilters(prev => ({...prev, software: value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value}))} value={filters.software}>
-                    <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Software" /></SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value={ALL_ITEMS_FILTER_VALUE}>Tutti i software</SelectItem>
-                        {SOFTWARE_PROFICIENCY_OPTIONS.map(sw => <SelectItem key={sw.value} value={sw.value} className="text-xs">{sw.label}</SelectItem>)}
-                    </SelectContent>
-                </Select>
-                <Select onValueChange={(value) => setFilters(prev => ({...prev, location: value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value}))} value={filters.location}>
-                    <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Localizzazione" /></SelectTrigger>
-                    <SelectContent>
-                         <SelectItem value={ALL_ITEMS_FILTER_VALUE}>Tutte le regioni</SelectItem>
-                        {ITALIAN_REGIONS.map(region => <SelectItem key={region} value={region} className="text-xs">{region}</SelectItem>)}
-                    </SelectContent>
-                </Select>
-                {userProfile?.role === 'professional' && (
-                  <Select
-                      onValueChange={(value) => setFilters(prev => ({...prev, applicationStatus: value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value}))}
-                      value={filters.applicationStatus}
-                      disabled={loadingApplications && authLoading}
-                  >
-                      <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Stato Candidatura" /></SelectTrigger>
-                      <SelectContent>
-                          {applicationStatusOptions.map(opt => <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>)}
-                      </SelectContent>
-                  </Select>
-                )}
-              </div>
-            </div>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Select onValueChange={(value) => setFilters(prev => ({...prev, skill: value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value}))} value={filters.skill}>
+                <SelectTrigger><SelectValue placeholder="Competenza BIM" /></SelectTrigger>
+                <SelectContent>
+                    <SelectItem value={ALL_ITEMS_FILTER_VALUE}>Tutte le competenze</SelectItem>
+                    {BIM_SKILLS_OPTIONS.map(skill => <SelectItem key={skill.value} value={skill.value}>{skill.label}</SelectItem>)}
+                </SelectContent>
+            </Select>
+            <Select onValueChange={(value) => setFilters(prev => ({...prev, software: value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value}))} value={filters.software}>
+                <SelectTrigger><SelectValue placeholder="Software" /></SelectTrigger>
+                <SelectContent>
+                    <SelectItem value={ALL_ITEMS_FILTER_VALUE}>Tutti i software</SelectItem>
+                    {SOFTWARE_PROFICIENCY_OPTIONS.map(sw => <SelectItem key={sw.value} value={sw.value}>{sw.label}</SelectItem>)}
+                </SelectContent>
+            </Select>
+            <Select onValueChange={(value) => setFilters(prev => ({...prev, location: value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value}))} value={filters.location}>
+                <SelectTrigger><SelectValue placeholder="Localizzazione" /></SelectTrigger>
+                <SelectContent>
+                     <SelectItem value={ALL_ITEMS_FILTER_VALUE}>Tutte le regioni</SelectItem>
+                    {ITALIAN_REGIONS.map(region => <SelectItem key={region} value={region}>{region}</SelectItem>)}
+                </SelectContent>
+            </Select>
+            {userProfile?.role === 'professional' && (
+              <Select
+                  onValueChange={(value) => setFilters(prev => ({...prev, applicationStatus: value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value}))}
+                  value={filters.applicationStatus}
+                  disabled={loadingApplications && authLoading}
+              >
+                  <SelectTrigger><SelectValue placeholder="Stato Candidatura" /></SelectTrigger>
+                  <SelectContent>
+                      {applicationStatusOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                  </SelectContent>
+              </Select>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
+      {/* Card for Project Results */}
+      <Card className="border border-gray-200 bg-white">
+        <CardHeader className="p-8">
+            <CardTitle className="text-lg font-semibold text-gray-900">Opportunità Disponibili</CardTitle>
+            <CardDescription className="text-sm text-gray-600">Esplora i progetti e candidati a quelli in linea con il tuo profilo.</CardDescription>
+        </CardHeader>
+        <CardContent>
           {loading || (authLoading && loadingApplications && userProfile?.role === 'professional') ? (
-             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
-                {[...Array(12)].map((_, i) => (
-                  <div key={i} className={`animate-fade-in opacity-0 animate-stagger-${(i % 6) + 1}`}>
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className={`animate-fade-in opacity-0 animate-stagger-${(i % 4) + 1}`}>
                     <ProjectCardSkeleton />
                   </div>
                 ))}
             </div>
           ) : error ? (
-            <div className="text-center py-10 border-2 border-dashed border-destructive/50 bg-destructive/5 rounded-lg">
-              <WifiOff className="mx-auto h-12 w-12 text-destructive mb-3" />
-              <p className="text-lg font-semibold text-destructive mb-1">Errore di Caricamento</p>
-              <p className="text-muted-foreground text-sm">{error}</p>
+            <div className="text-center py-8 border-2 border-dashed border-destructive/50 bg-destructive/5 rounded-lg">
+              <WifiOff className="mx-auto h-12 w-12 text-destructive mb-4" />
+              <p className="text-lg font-semibold text-destructive">Errore di Caricamento</p>
+              <p className="text-muted-foreground text-sm max-w-md mx-auto">{error}</p>
             </div>
           ) : filteredProjects.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {filteredProjects.map((project, index) => {
                 const applicationDetail = userProfile?.role === 'professional' && !loadingApplications 
                   ? userApplicationDetails.find(app => app.projectId === project.id!) 
@@ -257,7 +258,7 @@ export default function AvailableProjectsPage() {
                 return (
                   <div key={project.id} className={cn(
                     "animate-fade-in opacity-0",
-                    `animate-stagger-${(index % 6) + 1}`,
+                    `animate-stagger-${(index % 4) + 1}`,
                     currentApplicationStatus === 'accettata' && "[&>div]:border-2 [&>div]:border-teal-500 [&>div]:bg-teal-500/5"
                   )}>
                     <ProjectCard
@@ -275,8 +276,8 @@ export default function AvailableProjectsPage() {
                           {currentApplicationStatus !== 'accettata' && (
                             <Button size="sm" asChild>
                               <Link href={ROUTES.PROJECT_DETAILS(project.id!)}>
-                                <ExternalLink className="mr-1.5 h-3.5 w-3.5"/>
-                                {hasApplied ? 'Vedi' : 'Candidati'}
+                                <ExternalLink className="mr-1.5 h-4 w-4"/>
+                                {hasApplied ? 'Vedi Dettagli' : 'Candidati Ora'}
                               </Link>
                             </Button>
                           )}
@@ -290,10 +291,10 @@ export default function AvailableProjectsPage() {
           ) : (
             <EmptyStateIllustration
               illustration="search"
-              title="Nessun progetto disponibile"
+              title="Nessun Progetto Trovato"
               description="Non ci sono progetti che corrispondono ai tuoi criteri di ricerca. Prova a modificare i filtri o controlla più tardi per nuove opportunità."
               action={{
-                label: "Resetta tutti i filtri",
+                label: "Resetta Filtri",
                 onClick: resetFilters
               }}
             />

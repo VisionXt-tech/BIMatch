@@ -12,27 +12,27 @@ const Footer = () => {
   
   const getFooterClasses = () => {
     const isDashboard = pathname.startsWith('/dashboard');
-    const needsScroll = pathname.includes('/profile') || 
-                       pathname.includes('/notifications') || 
-                       pathname.includes('/candidates') || 
+    const needsScroll = pathname.includes('/profile') ||
+                       pathname.includes('/notifications') ||
+                       pathname.includes('/candidates') ||
                        pathname.includes('/edit');
     if (isHomePage) {
-      return "backdrop-blur-md border-t border-white/10 text-white/80 py-8 homepage-transparent";
+      return "backdrop-blur-md text-white/80 py-8 homepage-transparent";
     }
     if (isDashboard && !needsScroll) {
-      return "bg-muted/50 text-muted-foreground py-3 mt-auto";
+      return "bg-gray-50 text-gray-600 py-4";
     }
     if (isDashboard && needsScroll) {
-      return "bg-muted/50 text-muted-foreground py-6 mt-8";
+      return "bg-gray-50 text-gray-600 py-4 mt-4";
     }
-    return "bg-muted/50 text-muted-foreground py-8";
+    return "bg-gray-50 text-gray-600 py-8";
   };
 
   const getLinkClasses = () => {
     if (isHomePage) {
-      return "hover:text-white transition-colors text-xs";
+      return "text-sm text-white/80";
     }
-    return "hover:text-primary transition-colors text-xs";
+    return "text-sm text-gray-600";
   };
 
   const customFooterStyle = isHomePage ? {

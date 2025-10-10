@@ -124,3 +124,10 @@ storybook-static/
 
 # Playwright
 .playwright-mcp/
+
+# Windows/system files
+NUL
+
+# Claude Code commands and subagents
+.claude/commands/
+.claude/subagents/

@@ -480,12 +480,12 @@ export default function ProfessionalNotificationsPage() {
     const hasUnreadInterviewProposal = notificationsInGroup.some(n => !n.isRead && n.type === NOTIFICATION_TYPES.INTERVIEW_PROPOSED && applicationDetailsForNotifications[n.applicationId!]?.status === 'colloquio_proposto');
 
     return (
-        <Card 
-            className="shadow-md hover:shadow-lg transition-shadow duration-200 cursor-pointer h-full flex flex-col"
+        <Card
+            className="border border-gray-200 bg-white hover:border-gray-300 transition-colors duration-200 cursor-pointer h-full flex flex-col"
             onClick={onClick}
         >
             <CardHeader className="pb-2 pt-3 px-3">
-                <CardTitle className="text-md font-semibold text-primary truncate">{groupKey}</CardTitle>
+                <CardTitle className="text-md font-semibold text-gray-900 truncate">{groupKey}</CardTitle>
             </CardHeader>
             <CardContent className="flex-grow px-3 py-1">
                 <p className="text-xs text-muted-foreground">
@@ -548,128 +548,114 @@ export default function ProfessionalNotificationsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <CardTitle className="text-2xl font-bold">
-            {selectedProjectGroupKey ? `Notifiche per: ${selectedProjectGroupKey}` : "Le Tue Notifiche"}
-        </CardTitle>
-        <div className="flex gap-2 items-center self-start sm:self-center">
-            {selectedProjectGroupKey && (
-                <Button variant="outline" size="sm" onClick={() => setSelectedProjectGroupKey(null)}>
-                    <ArrowLeft className="mr-2 h-4 w-4" /> Torna alla Panoramica
-                </Button>
-            )}
-            {anyUnreadNotifications && (
-                <Button variant="outline" size="sm" onClick={handleMarkAllAsRead}>
-                    <CheckCheck className="mr-2 h-4 w-4" /> 
-                    {selectedProjectGroupKey ? "Segna tutte come lette (questo progetto)" : "Segna tutte come lette"}
-                </Button>
-            )}
-        </div>
-      </div>
-
-      {groupedNotifications.size === 0 ? (
-        <Card className="shadow-sm"><CardContent className="py-10 text-center"><Info className="mx-auto h-12 w-12 text-muted-foreground mb-4" /><p className="text-lg font-semibold">Nessuna notifica.</p><p className="text-sm text-muted-foreground">Non hai ancora ricevuto notifiche.</p></CardContent></Card>
-      ) : !selectedProjectGroupKey ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from(groupedNotifications.entries()).map(([groupKey, notificationsInGroup]) => (
-                <ProjectNotificationGroupCard 
-                    key={groupKey}
-                    groupKey={groupKey}
-                    notificationsInGroup={notificationsInGroup}
-                    onClick={() => setSelectedProjectGroupKey(groupKey)}
-                />
-            ))}
-        </div>
-      ) : (
-        (groupedNotifications.get(selectedProjectGroupKey) || []).length > 0 ? (
-            <Card className="shadow-md overflow-hidden">
-                <CardContent className="p-0">
-                    <div className="space-y-0">
-                    {(groupedNotifications.get(selectedProjectGroupKey) || []).map((notification) => {
-                        const { cardClassName, iconClassName } = getNotificationCardStyle(notification);
-                        const associatedApplication = notification.applicationId ? applicationDetailsForNotifications[notification.applicationId] : null;
-                        const showResponseButtons = notification.type === NOTIFICATION_TYPES.INTERVIEW_PROPOSED &&
-                                                    notification.applicationId &&
-                                                    associatedApplication?.status === 'colloquio_proposto';
-                        return (
-                        <div key={notification.id} className={cn("border-b last:border-b-0", cardClassName)}>
-                            <div className="p-4 flex items-start space-x-3">
-                            <div className="flex-shrink-0 mt-0.5">{getIconForNotificationType(notification.type, iconClassName)}</div>
-                            <div className="flex-grow">
-                                <div className="flex justify-between items-start">
-                                    <h4 className={cn("font-semibold text-sm mb-0.5", !notification.isRead && "text-primary")}>{notification.title || "Nuova Notifica"}</h4>
-                                    <p className="text-xs text-muted-foreground whitespace-nowrap">{notification.createdAt && (notification.createdAt as Timestamp).toDate ? formatDistanceToNowStrict((notification.createdAt as Timestamp).toDate(), { addSuffix: true, locale: it }) : 'N/A'}</p>
-                                </div>
-                                <p className={cn("text-xs text-muted-foreground whitespace-pre-line", !notification.isRead && "text-foreground/80")}>{notification.message}</p>
-                                
-                                {showResponseButtons && (
-                                <div className="mt-2 flex flex-wrap gap-2">
-                                    <Button size="sm" className="text-xs bg-green-600 hover:bg-green-700 h-7 px-2 py-1" onClick={() => handleOpenResponseModal(notification, 'accept')} disabled={processingResponse}><CalendarCheck className="mr-1.5 h-3.5 w-3.5"/> Accetta / Riproposta</Button>
-                                    <Button size="sm" variant="destructive" className="text-xs h-7 px-2 py-1" onClick={() => handleOpenResponseModal(notification, 'reject')} disabled={processingResponse}><X className="mr-1.5 h-3.5 w-3.5"/> Rifiuta</Button>
-                                </div>
-                                )}
-
-                                {notification.linkTo && !showResponseButtons && (
-                                <div className="mt-2">
-                                    <Button variant="outline" size="sm" asChild onClick={() => !notification.isRead && handleMarkAsRead(notification.id)} className={cn("text-xs h-7 px-2 py-1", !notification.isRead && "border-primary/50 text-primary hover:bg-primary/10 hover:text-primary")}>
-                                    <Link href={notification.linkTo}><Eye className="mr-1.5 h-3.5 w-3.5" /> Vedi Dettagli</Link>
-                                    </Button>
-                                </div>
-                                )}
-                            </div>
-                            {!notification.isRead && (<Badge variant="default" className="h-2 w-2 p-0 rounded-full bg-primary shrink-0" aria-label="Non letta"></Badge>)}
-                            </div>
-                        </div>
-                        );
-                    })}
-                    </div>
-                </CardContent>
-            </Card>
-        ) : (
-             <Card className="shadow-sm"><CardContent className="py-10 text-center"><Info className="mx-auto h-12 w-12 text-muted-foreground mb-4" /><p className="text-lg font-semibold">Nessuna notifica per questo progetto.</p></CardContent></Card>
-        )
-      )}
-
-      <Dialog open={isResponseModalOpen} onOpenChange={(isOpen) => {
-          setIsResponseModalOpen(isOpen);
-          if (!isOpen) { 
-              setSelectedNotificationForResponse(null); 
-              setResponseActionType(null);
-              professionalResponseForm.reset();
-          }
-      }}>
-        {selectedNotificationForResponse && responseActionType && ['accept', 'reject', 'reschedule'].includes(responseActionType) && (
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>
-                {responseActionType === 'accept' && 'Accetta Proposta / Proponi Alternativa'}
-                {responseActionType === 'reject' && 'Rifiuta Proposta di Colloquio'}
-                {responseActionType === 'reschedule' && 'Proponi Nuova Data per Colloquio'}
-              </DialogTitle>
-            </DialogHeader>
-            <Form {...professionalResponseForm}>
-              <form onSubmit={professionalResponseForm.handleSubmit(data => handleSubmitProfessionalResponse(data))} className="space-y-4 py-2">
-                {renderResponseModalContent()}
-                <ModalFooter className="pt-4">
-                  <DialogClose asChild><Button type="button" variant="outline" disabled={processingResponse}>Annulla</Button></DialogClose>
-                  <Button type="submit" variant={responseActionType === 'reject' ? 'destructive' : 'default'} disabled={processingResponse}>
-                    {processingResponse ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                    {processingResponse ? 'Invio...' : 
-                        responseActionType === 'accept' ? 'Invia Accettazione/Proposta' :
-                        responseActionType === 'reject' ? 'Conferma Rifiuto' :
-                        'Invia Risposta'
-                    }
+    <div className="space-y-4 w-full max-w-7xl mx-auto px-4">
+      <Card className="border border-gray-200 bg-white">
+      <CardHeader className="p-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <CardTitle className="text-lg font-semibold text-gray-900">
+              {selectedProjectGroupKey ? `Notifiche per: ${selectedProjectGroupKey}` : "Centro Notifiche"}
+          </CardTitle>
+          <div className="flex gap-4 items-center self-start sm:self-center">
+              {selectedProjectGroupKey && (
+                  <Button variant="outline" size="sm" onClick={() => setSelectedProjectGroupKey(null)}>
+                      <ArrowLeft className="mr-2 h-4 w-4" /> Torna alla Panoramica
                   </Button>
-                </ModalFooter>
-              </form>
-            </Form>
-          </DialogContent>
+              )}
+              {anyUnreadNotifications && (
+                  <Button variant="outline" size="sm" onClick={handleMarkAllAsRead}>
+                      <CheckCheck className="mr-2 h-4 w-4" /> 
+                      {selectedProjectGroupKey ? "Segna come lette" : "Segna tutte come lette"}
+                  </Button>
+              )}
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-6">
+        {groupedNotifications.size === 0 ? (
+          <div className="py-10 text-center"><Info className="mx-auto h-12 w-12 text-muted-foreground mb-4" /><p className="text-lg font-semibold">Nessuna notifica.</p><p className="text-sm text-muted-foreground">Non hai ancora ricevuto notifiche.</p></div>
+        ) : !selectedProjectGroupKey ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from(groupedNotifications.entries()).map(([groupKey, notificationsInGroup]) => (
+                  <ProjectNotificationGroupCard 
+                      key={groupKey}
+                      groupKey={groupKey}
+                      notificationsInGroup={notificationsInGroup}
+                      onClick={() => setSelectedProjectGroupKey(groupKey)}
+                  />
+              ))}
+          </div>
+        ) : (
+          (groupedNotifications.get(selectedProjectGroupKey) || []).length > 0 ? (
+              <div className="space-y-4">
+              {(groupedNotifications.get(selectedProjectGroupKey) || []).map((notification) => {
+                  const { cardClassName, iconClassName } = getNotificationCardStyle(notification);
+                  const associatedApplication = notification.applicationId ? applicationDetailsForNotifications[notification.applicationId] : null;
+                  const showResponseButtons = notification.type === NOTIFICATION_TYPES.INTERVIEW_PROPOSED &&
+                                              notification.applicationId &&
+                                              associatedApplication?.status === 'colloquio_proposto';
+                  return (
+                  <Card key={notification.id} className={cn("transition-all", cardClassName)}>
+                    <CardContent className="p-4 flex items-start space-x-4">
+                      <div className="flex-shrink-0 mt-1">{getIconForNotificationType(notification.type, iconClassName)}</div>
+                      <div className="flex-grow">
+                          <div className="flex justify-between items-start">
+                              <h4 className={cn("font-semibold text-base mb-1", !notification.isRead && "text-primary")}>{notification.title || "Nuova Notifica"}</h4>
+                              <p className="text-sm text-muted-foreground whitespace-nowrap">{notification.createdAt && (notification.createdAt as Timestamp).toDate ? formatDistanceToNowStrict((notification.createdAt as Timestamp).toDate(), { addSuffix: true, locale: it }) : 'N/A'}</p>
+                          </div>
+                          <p className={cn("text-sm text-muted-foreground whitespace-pre-line", !notification.isRead && "text-foreground/90")}>{notification.message}</p>
+                          
+                          {showResponseButtons && (
+                          <div className="mt-4 flex flex-wrap gap-2">
+                              <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleOpenResponseModal(notification, 'accept')} disabled={processingResponse}><CalendarCheck className="mr-2 h-4 w-4"/> Accetta / Riproposta</Button>
+                              <Button size="sm" variant="destructive" onClick={() => handleOpenResponseModal(notification, 'reject')} disabled={processingResponse}><X className="mr-2 h-4 w-4"/> Rifiuta</Button>
+                          </div>
+                          )}
+
+                          {notification.linkTo && !showResponseButtons && (
+                          <div className="mt-4">
+                              <Button variant="outline" size="sm" asChild onClick={() => !notification.isRead && handleMarkAsRead(notification.id)} className={cn(!notification.isRead && "border-primary/50 text-primary hover:bg-primary/10 hover:text-primary")}>
+                              <Link href={notification.linkTo}><Eye className="mr-2 h-4 w-4" /> Vedi Dettagli</Link>
+                              </Button>
+                          </div>
+                          )}
+                      </div>
+                      {!notification.isRead && (<div className="h-3 w-3 p-0 rounded-full bg-primary shrink-0" aria-label="Non letta"></div>)}
+                    </CardContent>
+                  </Card>
+                  );
+              })}
+              </div>
+          ) : (
+               <div className="py-10 text-center"><Info className="mx-auto h-12 w-12 text-muted-foreground mb-4" /><p className="text-lg font-semibold">Nessuna notifica per questo progetto.</p></div>
+          )
         )}
+      </CardContent>
+    </Card>
+
+    <Dialog open={isResponseModalOpen} onOpenChange={setIsResponseModalOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold">
+              {responseActionType === 'accept' && "Accetta Proposta Colloquio"}
+              {responseActionType === 'reject' && "Rifiuta Proposta Colloquio"}
+            </DialogTitle>
+          </DialogHeader>
+          <Form {...professionalResponseForm}>
+            <form onSubmit={professionalResponseForm.handleSubmit(handleSubmitProfessionalResponse)} className="space-y-4">
+              {renderResponseModalContent()}
+              <ModalFooter className="gap-2">
+                <DialogClose asChild>
+                  <Button type="button" variant="outline" disabled={processingResponse}>Annulla</Button>
+                </DialogClose>
+                <Button type="submit" disabled={processingResponse}>
+                  {processingResponse ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                  {responseActionType === 'accept' ? 'Conferma Accettazione' : 'Conferma Rifiuto'}
+                </Button>
+              </ModalFooter>
+            </form>
+          </Form>
+        </DialogContent>
       </Dialog>
     </div>
   );
 }
-    
-
-    

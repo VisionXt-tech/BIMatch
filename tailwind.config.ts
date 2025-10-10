@@ -89,6 +89,10 @@ export default {
         customPulse: {
           '0%, 100%': { opacity: '1', transform: 'scale(1)' },
           '50%': { opacity: '0.8', transform: 'scale(1.03)' },
+        },
+        shine: {
+          '0%': { 'background-position': '100%' },
+          '100%': { 'background-position': '-100%' },
         }
   		},
   		animation: {
@@ -96,6 +100,7 @@ export default {
   			'accordion-up': 'accordion-up 0.2s ease-out',
         'fadeIn': 'fadeIn 0.6s ease-out forwards',
         'custom-pulse': 'customPulse 2.5s infinite ease-in-out',
+        'shine': 'shine 5s linear infinite',
   		}
   	}
   },

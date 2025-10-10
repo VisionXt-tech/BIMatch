@@ -9,7 +9,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Save, UserCircle2, Upload, FileText, Link as LinkIcon, Award, Trash2, Loader2, ShieldCheck, BadgeCheck, TrendingUp, Sparkles, MapPin } from 'lucide-react';
+import { Save, UserCircle2, Upload, FileText, Link as LinkIcon, Award, Trash2, Loader2, ShieldCheck, BadgeCheck, TrendingUp } from 'lucide-react';
 import type { ProfessionalProfile as FullProfessionalProfile } from '@/types/auth';
 import { FormInput, FormTextarea, FormMultiSelect, FormSingleSelect } from '@/components/ProfileFormElements';
 import { BIM_SKILLS_OPTIONS, SOFTWARE_PROFICIENCY_OPTIONS, WORK_MODE_OPTIONS, AVAILABILITY_OPTIONS, LOCATION_MODE_OPTIONS, ITALIAN_REGIONS, EXPERIENCE_LEVEL_OPTIONS, MONTHLY_RATE_OPTIONS } from '@/constants';
@@ -30,7 +30,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { doc, updateDoc, deleteField } from 'firebase/firestore';
 import { useProfileStrength } from '@/hooks/useProfileStrength';
-import { ProfileStrengthMeter, ProfileStrengthBar } from '@/components/ProfileStrengthMeter';
 import { cn } from '@/lib/utils';
 
 
@@ -448,9 +447,9 @@ export default function ProfessionalProfilePage() {
     const hasPendingFile = !!fileState;
 
     return (
-      <FormItem className="border p-2.5 sm:p-3 rounded-md shadow-sm bg-muted/30">
-        <FormLabel className="text-sm font-semibold text-primary flex items-center">
-          <IconComponent className="mr-1.5 h-4 w-4" />
+      <FormItem className="border border-gray-200 p-2.5 sm:p-3 rounded-md bg-gray-50">
+        <FormLabel className="text-sm font-semibold text-gray-900 flex items-center">
+          <IconComponent className="mr-1.5 h-4 w-4 text-gray-700" />
           <span className="text-xs sm:text-sm">{title}</span>
         </FormLabel>
         
@@ -524,51 +523,26 @@ export default function ProfessionalProfilePage() {
 
   return (
     <>
-    <div className="space-y-4 w-full max-w-7xl mx-auto">
-      {/* Gamification Header */}
-      <Card className="relative overflow-hidden border-2 shadow-xl bg-gradient-to-br from-background via-background to-primary/5">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
-        <CardContent className="p-6 relative">
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-            {/* Progress Ring */}
-            <div className="flex-shrink-0">
-              <ProfileStrengthMeter strengthData={strengthData} size="md" showDetails={true} />
-            </div>
-
-            {/* Info Section */}
-            <div className="flex-1 space-y-3">
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
-                  <Sparkles className="h-6 w-6 text-primary" />
-                  Il Mio Profilo Professionale
-                </h1>
-                <p className="text-muted-foreground mt-1">
-                  Completa il tuo profilo per sbloccare più opportunità e aumentare la tua visibilità
-                </p>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="max-w-2xl">
-                <ProfileStrengthBar strengthData={strengthData} showBreakdown={false} />
-              </div>
-
-              {/* Next Milestone Hint */}
-              {strengthData.nextMilestone && strengthData.nextMilestone.suggestions.length > 0 && (
-                <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 max-w-2xl">
-                  <p className="text-sm font-semibold text-primary mb-1">💡 Suggerimento Rapido:</p>
-                  <p className="text-xs text-muted-foreground">
-                    {strengthData.nextMilestone.suggestions[0]} per guadagnare punti!
-                  </p>
-                </div>
-              )}
+    <div className="space-y-4 w-full max-w-7xl mx-auto px-4">
+      {/* Header */}
+      <Card className="border border-gray-200 bg-white">
+        <CardContent className="p-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="flex-1">
+              <h1 className="text-lg font-semibold text-gray-900">
+                Il Mio Profilo Professionale
+              </h1>
+              <p className="text-sm text-gray-600 mt-1">
+                Completamento profilo: {strengthData.totalStrength}%
+              </p>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Main Form Card */}
-      <Card className="shadow-xl">
-        <CardContent className="p-4">
+      <Card className="border border-gray-200 bg-white">
+        <CardContent className="p-8">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
                <Tabs defaultValue="personal-info" className="w-full">
@@ -578,75 +552,69 @@ export default function ProfessionalProfilePage() {
                   <TabsTrigger value="certifications" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">CV e Certificazioni</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="personal-info" className="space-y-4">
-                  {/* Header con Avatar Gamification */}
-                  <div className="relative bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 rounded-xl p-4 border border-primary/20">
-                    <div className="flex flex-col sm:flex-row items-center gap-4">
-                      <div className="relative">
-                        <Avatar className="h-24 w-24 sm:h-28 sm:w-28 border-4 border-primary/30 shadow-lg">
-                          <AvatarImage src={imagePreview || undefined} alt={(userProfile as FullProfessionalProfile).displayName || 'User'} data-ai-hint="profile person" />
-                          <AvatarFallback className="text-3xl sm:text-4xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
-                            {getInitials((userProfile as FullProfessionalProfile).displayName)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="absolute -bottom-1 -right-1 bg-background border-2 border-primary rounded-full p-1.5">
-                          <span className="text-xl">{strengthData.levelEmoji}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex-1 text-center sm:text-left">
-                        <h3 className="text-lg font-bold flex items-center justify-center sm:justify-start gap-2">
-                          <Sparkles className="h-5 w-5 text-primary" />
-                          Profilo {strengthData.level}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {strengthData.powerPoints} Power Points • {Math.round((strengthData as any).percentage || 0)}% completato
-                        </p>
-                        <div className="mt-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => profileImageInputRef.current?.click()}
-                            className="bg-primary/10 hover:bg-primary/20 border-primary/30 text-xs"
-                            disabled={isUploadingAnyFile}
-                          >
-                            <Upload className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                            <span className="hidden sm:inline">Carica / Modifica Immagine</span>
-                            <span className="sm:hidden">Carica Immagine</span>
-                          </Button>
-                          {profileImageFile && (
-                            <span className="text-xs sm:text-sm text-muted-foreground truncate block mt-1">
-                              File: {profileImageFile.name}
-                            </span>
-                          )}
-                          <Input
-                            type="file"
-                            accept="image/jpeg, image/png, image/webp"
-                            onChange={(e) => handleGenericFileChange(e, setProfileImageFile, 'image')}
-                            className="hidden"
-                            ref={profileImageInputRef}
-                            disabled={isUploadingAnyFile}
-                          />
-                          <FormDescription className="text-xs mt-1">Max 2MB (JPG, PNG, WEBP)</FormDescription>
-                        </div>
-                      </div>
+                <TabsContent value="personal-info" className="space-y-6">
+                  {/* Avatar Section */}
+                  <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 pb-6 border-b border-gray-200">
+                    <div className="relative">
+                      <Avatar className="h-24 w-24 border-2 border-gray-200">
+                        <AvatarImage src={imagePreview || undefined} alt={(userProfile as FullProfessionalProfile).displayName || 'User'} data-ai-hint="profile person" />
+                        <AvatarFallback className="text-2xl bg-[#008080] text-white">
+                          {getInitials((userProfile as FullProfessionalProfile).displayName)}
+                        </AvatarFallback>
+                      </Avatar>
                     </div>
-                    {isUploadingImage && imageUploadProgress !== null && (
-                      <div className="mt-3">
-                        <Progress value={imageUploadProgress} className="w-full h-2" />
-                        <p className="text-xs text-muted-foreground mt-1">Caricamento: {Math.round(imageUploadProgress)}%</p>
+
+                    <div className="flex-1 text-center sm:text-left space-y-3">
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-900">
+                          Immagine Profilo
+                        </h3>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Carica una foto professionale
+                        </p>
                       </div>
-                    )}
-                    {!isUploadingImage && imageUploadProgress === 100 && profileImageFile && (
-                      <p className="text-sm text-green-600 mt-2">✓ Nuova immagine pronta per il salvataggio</p>
-                    )}
+                      <div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => profileImageInputRef.current?.click()}
+                          disabled={isUploadingAnyFile}
+                        >
+                          <Upload className="mr-2 h-4 w-4" />
+                          Carica Immagine
+                        </Button>
+                        {profileImageFile && (
+                          <span className="text-sm text-gray-600 truncate block mt-2">
+                            File: {profileImageFile.name}
+                          </span>
+                        )}
+                        <Input
+                          type="file"
+                          accept="image/jpeg, image/png, image/webp"
+                          onChange={(e) => handleGenericFileChange(e, setProfileImageFile, 'image')}
+                          className="hidden"
+                          ref={profileImageInputRef}
+                          disabled={isUploadingAnyFile}
+                        />
+                        <p className="text-xs text-gray-600 mt-2">Max 2MB (JPG, PNG, WEBP)</p>
+                      </div>
+                      {isUploadingImage && imageUploadProgress !== null && (
+                        <div>
+                          <Progress value={imageUploadProgress} className="w-full h-2" />
+                          <p className="text-xs text-gray-600 mt-1">Caricamento: {Math.round(imageUploadProgress)}%</p>
+                        </div>
+                      )}
+                      {!isUploadingImage && imageUploadProgress === 100 && profileImageFile && (
+                        <p className="text-sm text-gray-900 mt-2">✓ Nuova immagine pronta</p>
+                      )}
+                    </div>
                   </div>
 
                   {/* Dati Anagrafici */}
-                  <div className="bg-card rounded-lg border p-4 space-y-3">
-                    <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                      <UserCircle2 className="h-4 w-4 text-primary" />
+                  <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                      <UserCircle2 className="h-4 w-4 text-gray-700" />
                       Dati Anagrafici
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -656,8 +624,8 @@ export default function ProfessionalProfilePage() {
                   </div>
 
                   {/* Riga a 3 colonne: Localizzazione, Cognome, Regione */}
-                  <div className="bg-card rounded-lg border p-4 mb-4">
-                    <h3 className="text-sm font-semibold text-foreground mb-4">
+                  <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 mb-4">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-4">
                       Localizzazione e Regione
                     </h3>
                     <div>
@@ -687,20 +655,20 @@ export default function ProfessionalProfilePage() {
                   </div>
 
                   {/* Bio Professionale */}
-                  <div className="bg-card rounded-lg border p-4">
+                  <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
                     <FormTextarea
                       control={form.control}
                       name="bio"
-                      label="📝 Breve Bio Professionale"
+                      label="Breve Bio Professionale"
                       placeholder="Descrivi la tua esperienza, specializzazioni e obiettivi nel settore BIM..."
                       rows={4}
                     />
                   </div>
 
                   {/* Esperienza e Modalità Lavorativa */}
-                  <div className="bg-card rounded-lg border p-4 space-y-4">
-                    <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4 text-primary" />
+                  <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 space-y-4">
+                    <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-gray-700" />
                       Esperienza e Disponibilità
                     </h3>
 
@@ -744,12 +712,12 @@ export default function ProfessionalProfilePage() {
                   </div>
 
                   {/* Retribuzione */}
-                  <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg border border-primary/20 p-4">
+                  <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
                     <FormSingleSelect
                       key={`monthlyRate-${form.watch('monthlyRate') || 'default'}`}
                       control={form.control}
                       name="monthlyRate"
-                      label="💰 Fascia Retributiva Mensile Lorda"
+                      label="Fascia Retributiva Mensile Lorda"
                       options={MONTHLY_RATE_OPTIONS}
                       placeholder="Seleziona la fascia retributiva"
                     />
@@ -783,8 +751,8 @@ export default function ProfessionalProfilePage() {
                    <Input type="file" className="hidden" ref={otherCertInputRef} accept="application/pdf" onChange={(e) => handleGenericFileChange(e, setOtherCertPdfFile, 'other')} />
 
                   <div>
-                    <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-gray-700" />
                       Documenti e Certificazioni
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
