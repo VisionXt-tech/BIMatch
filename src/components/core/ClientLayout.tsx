@@ -8,6 +8,7 @@ import Footer from '@/components/core/Footer';
 import { FirebaseProvider } from '@/contexts/FirebaseContext';
 import CookieBanner from '@/components/core/CookieBanner';
 import { usePathname } from 'next/navigation';
+import LiquidEther from '@/components/LiquidEther';
 
 interface ClientLayoutProps {
   children: ReactNode;
@@ -23,8 +24,28 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
         <div className="relative flex flex-col min-h-screen">
           {isHomePage && (
             <>
-              <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black -z-20"></div>
-              <div className="absolute inset-0 bg-black/50 -z-10"></div>
+              {/* Black background layer */}
+              <div className="fixed inset-0 w-full h-full bg-black -z-10"></div>
+              {/* Liquid Ether effect */}
+              <div className="fixed inset-0 w-full h-full z-0">
+                <LiquidEther
+                  colors={['#000000', '#FFFFFF', '#008080']}
+                  mouseForce={20}
+                  cursorSize={100}
+                  isViscous={false}
+                  viscous={20}
+                  iterationsViscous={32}
+                  iterationsPoisson={32}
+                  resolution={0.5}
+                  isBounce={false}
+                  autoDemo={true}
+                  autoSpeed={0.3}
+                  autoIntensity={2.0}
+                  takeoverDuration={0.25}
+                  autoResumeDelay={3000}
+                  autoRampDuration={0.6}
+                />
+              </div>
             </>
           )}
           <Navbar />
