@@ -3,7 +3,7 @@ export const BIM_SKILLS_CATEGORIES = [
   {
     id: "modellazione",
     title: "Modellazione Base",
-    icon: "📦",
+    icon: "Box",
     skills: [
       { value: "modellazione-architettonica", label: "Modellazione Architettonica" },
       { value: "modellazione-strutturale", label: "Modellazione Strutturale" },
@@ -15,7 +15,7 @@ export const BIM_SKILLS_CATEGORIES = [
   {
     id: "gestione-coordinamento",
     title: "Gestione e Coordinamento BIM",
-    icon: "👥",
+    icon: "Users",
     skills: [
       { value: "bim-management", label: "BIM Management e Direzione Progetti" },
       { value: "bim-coordination", label: "BIM Coordination e Federazione Modelli" },
@@ -27,7 +27,7 @@ export const BIM_SKILLS_CATEGORIES = [
   {
     id: "analisi-simulazioni",
     title: "Analisi e Simulazioni",
-    icon: "📈",
+    icon: "LineChart",
     skills: [
       { value: "analisi-energetica-bim", label: "Analisi Energetica e Sostenibilità" },
       { value: "analisi-strutturale-bim", label: "Analisi Strutturale da Modelli BIM" },
@@ -39,7 +39,7 @@ export const BIM_SKILLS_CATEGORIES = [
   {
     id: "pianificazione-controllo",
     title: "Pianificazione e Controllo (4D/5D)",
-    icon: "📅",
+    icon: "Calendar",
     skills: [
       { value: "programmazione-lavori-4d", label: "Pianificazione Temporale (4D BIM)" },
       { value: "gestione-costi-5d", label: "Gestione Costi e Budget (5D BIM)" },
@@ -50,7 +50,7 @@ export const BIM_SKILLS_CATEGORIES = [
   {
     id: "visualizzazione",
     title: "Visualizzazione e Comunicazione",
-    icon: "🖼️",
+    icon: "Monitor",
     skills: [
       { value: "rendering-visualizzazione", label: "Rendering e Visualizzazione Avanzata" },
       { value: "realta-virtuale-aumentata", label: "Realtà Virtuale e Aumentata (VR/AR)" },
@@ -61,7 +61,7 @@ export const BIM_SKILLS_CATEGORIES = [
   {
     id: "tecnologie-avanzate",
     title: "Tecnologie Avanzate",
-    icon: "🚀",
+    icon: "Sparkles",
     skills: [
       { value: "scansione-laser-point-cloud", label: "Scansione Laser 3D e Point Cloud" },
       { value: "fotogrammetria-drone", label: "Fotogrammetria e Rilievi con Droni" },
@@ -73,7 +73,7 @@ export const BIM_SKILLS_CATEGORIES = [
   {
     id: "facility-management",
     title: "Gestione Operativa e Facility",
-    icon: "🏢",
+    icon: "Building2",
     skills: [
       { value: "facility-management-bim", label: "Facility Management e Asset Management" },
       { value: "manutenzione-predittiva", label: "Manutenzione Predittiva da BIM" },
@@ -83,7 +83,7 @@ export const BIM_SKILLS_CATEGORIES = [
   {
     id: "competenze-specialistiche",
     title: "Competenze Specialistiche",
-    icon: "⭐",
+    icon: "Award",
     skills: [
       { value: "creazione-famiglie-oggetti-bim", label: "Creazione Famiglie e Componenti BIM" },
       { value: "interoperabilita-formati", label: "Interoperabilità e Gestione Formati (IFC, gbXML)" },
@@ -98,7 +98,7 @@ export const SOFTWARE_CATEGORIES = [
   {
     id: "authoring",
     title: "Software BIM Primari - Authoring",
-    icon: "🖱️",
+    icon: "Pencil",
     skills: [
       { value: "autodesk-revit", label: "Autodesk Revit (Architettura, Strutture, MEP)" },
       { value: "graphisoft-archicad", label: "Graphisoft ArchiCAD" },
@@ -112,7 +112,7 @@ export const SOFTWARE_CATEGORIES = [
   {
     id: "coordination",
     title: "Coordinamento e Clash Detection",
-    icon: "✅",
+    icon: "GitMerge",
     skills: [
       { value: "autodesk-navisworks", label: "Autodesk Navisworks Manage/Freedom" },
       { value: "solibri-model-checker", label: "Solibri Model Checker/Office" },
@@ -124,7 +124,7 @@ export const SOFTWARE_CATEGORIES = [
   {
     id: "planning-estimating",
     title: "Pianificazione e Computi (4D/5D)",
-    icon: "🧮",
+    icon: "Calculator",
     skills: [
       { value: "synchro-pro", label: "Synchro Pro (4D)" },
       { value: "vico-trimble", label: "Vico Office/Trimble Connect" },
@@ -135,7 +135,7 @@ export const SOFTWARE_CATEGORIES = [
   {
     id: "automation",
     title: "Automazione e Scripting",
-    icon: "🤖",
+    icon: "Bot",
     skills: [
       { value: "dynamo-revit", label: "Dynamo for Revit" },
       { value: "grasshopper-rhino", label: "Grasshopper for Rhino" },
@@ -146,7 +146,7 @@ export const SOFTWARE_CATEGORIES = [
   {
     id: "rendering",
     title: "Rendering e Visualizzazione",
-    icon: "📷",
+    icon: "Camera",
     skills: [
       { value: "enscape", label: "Enscape Real-time Rendering" },
       { value: "lumion", label: "Lumion" },
@@ -159,7 +159,7 @@ export const SOFTWARE_CATEGORIES = [
   {
     id: "energy-analysis",
     title: "Analisi Energetica",
-    icon: "🌡️",
+    icon: "Thermometer",
     skills: [
       { value: "autodesk-insight", label: "Autodesk Insight (Green Building Studio)" },
       { value: "designbuilder", label: "DesignBuilder" },
@@ -171,7 +171,7 @@ export const SOFTWARE_CATEGORIES = [
   {
     id: "structural",
     title: "Analisi Strutturale",
-    icon: "🏢",
+    icon: "Building",
     skills: [
       { value: "robot-structural", label: "Autodesk Robot Structural Analysis" },
       { value: "sap2000", label: "SAP2000" },
@@ -183,7 +183,7 @@ export const SOFTWARE_CATEGORIES = [
   {
     id: "point-cloud",
     title: "Scansione 3D e Point Cloud",
-    icon: "📡",
+    icon: "ScanLine",
     skills: [
       { value: "recap-pro", label: "Autodesk ReCap Pro" },
       { value: "cloudcompare", label: "CloudCompare" },
@@ -194,7 +194,7 @@ export const SOFTWARE_CATEGORIES = [
   {
     id: "infrastructure",
     title: "Infrastrutture e GIS",
-    icon: "🗺️",
+    icon: "Map",
     skills: [
       { value: "civil-3d", label: "Autodesk Civil 3D" },
       { value: "openroads", label: "Bentley OpenRoads Designer" },
@@ -205,7 +205,7 @@ export const SOFTWARE_CATEGORIES = [
   {
     id: "collaboration",
     title: "Collaborazione e Cloud",
-    icon: "☁️",
+    icon: "Cloud",
     skills: [
       { value: "acc", label: "Autodesk Construction Cloud" },
       { value: "trimble-connect", label: "Trimble Connect" },
@@ -216,7 +216,7 @@ export const SOFTWARE_CATEGORIES = [
   {
     id: "cad-modeling",
     title: "CAD e Modellazione 3D",
-    icon: "📏",
+    icon: "Ruler",
     skills: [
       { value: "autocad", label: "AutoCAD (2D/3D)" },
       { value: "sketchup", label: "SketchUp Pro" },

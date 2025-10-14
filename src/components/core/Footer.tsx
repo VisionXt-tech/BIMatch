@@ -49,7 +49,7 @@ const Footer = () => {
     >
       <div className="container mx-auto px-4 text-center">
         <p className="text-sm">
-          &copy; {currentYear === 2025 ? 2024 : currentYear} VisionXt. Tutti i diritti riservati.
+          &copy; 2025 VisionXt. Tutti i diritti riservati.
         </p>
         <div className="mt-2 space-x-4">
           <Link href={ROUTES.PRIVACY_POLICY} className={getLinkClasses()}>

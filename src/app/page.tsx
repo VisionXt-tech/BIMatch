@@ -7,7 +7,7 @@ import { ROUTES } from "@/constants";
 import { ArrowRight, HelpCircle } from 'lucide-react';
 import AnimatedContent from "@/components/AnimatedContent";
 
-const initialTalentWords = ["Talenti", "Professionisti", "Esperti", "Innovatori", "Specialisti", "Consulenti"];
+const initialTalentWords = ["Talenti", "Esperti", "Innovatori", "Specialisti", "Consulenti"];
 
 export default function HomePage() {
   const [talentWords] = useState(initialTalentWords);
@@ -43,7 +43,7 @@ export default function HomePage() {
           <Button
             variant="ghost"
             className="inline-block align-baseline text-center
-                       min-w-[190px] sm:min-w-[240px] md:min-w-[280px] lg:min-w-[340px]
+                       min-w-[170px] sm:min-w-[200px] md:min-w-[230px] lg:min-w-[260px]
                        h-auto
                        px-4 py-2.5
                        text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight

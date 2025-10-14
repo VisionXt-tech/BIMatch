@@ -16,7 +16,20 @@
       "Bash(npx shadcn@latest add https://reactbits.dev/r/AnimatedContent-TS-TW)",
       "Bash(npx shadcn@latest add https://reactbits.dev/r/ShinyText-TS-TW)",
       "Bash(npm install:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(npx shadcn@latest add https://reactbits.dev/r/ScrollFloat-JS-CSS)",
+      "Bash(npx shadcn@latest add https://reactbits.dev/r/GradientText-JS-CSS)",
+      "Bash(npx shadcn@latest add https://reactbits.dev/r/BlurText-JS-CSS)",
+      "Bash(npx shadcn@latest add https://reactbits.dev/r/SpotlightCard-JS-CSS)",
+      "Bash(npx shadcn@latest add https://reactbits.dev/r/MagicBento-JS-CSS)",
+      "Bash(npx shadcn@latest add https://reactbits.dev/r/StarBorder-JS-CSS)",
+      "Bash(npx shadcn@latest add https://reactbits.dev/r/ScrollStack-JS-CSS)",
+      "Bash(npm run typecheck)",
+      "Bash(npm run lint)",
+      "Bash(if [ -f .env.local ])",
+      "Bash(then echo \"✓ .env.local exists\")",
+      "Bash(else echo \"✗ .env.local not found\")",
+      "Bash(fi)"
     ],
     "deny": [],
     "ask": []

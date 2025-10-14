@@ -99,9 +99,11 @@ const Navbar = () => {
             variant="ghost"
             asChild
             className={cn(
-              "justify-start text-sm",
-              pathname.startsWith(item.href) ? "font-semibold text-primary bg-accent/50" : "text-muted-foreground hover:text-foreground",
-              mobile ? "w-full" : "px-2 lg:px-3 h-9"
+              "justify-start text-base transition-all duration-200",
+              pathname.startsWith(item.href)
+                ? "font-semibold text-primary bg-primary/10 hover:bg-primary/15"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent/50",
+              mobile ? "w-full" : "px-3 lg:px-4 h-10"
             )}
             onClick={() => mobile && setIsMobileMenuOpen(false)}
           >
@@ -140,25 +142,35 @@ const Navbar = () => {
     >
       <div className="w-full">
         <nav
-          className="py-3 flex items-center"
-          style={navStyleToApply} 
+          className="py-4 flex items-center"
+          style={navStyleToApply}
         >
           <Logo />
           
           {mounted && (
             <div className="ml-auto flex items-center space-x-1 md:space-x-2">
               {userProfile?.role === ROLES.COMPANY && (
-                   <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex">
+                   <Button
+                     variant="ghost"
+                     size="default"
+                     asChild
+                     className="hidden md:inline-flex text-base hover:bg-accent/50 transition-all duration-200"
+                   >
                       <Link href={ROUTES.PROFESSIONALS_MARKETPLACE}>
-                          <Search className="mr-2 h-4 w-4" />Cerca Professionisti
+                          <Search className="mr-2 h-5 w-5" />Trova Professionisti
                       </Link>
                   </Button>
               )}
               
               {userProfile?.role === ROLES.ADMIN && (
-                   <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex">
+                   <Button
+                     variant="ghost"
+                     size="default"
+                     asChild
+                     className="hidden md:inline-flex text-base hover:bg-accent/50 transition-all duration-200"
+                   >
                       <Link href={ROUTES.DASHBOARD_ADMIN}>
-                          <Shield className="mr-2 h-4 w-4" />Pannello Admin
+                          <Shield className="mr-2 h-5 w-5" />Admin
                       </Link>
                   </Button>
               )}
@@ -171,10 +183,15 @@ const Navbar = () => {
               )}
               
               {user && userProfile && !isDashboardPageForContent && userProfile.role !== ROLES.ADMIN && (
-                <Button variant="outline" size="sm" asChild className="hidden md:inline-flex">
+                <Button
+                  variant="outline"
+                  size="default"
+                  asChild
+                  className="hidden md:inline-flex text-base hover:bg-accent/50 transition-all duration-200"
+                >
                   <Link href={dashboardLink}>
-                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                    Vai alla Dashboard
+                    <LayoutDashboard className="mr-2 h-5 w-5" />
+                    Dashboard
                   </Link>
                 </Button>
               )}
@@ -210,9 +227,9 @@ const Navbar = () => {
                       )}
 
                       {!isDashboardPageForContent && userProfile.role !== ROLES.ADMIN && (
-                         <DropdownMenuItem onClick={() => router.push(dashboardLink)}>
+                         <DropdownMenuItem onClick={() => router.push(dashboardLink)} className="cursor-pointer">
                            <LayoutDashboard className="mr-2 h-4 w-4" />
-                           <span>Vai alla Dashboard</span>
+                           <span>Dashboard</span>
                          </DropdownMenuItem>
                       )}
 
@@ -224,58 +241,77 @@ const Navbar = () => {
                       ))}
 
                        {isDashboardPageForContent && userProfile.role === ROLES.COMPANY && (
-                         <DropdownMenuItem onClick={() => router.push(ROUTES.PROFESSIONALS_MARKETPLACE)} className="md:hidden">
+                         <DropdownMenuItem onClick={() => router.push(ROUTES.PROFESSIONALS_MARKETPLACE)} className="md:hidden cursor-pointer">
                            <Search className="mr-2 h-4 w-4" />
-                           <span>Cerca Professionisti</span>
+                           <span>Trova Professionisti</span>
                          </DropdownMenuItem>
                        )}
                       {isDashboardPageForContent && <DropdownMenuSeparator className="md:hidden"/>}
-                      <DropdownMenuItem onClick={handleLogout}>
+                      <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
                         <LogOut className="mr-2 h-4 w-4" />
-                        <span>Logout</span>
+                        <span>Esci</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </>
               ) : (
                 <>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    asChild
-                    className={cn("hidden md:inline-flex", isHomePage ? "text-white hover:text-white/80 hover:bg-white/10" : "")}
-                  >
-                    <Link href={ROUTES.HOW_IT_WORKS}>
-                      <HelpCircle className="mr-1 h-4 w-4"/> Come Funziona?
-                    </Link>
-                  </Button>
-                  <Button 
-                    variant={isHomePage ? "outline" : "ghost"} 
-                    size="sm" 
+                  <Button
+                    variant="ghost"
+                    size="default"
                     asChild
                     className={cn(
-                      isHomePage ? "border-white/50 text-white hover:bg-white/20 hover:text-white !text-white bg-white/10" : ""
+                      "hidden md:inline-flex text-base transition-all duration-200",
+                      isHomePage
+                        ? "text-white hover:bg-white/10 border border-white/30 hover:border-white/50"
+                        : "hover:bg-accent/50"
+                    )}
+                  >
+                    <Link href={ROUTES.HOW_IT_WORKS}>
+                      <HelpCircle className="mr-2 h-5 w-5" />Come Funziona
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="default"
+                    asChild
+                    className={cn(
+                      "text-base transition-all duration-200",
+                      isHomePage
+                        ? "text-white hover:bg-white/10 border border-white/30 hover:border-white/50"
+                        : "hover:bg-accent/50"
                     )}
                   >
                     <Link href={ROUTES.LOGIN}>Accedi</Link>
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button 
-                        size="sm"
-                        className={isHomePage ? "bg-white text-slate-900 hover:bg-white/80 hover:scale-105 transition-transform" : ""}
+                      <Button
+                        size="default"
+                        className={cn(
+                          "text-base transition-all duration-200",
+                          isHomePage
+                            ? "bg-white text-slate-900 hover:bg-white/90 border border-white/30"
+                            : ""
+                        )}
                       >
                         Registrati
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => router.push(ROUTES.REGISTER_PROFESSIONAL)}>
-                        <User className="mr-2 h-4 w-4" />
-                        <span>Come Professionista</span>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuItem
+                        onClick={() => router.push(ROUTES.REGISTER_PROFESSIONAL)}
+                        className="cursor-pointer py-3 text-base"
+                      >
+                        <User className="mr-2 h-5 w-5" />
+                        <span>Professionista</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => router.push(ROUTES.REGISTER_COMPANY)}>
-                        <Briefcase className="mr-2 h-4 w-4" />
-                        <span>Come Azienda</span>
+                      <DropdownMenuItem
+                        onClick={() => router.push(ROUTES.REGISTER_COMPANY)}
+                        className="cursor-pointer py-3 text-base"
+                      >
+                        <Briefcase className="mr-2 h-5 w-5" />
+                        <span>Azienda</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -304,15 +340,17 @@ const Navbar = () => {
                               variant="ghost"
                               asChild
                               className={cn(
-                              "justify-start text-sm",
-                              pathname === ROUTES.PROFESSIONALS_MARKETPLACE ? "font-semibold text-primary bg-accent/50" : "text-muted-foreground hover:text-foreground",
+                              "justify-start text-base transition-all duration-200",
+                              pathname === ROUTES.PROFESSIONALS_MARKETPLACE
+                                ? "font-semibold text-primary bg-primary/10"
+                                : "text-muted-foreground hover:text-foreground hover:bg-accent/50",
                               "w-full"
                               )}
                               onClick={() => setIsMobileMenuOpen(false)}
                           >
                               <Link href={ROUTES.PROFESSIONALS_MARKETPLACE}>
-                                  <Search className="mr-2 h-4 w-4" />
-                                  <span>Cerca Professionisti</span>
+                                  <Search className="mr-2 h-5 w-5" />
+                                  <span>Trova Professionisti</span>
                               </Link>
                           </Button>
                        )}
@@ -320,15 +358,17 @@ const Navbar = () => {
                             variant="ghost"
                             asChild
                             className={cn(
-                            "justify-start text-sm",
-                            pathname === ROUTES.HOW_IT_WORKS ? "font-semibold text-primary bg-accent/50" : "text-muted-foreground hover:text-foreground",
+                            "justify-start text-base transition-all duration-200",
+                            pathname === ROUTES.HOW_IT_WORKS
+                              ? "font-semibold text-primary bg-primary/10"
+                              : "text-muted-foreground hover:text-foreground hover:bg-accent/50",
                             "w-full"
                             )}
                             onClick={() => setIsMobileMenuOpen(false)}
                         >
                             <Link href={ROUTES.HOW_IT_WORKS}>
-                                <HelpCircle className="mr-2 h-4 w-4" />
-                                <span>Come Funziona?</span>
+                                <HelpCircle className="mr-2 h-5 w-5" />
+                                <span>Come Funziona</span>
                             </Link>
                         </Button>
                     </div>

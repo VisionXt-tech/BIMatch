@@ -17,6 +17,7 @@ service firebase.storage {
       allow write: if request.auth != null && request.auth.uid == userId
         && request.resource.size < 5 * 1024 * 1024 // 5MB limit
         && isValidImageType(request.resource.contentType);
+      allow delete: if request.auth != null && request.auth.uid == userId;
     }
 
     // User files - each user can only access their own files (except profileImages)
@@ -26,6 +27,7 @@ service firebase.storage {
         && request.resource.size < 5 * 1024 * 1024 // 5MB limit
         && (isValidImageType(request.resource.contentType) ||
             isValidDocumentType(request.resource.contentType));
+      allow delete: if request.auth != null && request.auth.uid == userId;
     }
     
     // Company logos - require authentication for access
@@ -34,14 +36,16 @@ service firebase.storage {
       allow write: if request.auth != null && request.auth.uid == companyId
         && request.resource.size < 2 * 1024 * 1024 // 2MB limit
         && isValidImageType(request.resource.contentType);
+      allow delete: if request.auth != null && request.auth.uid == companyId;
     }
-    
+
     // Company logos alternative path - require authentication
     match /companyLogos/{companyId}/{allPaths=**} {
       allow read: if request.auth != null; // Require authentication
       allow write: if request.auth != null && request.auth.uid == companyId
         && request.resource.size < 2 * 1024 * 1024 // Consistent 2MB limit
         && isValidImageType(request.resource.contentType);
+      allow delete: if request.auth != null && request.auth.uid == companyId;
     }
 
     // Profile images - publicly readable for marketplace
@@ -50,6 +54,7 @@ service firebase.storage {
       allow write: if request.auth != null && request.auth.uid == userId
         && request.resource.size < 5 * 1024 * 1024 // 5MB limit
         && isValidImageType(request.resource.contentType);
+      allow delete: if request.auth != null && request.auth.uid == userId;
     }
 
     // Project images - publicly readable for marketplace, writable by project owner

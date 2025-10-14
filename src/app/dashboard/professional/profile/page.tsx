@@ -28,7 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from 'next/link';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { doc, updateDoc, deleteField } from 'firebase/firestore';
+import { doc, updateDoc, deleteField, getDoc, serverTimestamp } from 'firebase/firestore';
 import { useProfileStrength } from '@/hooks/useProfileStrength';
 import { cn } from '@/lib/utils';
 
@@ -284,30 +284,77 @@ export default function ProfessionalProfilePage() {
 
         const urlToDelete = (userProfile as FullProfessionalProfile)[urlToDeleteKey] as string | undefined;
 
+        // Extract file path from Firebase Storage URL and delete the file
         if (urlToDelete) {
             try {
-                const fileRef = storageRef(storage, urlToDelete);
-                await deleteObject(fileRef);
+                // Extract the file path from the full Firebase Storage URL
+                // Format: https://firebasestorage.googleapis.com/v0/b/bucket-name/o/path%2Fto%2Ffile.pdf?...
+                const urlObj = new URL(urlToDelete);
+                const pathMatch = urlObj.pathname.match(/\/o\/(.+?)(\?|$)/);
+
+                if (pathMatch && pathMatch[1]) {
+                    // Decode the URL-encoded path
+                    const filePath = decodeURIComponent(pathMatch[1]);
+                    console.log('Deleting file from path:', filePath);
+
+                    const fileRef = storageRef(storage, filePath);
+                    await deleteObject(fileRef);
+                    console.log('File deleted successfully from storage');
+                } else {
+                    console.warn('Could not extract file path from URL:', urlToDelete);
+                    // Try direct deletion as fallback
+                    const fileRef = storageRef(storage, urlToDelete);
+                    await deleteObject(fileRef);
+                }
             } catch (error: any) {
                 if (error.code !== 'storage/object-not-found') {
+                    console.error('Error deleting file from storage:', error);
                     throw error;
                 }
-                // File already deleted from storage
+                console.log('File not found in storage (may have been already deleted)');
             }
         }
-        
-        const updatePayload = {
+
+        // Update Firestore document to remove the URL fields
+        const userDocRef = doc(db, 'users', user.uid);
+        const updatePayload: any = {
           [urlToDeleteKey]: deleteField(),
-          [selfCertifiedKey]: deleteField(),
+          updatedAt: serverTimestamp(),
         };
-        
-        await updateUserProfile(updatePayload);
+
+        // Only add selfCertified field deletion for certifications (not CV)
+        if (certType !== 'cv') {
+          updatePayload[selfCertifiedKey] = deleteField();
+        }
+
+        await updateDoc(userDocRef, updatePayload);
+        console.log('Firestore document updated successfully');
+
+        // Refresh the user profile to reflect changes
+        const updatedDocSnap = await getDoc(userDocRef);
+        if (updatedDocSnap.exists()) {
+          const updatedProfileData = updatedDocSnap.data() as FullProfessionalProfile;
+
+          // Reset form fields to reflect the deletion
+          if (certType !== 'cv') {
+            form.setValue(`${certType}SelfCertified` as any, false as any);
+          }
+          const fieldName = certType === 'albo' ? 'alboRegistrationUrl' :
+                           certType === 'uni' ? 'uniCertificationUrl' :
+                           certType === 'other' ? 'otherCertificationsUrl' :
+                           'cvUrl';
+          form.setValue(fieldName as any, '' as any);
+
+          // Force form reset with updated profile data
+          form.reset(mapProfileToFormData(updatedProfileData));
+        }
+
         await form.trigger(); // Re-validate the form after deletion
-        
-        toast({ title: "Documento Eliminato", description: "Il documento è stato rimosso con successo." });
+
+        toast({ title: "Documento Eliminato", description: "Il documento è stato rimosso con successo dal tuo profilo e dallo storage." });
 
     } catch (error: any) {
-        // Error during certification deletion
+        console.error('Error during certification deletion:', error);
         toast({ title: "Errore Eliminazione", description: `Impossibile completare l'eliminazione: ${error.message}`, variant: "destructive" });
     } finally {
         setIsDeletingFile(false);

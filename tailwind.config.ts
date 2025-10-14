@@ -14,7 +14,7 @@ export default {
         'xs': '480px',
       },
       fontFamily: {
-        sans: ['var(--font-raleway)', 'system-ui', 'sans-serif'], 
+        sans: ['var(--font-figtree)', 'system-ui', 'sans-serif'],
       },
   		colors: {
   			background: 'hsl(var(--background))',
@@ -84,6 +84,10 @@ export default {
   			},
         fadeIn: {
           '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        fadeInUp: {
+          '0%': { opacity: '0', transform: 'translateY(30px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         customPulse: {

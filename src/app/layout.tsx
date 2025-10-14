@@ -1,6 +1,6 @@
 
 import type { Metadata } from 'next';
-import { Raleway } from 'next/font/google';
+import { Figtree } from 'next/font/google';
 import './globals.css';
 import ClientLayout from '@/components/core/ClientLayout';
 import { Toaster } from 'react-hot-toast';
@@ -65,10 +65,10 @@ export const viewport = {
   initialScale: 1,
 };
 
-const raleway = Raleway({
+const figtree = Figtree({
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-raleway',
+  variable: '--font-figtree',
 });
 
 
@@ -79,7 +79,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="it">
-      <body className={`${raleway.variable} font-sans antialiased flex flex-col min-h-screen`}>
+      <body className={`${figtree.variable} font-sans antialiased flex flex-col min-h-screen`}>
         <ClientLayout>
           {children}
         </ClientLayout>

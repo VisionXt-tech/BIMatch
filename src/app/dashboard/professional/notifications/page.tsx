@@ -641,7 +641,7 @@ export default function ProfessionalNotificationsPage() {
             </DialogTitle>
           </DialogHeader>
           <Form {...professionalResponseForm}>
-            <form onSubmit={professionalResponseForm.handleSubmit(handleSubmitProfessionalResponse)} className="space-y-4">
+            <form onSubmit={professionalResponseForm.handleSubmit((data) => handleSubmitProfessionalResponse(data))} className="space-y-4">
               {renderResponseModalContent()}
               <ModalFooter className="gap-2">
                 <DialogClose asChild>
