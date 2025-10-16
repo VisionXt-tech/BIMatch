@@ -4,7 +4,7 @@
 
 .scroll-float-text {
   display: inline-block;
-  font-size: clamp(1.6rem, 8vw, 10rem);
+  font-size: clamp(1.2rem, 7.5vw, 6rem);
   font-weight: 900;
   text-align: center;
   line-height: 1.5;
