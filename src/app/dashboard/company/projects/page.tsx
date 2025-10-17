@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Briefcase, Users, Edit3, Trash2, Eye, PlusCircle, WifiOff, Info } from 'lucide-react';
 import Link from 'next/link';
@@ -122,111 +122,123 @@ export default function CompanyProjectsPage() {
   const isFilteringByCandidates = searchParams.get('filter') === 'candidates';
 
   return (
-    <div className="space-y-6">
-      <Card className="shadow-lg">
-        <CardHeader className="px-4 pt-3 pb-1">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <CardTitle className="text-xl font-bold">
-                {isFilteringByCandidates ? "Progetti con Candidature" : "I Miei Progetti Pubblicati"}
-              </CardTitle>
-              <CardDescription className="text-sm">
-                {isFilteringByCandidates 
-                  ? "Elenco dei tuoi progetti che hanno ricevuto almeno una candidatura." 
-                  : "Gestisci i tuoi progetti BIM, visualizza le candidature e trova i migliori talenti."
+    <div className="space-y-4 w-full max-w-7xl mx-auto px-4">
+      {/* Header */}
+      <Card className="border border-gray-200 bg-white">
+        <CardContent className="p-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="flex-1">
+              <h1 className="text-lg font-semibold text-gray-900">
+                {isFilteringByCandidates ? "Progetti con Candidature" : "I Miei Progetti"}
+              </h1>
+              <p className="text-sm text-gray-600 mt-1">
+                {isFilteringByCandidates
+                  ? "Progetti con almeno una candidatura"
+                  : "Gestisci i tuoi progetti BIM"
                 }
-              </CardDescription>
+              </p>
             </div>
-            <Button asChild size="sm">
-                <Link href={ROUTES.DASHBOARD_COMPANY_POST_PROJECT}><PlusCircle className="mr-2 h-4 w-4" /> Pubblica Nuovo Progetto</Link>
-            </Button>
+            <Link href={ROUTES.DASHBOARD_COMPANY_POST_PROJECT}>
+              <Button size="lg" className="gap-2 bg-[#008080] hover:bg-[#006666] text-white">
+                <PlusCircle className="h-4 w-4" />
+                Nuovo Progetto
+              </Button>
+            </Link>
           </div>
-        </CardHeader>
-        <CardContent className="px-3 py-2">
+        </CardContent>
+      </Card>
+
+      {/* Projects List Card */}
+      <Card className="border border-gray-200 bg-white">
+        <CardContent className="p-8">
           {loading ? (
-            <div className="space-y-3">
-                {[...Array(2)].map((_, i) => (
-                  <Card key={i} className="shadow-lg"><CardHeader className="px-3 pt-2 pb-1"><Skeleton className="h-5 w-3/4" /><Skeleton className="h-3 w-1/2 mt-1" /></CardHeader><CardContent className="px-3 py-2 space-y-2"><Skeleton className="h-4 w-1/4" /><div className="flex flex-wrap gap-2"><Skeleton className="h-8 w-24" /><Skeleton className="h-8 w-24" /></div></CardContent></Card>
-                ))}
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="border border-gray-200 rounded-lg p-6">
+                  <Skeleton className="h-6 w-3/4 mb-3" />
+                  <Skeleton className="h-4 w-1/2 mb-4" />
+                  <div className="flex gap-2">
+                    <Skeleton className="h-9 w-24" />
+                    <Skeleton className="h-9 w-24" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : error ? (
-             <div className="text-center py-8 border-2 border-dashed border-destructive/50 bg-destructive/5 rounded-lg">
-              <WifiOff className="mx-auto h-12 w-12 text-destructive mb-3" />
-              <p className="text-lg font-semibold text-destructive mb-1">Errore di Caricamento</p>
-              <p className="text-muted-foreground text-sm">{error}</p>
+            <div className="text-center py-16">
+              <WifiOff className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <p className="text-sm font-semibold text-gray-900 mb-2">Errore di Caricamento</p>
+              <p className="text-sm text-gray-600">{error}</p>
             </div>
           ) : displayedProjects.length > 0 ? (
-            <div className="space-y-3">
-              {displayedProjects.map((project, index) => (
-                <Card key={project.id} className={cn(
-                  "shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 animate-fade-in opacity-0",
-                  `animate-stagger-${(index % 6) + 1}`
-                )}>
-                  <CardHeader className="px-3 pt-2 pb-1">
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                        <div>
-                            <CardTitle className="text-lg hover:text-primary transition-colors">
-                                <Link href={ROUTES.PROJECT_DETAILS(project.id!)}>{project.title}</Link>
-                            </CardTitle>
-                            <div className="text-xs text-muted-foreground mt-1">
-                                Pubblicato: {project.postedAt && (project.postedAt as Timestamp).toDate ? (project.postedAt as Timestamp).toDate().toLocaleDateString('it-IT') : 'N/A'} - Località: {project.location}
-                            </div>
-                        </div>
-                        <StatusBadge
-                          status={project.status as ProjectStatus}
-                          type="project"
-                          showIcon
+            <div className="space-y-4">
+              {displayedProjects.map((project) => (
+                <div key={project.id} className="border border-gray-200 rounded-lg p-6 hover:border-[#008080] transition-colors">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+                    <div className="flex-1">
+                      <Link href={ROUTES.PROJECT_DETAILS(project.id!)}>
+                        <h3 className="text-base font-semibold text-gray-900 hover:text-[#008080] transition-colors">
+                          {project.title}
+                        </h3>
+                      </Link>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Pubblicato: {project.postedAt && (project.postedAt as Timestamp).toDate ? (project.postedAt as Timestamp).toDate().toLocaleDateString('it-IT') : 'N/A'} • {project.location}
+                      </p>
+                    </div>
+                    <StatusBadge
+                      status={project.status as ProjectStatus}
+                      type="project"
+                      showIcon
+                      size="sm"
+                    />
+                  </div>
+
+                  <div className="flex items-center text-sm text-gray-600 mb-4">
+                    <Users className="h-4 w-4 mr-2" />
+                    <span>{project.applicationsCount || 0} Candidati</span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" variant="outline" asChild>
+                      <Link href={ROUTES.PROJECT_DETAILS(project.id!)}>
+                        <Eye className="mr-2 h-4 w-4" /> Visualizza
+                      </Link>
+                    </Button>
+                    <Button size="sm" variant="outline" asChild disabled={project.status === 'chiuso' || project.status === 'completato'}>
+                      <Link href={`${ROUTES.DASHBOARD_COMPANY_PROJECTS}/${project.id}/edit`}>
+                        <Edit3 className="mr-2 h-4 w-4" /> Modifica
+                      </Link>
+                    </Button>
+                    <Button size="sm" variant="outline" asChild>
+                      <Link href={`${ROUTES.DASHBOARD_COMPANY_CANDIDATES}?projectId=${project.id}`}>
+                        <Users className="mr-2 h-4 w-4" /> Candidati ({project.applicationsCount || 0})
+                      </Link>
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
                           size="sm"
-                        />
-                    </div>
-                  </CardHeader>
-                  <CardContent className="px-3 py-2">
-                    <div className="flex items-center text-xs text-muted-foreground mb-3">
-                      <Users className="h-4 w-4 mr-2" />
-                      <span>{project.applicationsCount || 0} Candidati</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button size="sm" variant="outline" asChild>
-                        <Link href={ROUTES.PROJECT_DETAILS(project.id!)}>
-                          <Eye className="mr-2 h-4 w-4" /> Visualizza
-                        </Link>
-                      </Button>
-                       <Button size="sm" variant="outline" asChild disabled={project.status === 'chiuso' || project.status === 'completato'}>
-                        <Link href={`${ROUTES.DASHBOARD_COMPANY_PROJECTS}/${project.id}/edit`}>
-                          <Edit3 className="mr-2 h-4 w-4" /> Modifica
-                        </Link>
-                      </Button>
-                      <Button size="sm" variant="outline" asChild>
-                        <Link href={`${ROUTES.DASHBOARD_COMPANY_CANDIDATES}?projectId=${project.id}`}>
-                          <Users className="mr-2 h-4 w-4" /> Vedi Candidati ({project.applicationsCount || 0})
-                        </Link>
-                      </Button>
-                       <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            disabled={project.status === 'completato' || project.status === 'chiuso'}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" /> Chiudi Progetto
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Conferma Chiusura Progetto</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Sei sicuro di voler chiudere il progetto "{project.title}"? Questa azione non può essere annullata e il progetto non riceverà più candidature.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Annulla</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleConfirmCloseProject(project)}>Conferma Chiusura</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </CardContent>
-                </Card>
+                          variant="destructive"
+                          disabled={project.status === 'completato' || project.status === 'chiuso'}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" /> Chiudi
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Conferma Chiusura</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Chiudere "{project.title}"? Azione irreversibile.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Annulla</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleConfirmCloseProject(project)}>Conferma</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
               ))}
             </div>
           ) : isFilteringByCandidates ? (

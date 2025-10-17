@@ -172,18 +172,13 @@ export default function PostProjectPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <Card className="shadow-xl">
-        <CardHeader className="p-4">
-          <div className="flex items-center space-x-3">
-            <FolderPlus className="h-6 w-6 text-primary" />
-            <div>
-              <CardTitle className="text-2xl font-bold">Pubblica un Nuovo Progetto BIM</CardTitle>
-              <CardDescription className="text-xs">Descrivi il tuo progetto per trovare i professionisti BIM più adatti.</CardDescription>
-            </div>
+    <div className="space-y-4 w-full max-w-7xl mx-auto px-4">
+      <Card className="border border-gray-200 bg-white">
+        <CardContent className="p-8">
+          <div className="mb-6">
+            <h1 className="text-lg font-semibold text-gray-900">Pubblica Nuovo Progetto</h1>
+            <p className="text-sm text-gray-600 mt-1">Trova i professionisti BIM ideali</p>
           </div>
-        </CardHeader>
-        <CardContent className="p-4 pt-2">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <Tabs defaultValue="info-principali" className="w-full">
@@ -284,9 +279,9 @@ export default function PostProjectPage() {
                 </TabsContent>
               </Tabs>
 
-              <Button type="submit" className="w-full md:w-auto mt-6" size="sm" disabled={authLoading || form.formState.isSubmitting}>
-                <Save className="mr-2 h-4 w-4" />
-                {form.formState.isSubmitting ? 'Pubblicazione in corso...' : 'Pubblica Progetto'}
+              <Button type="submit" className="w-full md:w-auto mt-3 bg-[#008080] hover:bg-[#006666]" size="default" disabled={authLoading || form.formState.isSubmitting}>
+                <Save className="mr-2 h-5 w-5" />
+                {form.formState.isSubmitting ? 'Pubblicazione...' : 'Pubblica Progetto'}
               </Button>
             </form>
           </Form>

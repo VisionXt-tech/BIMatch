@@ -312,22 +312,23 @@ export default function CompanyCandidatesPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-1/4 mb-2" />
-        <Skeleton className="h-6 w-1/2 mb-6" />
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-6 w-3/4" />
-          </CardHeader>
-          <CardContent>
+      <div className="space-y-4 w-full max-w-7xl mx-auto px-4">
+        <Card className="border border-gray-200 bg-white">
+          <CardContent className="p-8">
+            <Skeleton className="h-8 w-3/4" />
+            <Skeleton className="h-4 w-1/2 mt-4" />
+          </CardContent>
+        </Card>
+        <Card className="border border-gray-200 bg-white">
+          <CardContent className="p-8">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="flex items-center space-x-4 py-3 border-b">
+              <div key={i} className="flex items-center space-x-4 py-4 border-b border-gray-200 last:border-0">
                 <Skeleton className="h-10 w-10 rounded-full" />
-                <div className="space-y-1 flex-grow">
+                <div className="space-y-2 flex-grow">
                   <Skeleton className="h-4 w-1/2" />
                   <Skeleton className="h-3 w-1/4" />
                 </div>
-                <Skeleton className="h-8 w-24" />
+                <Skeleton className="h-9 w-24" />
               </div>
             ))}
           </CardContent>
@@ -338,25 +339,34 @@ export default function CompanyCandidatesPage() {
 
   if (error) {
     return (
-      <div className="text-center py-8 border-2 border-dashed border-destructive/50 bg-destructive/5 rounded-lg">
-        <WifiOff className="mx-auto h-12 w-12 text-destructive mb-3" />
-        <p className="text-lg font-semibold text-destructive mb-1">Errore di Caricamento</p>
-        <p className="text-muted-foreground text-sm mb-4">{error}</p>
-        <Button variant="outline" onClick={() => router.back()}>
-          <ArrowLeft className="mr-2 h-4 w-4" /> Torna Indietro
-        </Button>
+      <div className="space-y-4 w-full max-w-7xl mx-auto px-4">
+        <Card className="border border-gray-200 bg-white">
+          <CardContent className="p-16 text-center">
+            <WifiOff className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <p className="text-sm font-semibold text-gray-900 mb-2">Errore di Caricamento</p>
+            <p className="text-sm text-gray-600 mb-6">{error}</p>
+            <Button variant="outline" onClick={() => router.back()}>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Torna Indietro
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   if (!project) {
     return (
-      <div className="text-center py-8 border-2 border-dashed border-border rounded-lg">
-        <Info className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
-        <p className="text-lg font-semibold mb-1">Progetto non trovato o non accessibile.</p>
-        <Button variant="outline" onClick={() => router.push(ROUTES.DASHBOARD_COMPANY_PROJECTS)} className="mt-4">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Torna ai Miei Progetti
-        </Button>
+      <div className="space-y-4 w-full max-w-7xl mx-auto px-4">
+        <Card className="border border-gray-200 bg-white">
+          <CardContent className="p-16 text-center">
+            <Info className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <p className="text-sm font-semibold text-gray-900 mb-2">Progetto non trovato</p>
+            <p className="text-sm text-gray-600 mb-6">Progetto non accessibile</p>
+            <Button variant="outline" onClick={() => router.push(ROUTES.DASHBOARD_COMPANY_PROJECTS)}>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Torna ai Miei Progetti
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -407,27 +417,34 @@ export default function CompanyCandidatesPage() {
 
 
   return (
-    <div className="space-y-6">
-      <Button variant="outline" size="sm" onClick={() => router.push(ROUTES.DASHBOARD_COMPANY_PROJECTS)} className="mb-0">
-        <ArrowLeft className="mr-2 h-4 w-4" /> Torna ai Miei Progetti
-      </Button>
-
-      <Card className="shadow-lg">
-        <CardHeader>
-          <div className="flex items-start gap-3">
-            <Briefcase className="h-6 w-6 text-primary mt-1 shrink-0" />
-            <div>
-              <CardTitle className="text-xl font-bold">Candidati per: {project.title}</CardTitle>
-              <CardDescription className="text-sm">Gestisci i professionisti che si sono candidati per questo progetto.</CardDescription>
+    <div className="space-y-4 w-full max-w-7xl mx-auto px-4">
+      {/* Header */}
+      <Card className="border border-gray-200 bg-white">
+        <CardContent className="p-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="flex-1">
+              <h1 className="text-lg font-semibold text-gray-900">
+                Candidati: {project.title}
+              </h1>
+              <p className="text-sm text-gray-600 mt-1">
+                Gestisci i professionisti candidati
+              </p>
             </div>
+            <Button variant="outline" size="lg" onClick={() => router.push(ROUTES.DASHBOARD_COMPANY_PROJECTS)}>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Torna ai Progetti
+            </Button>
           </div>
-        </CardHeader>
-        <CardContent>
+        </CardContent>
+      </Card>
+
+      {/* Candidates List Card */}
+      <Card className="border border-gray-200 bg-white">
+        <CardContent className="p-8">
           {applications.length === 0 ? (
-            <div className="text-center py-10 border-2 border-dashed border-border rounded-lg">
-                <Info className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
-                <p className="text-md font-semibold">Nessuna candidatura ricevuta.</p>
-                <p className="text-sm text-muted-foreground">Non ci sono ancora candidature per questo progetto.</p>
+            <div className="text-center py-16">
+              <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <p className="text-sm font-semibold text-gray-900 mb-2">Nessuna candidatura</p>
+              <p className="text-sm text-gray-600">Nessun professionista ha ancora candidato per questo progetto</p>
             </div>
           ) : (
             <div className="overflow-x-auto">

@@ -237,18 +237,26 @@ export default function CompanyProfilePage() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <Card className="shadow-xl">
-        <CardHeader className="p-6 border-b">
-          <div className="flex items-center space-x-4">
-            <Building className="h-8 w-8 text-primary" />
-            <div>
-              <CardTitle className="text-2xl font-bold">Profilo Aziendale</CardTitle>
-              <CardDescription className="text-sm text-muted-foreground">Gestisci le informazioni della tua azienda per attrarre i migliori talenti BIM.</CardDescription>
+    <div className="space-y-4 w-full max-w-7xl mx-auto px-4">
+      {/* Header */}
+      <Card className="border border-gray-200 bg-white">
+        <CardContent className="p-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="flex-1">
+              <h1 className="text-lg font-semibold text-gray-900">
+                Profilo Aziendale
+              </h1>
+              <p className="text-sm text-gray-600 mt-1">
+                Gestisci le informazioni della tua azienda
+              </p>
             </div>
           </div>
-        </CardHeader>
-        <CardContent className="p-6">
+        </CardContent>
+      </Card>
+
+      {/* Main Form Card */}
+      <Card className="border border-gray-200 bg-white">
+        <CardContent className="p-8">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <Tabs defaultValue="base-info" className="w-full">
@@ -349,7 +357,7 @@ export default function CompanyProfilePage() {
                 </TabsContent>
               </Tabs>
 
-              <Button type="submit" className="w-full md:w-auto mt-6" size="lg" disabled={authLoading || form.formState.isSubmitting || isUploading}>
+              <Button type="submit" className="w-full md:w-auto mt-3 bg-[#008080] hover:bg-[#006666]" size="default" disabled={authLoading || form.formState.isSubmitting || isUploading}>
                 <Save className="mr-2 h-5 w-5" />
                  {isUploading ? `Caricamento Logo... ${uploadProgress !== null ? Math.round(uploadProgress) + '%' : ''}` : (form.formState.isSubmitting ? 'Salvataggio Profilo...' : 'Salva Profilo Aziendale')}
               </Button>

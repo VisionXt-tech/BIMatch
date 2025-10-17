@@ -2,17 +2,22 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ROUTES } from '@/constants';
-import { Building, Briefcase, Users, FolderPlus, Edit2, WifiOff, Loader2, Bell, Star } from 'lucide-react';
+import { Briefcase, Users, FolderPlus, Edit2, WifiOff, Loader2, Bell, Star, TrendingUp, BarChart3 } from 'lucide-react';
 import { useState, useEffect, useCallback, memo } from 'react';
 import { useFirebase } from '@/contexts/FirebaseContext';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, Timestamp, orderBy, limit } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
 import { useCountAnimation } from '@/hooks/useCountAnimation';
+import { ApplicationsTimelineChart } from '@/components/charts/ApplicationsTimelineChart';
+import { TopSkillsChart } from '@/components/charts/TopSkillsChart';
+import { Badge } from '@/components/ui/badge';
+import { format, subWeeks, startOfWeek, endOfWeek, eachWeekOfInterval, isWithinInterval } from 'date-fns';
+import { it } from 'date-fns/locale';
+import type { Project } from '@/types/project';
 
 function CompanyDashboardPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
@@ -24,6 +29,12 @@ function CompanyDashboardPage() {
   const [acceptedMatchesCount, setAcceptedMatchesCount] = useState<number | null>(null);
   const [loadingCounts, setLoadingCounts] = useState(true);
   const [errorCounts, setErrorCounts] = useState<string | null>(null);
+
+  // Analytics data
+  const [timelineData, setTimelineData] = useState<Array<{ date: string; count: number }>>([]);
+  const [topSkillsData, setTopSkillsData] = useState<Array<{ name: string; count: number }>>([]);
+  const [recentProjects, setRecentProjects] = useState<Project[]>([]);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(true);
 
   const fetchDashboardCounts = useCallback(async () => {
     if (authLoading || !user || !db || userProfile?.role !== 'company') {
@@ -88,6 +99,111 @@ function CompanyDashboardPage() {
     fetchDashboardCounts();
   }, [fetchDashboardCounts]);
 
+  // Fetch analytics data
+  const fetchAnalytics = useCallback(async () => {
+    if (authLoading || !user || !db || userProfile?.role !== 'company') {
+      setLoadingAnalytics(false);
+      return;
+    }
+
+    setLoadingAnalytics(true);
+    try {
+      // Fetch applications for timeline (last 8 weeks)
+      const now = new Date();
+      const weeksAgo8 = subWeeks(now, 7);
+
+      const weeks = eachWeekOfInterval({
+        start: weeksAgo8,
+        end: now
+      }, { weekStartsOn: 1 }); // Monday as start of week
+
+      const applicationsRef = collection(db, 'projectApplications');
+      const qApplications = query(
+        applicationsRef,
+        where('companyId', '==', user.uid)
+      );
+      const applicationsSnapshot = await getDocs(qApplications);
+
+      // Group applications by week
+      const applicationsByWeek = new Map<string, { count: number; start: Date; end: Date }>();
+      weeks.forEach(weekStart => {
+        const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
+        const weekLabel = `${format(weekStart, 'dd', { locale: it })}-${format(weekEnd, 'dd MMM', { locale: it })}`;
+        applicationsByWeek.set(weekLabel, { count: 0, start: weekStart, end: weekEnd });
+      });
+
+      applicationsSnapshot.forEach(doc => {
+        const appData = doc.data();
+        if (appData.applicationDate) {
+          const appDate = (appData.applicationDate as Timestamp).toDate();
+
+          // Find which week this application belongs to
+          applicationsByWeek.forEach((weekData, weekLabel) => {
+            if (isWithinInterval(appDate, { start: weekData.start, end: weekData.end })) {
+              weekData.count++;
+            }
+          });
+        }
+      });
+
+      setTimelineData(
+        Array.from(applicationsByWeek.entries()).map(([date, data]) => ({
+          date,
+          count: data.count,
+        }))
+      );
+
+      // Fetch projects to analyze top skills
+      const projectsRef = collection(db, 'projects');
+      const qProjects = query(
+        projectsRef,
+        where('companyId', '==', user.uid)
+      );
+      const projectsSnapshot = await getDocs(qProjects);
+
+      const skillsMap = new Map<string, number>();
+      projectsSnapshot.forEach(doc => {
+        const project = doc.data();
+        if (project.requiredSkills && Array.isArray(project.requiredSkills)) {
+          project.requiredSkills.forEach((skill: string) => {
+            skillsMap.set(skill, (skillsMap.get(skill) || 0) + 1);
+          });
+        }
+      });
+
+      // Get top 5 skills
+      const sortedSkills = Array.from(skillsMap.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([name, count]) => ({ name, count }));
+
+      setTopSkillsData(sortedSkills);
+
+      // Fetch recent projects (last 3)
+      const qRecentProjects = query(
+        projectsRef,
+        where('companyId', '==', user.uid),
+        orderBy('postedAt', 'desc'),
+        limit(3)
+      );
+      const recentProjectsSnapshot = await getDocs(qRecentProjects);
+      const projects: Project[] = [];
+      recentProjectsSnapshot.forEach(doc => {
+        projects.push({ id: doc.id, ...doc.data() } as Project);
+      });
+      setRecentProjects(projects);
+
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+    } finally {
+      setLoadingAnalytics(false);
+    }
+  }, [user, db, authLoading, userProfile]);
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
+
   const animatedActiveProjects = useCountAnimation(activeProjectsCount ?? 0);
   const animatedNewCandidates = useCountAnimation(newCandidatesCount ?? 0);
   const animatedAcceptedMatches = useCountAnimation(acceptedMatchesCount ?? 0);
@@ -95,10 +211,18 @@ function CompanyDashboardPage() {
 
   if (authLoading && !userProfile) {
      return (
-      <div className="space-y-3 w-full max-w-7xl mx-auto">
-        <Card className="shadow-lg"><CardHeader className="p-4"><Skeleton className="h-8 w-3/4" /><Skeleton className="h-6 w-1/2 mt-1" /></CardHeader></Card>
-        <Card className="shadow-lg"><CardHeader className="p-4"><Skeleton className="h-7 w-1/3" /></CardHeader><CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">{[...Array(3)].map((_,i) => <Skeleton key={i} className="h-28 w-full" />)}</CardContent></Card>
-        <Card className="shadow-lg"><CardHeader className="p-4"><Skeleton className="h-7 w-1/4" /></CardHeader><CardContent className="p-4"><Skeleton className="h-10 w-1/3" /></CardContent></Card>
+      <div className="p-8 space-y-4 w-full max-w-7xl mx-auto px-4 bg-gray-50">
+        <Card className="border border-gray-200 bg-white">
+          <CardContent className="p-8">
+            <Skeleton className="h-8 w-3/4" />
+            <Skeleton className="h-4 w-1/2 mt-4" />
+          </CardContent>
+        </Card>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {[...Array(5)].map((_, i) => (
+            <Skeleton key={i} className="h-32 w-full" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -110,213 +234,261 @@ function CompanyDashboardPage() {
   const isProfileComplete = userProfile.companyDescription && userProfile.industry;
 
   return (
-    <div className="w-full max-w-7xl mx-auto">
-      <div className="flex flex-col gap-3">
-
-      {/* Header Welcome Card - Compact */}
-      <Card className="shadow-lg bg-gradient-to-r from-primary/5 via-primary/10 to-accent/5 border-primary/20 flex-shrink-0">
-        <CardHeader className="p-2 pb-1">
-          <CardTitle className="text-lg font-bold text-primary break-words">Benvenuta, {userProfile.companyName || userProfile.displayName}!</CardTitle>
-          <CardDescription className="text-xs text-muted-foreground">La tua dashboard BIMatch per gestire progetti e talenti.</CardDescription>
-        </CardHeader>
-         {!isProfileComplete && (
-          <CardContent className="px-3 pt-0 pb-2">
-             <div className="bg-secondary border-l-4 border-primary text-secondary-foreground p-2 rounded-md" role="alert">
-                <p className="font-bold text-xs">Completa il profilo aziendale! <Link href={ROUTES.DASHBOARD_COMPANY_PROFILE} className="font-semibold underline hover:text-primary">Aggiorna ora</Link>.</p>
+    <div className="p-8 space-y-4 w-full max-w-7xl mx-auto px-4 bg-gray-50">
+      {/* Hero Section - Welcome Card */}
+      <Card className="border border-gray-200 bg-white">
+        <CardContent className="p-8">
+          <div className="flex flex-col md:flex-row items-start justify-between gap-8">
+            {/* User Info */}
+            <div className="flex-1 space-y-4">
+              <div>
+                <h1 className="text-lg font-semibold text-gray-900">
+                  {`Ciao, ${userProfile.companyName || userProfile.displayName}`}
+                </h1>
+                <p className="text-sm text-gray-600">Dashboard aziendale BIMatch</p>
+              </div>
             </div>
-          </CardContent>
-        )}
+
+            {/* Action Button */}
+            <div className="flex-shrink-0">
+              <Link href={ROUTES.DASHBOARD_COMPANY_PROFILE}>
+                <Button size="lg" className="gap-2 bg-[#008080] hover:bg-[#006666] text-white">
+                  <Edit2 className="h-4 w-4" />
+                  Modifica Profilo
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </CardContent>
       </Card>
 
-      {/* Main Content Area */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+      {/* Profile Incomplete Alert */}
+      {!isProfileComplete && (
+        <Card className="border border-gray-200 bg-white">
+          <CardContent className="p-8">
+            <div className="flex items-start justify-between gap-8">
+              <div className="flex-1">
+                <p className="font-semibold text-sm text-gray-900">Completa il tuo profilo</p>
+                <p className="text-sm text-gray-600 mt-4">
+                  Aumenta la visibilità aggiungendo informazioni aziendali.
+                </p>
+              </div>
+              <Link href={ROUTES.DASHBOARD_COMPANY_PROFILE}>
+                <Button size="sm" className="bg-[#008080] hover:bg-[#006666] text-white">Completa ora</Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-        {/* Left Column - Activity Cards */}
-        <div className="lg:col-span-2">
-          <Card className="shadow-xl w-full h-full border-2 border-primary/10">
-            <CardHeader className="p-2 bg-gradient-to-r from-primary/5 to-transparent">
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <div className="h-5 w-1 bg-primary rounded-full"></div>
-                  Azioni Rapide
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="p-3">
-            <div className="grid grid-cols-2 gap-2 max-w-md">
-            <div className="animate-fade-in opacity-0 animate-stagger-1">
-            <Button asChild size="sm" className="w-full aspect-square max-h-32 bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl rounded-lg">
-                <Link href={ROUTES.DASHBOARD_COMPANY_POST_PROJECT} className="w-full h-full flex flex-col items-center justify-center gap-1 p-2">
-                    <FolderPlus className="h-5 w-5 text-primary-foreground" />
-                    <span className="text-xs font-medium leading-tight">Nuovo</span>
-                </Link>
-            </Button>
-            </div>
-            <div className="animate-fade-in opacity-0 animate-stagger-2">
-             <Button
-                asChild
-                size="sm"
-                className={cn(
-                    "w-full aspect-square max-h-32 flex flex-col items-center justify-center p-2 text-center text-primary-foreground transition-all duration-300 hover:-translate-y-1 hover:shadow-xl rounded-lg",
-                    loadingCounts ? "bg-secondary hover:bg-secondary/80" :
-                    activeProjectsCount && activeProjectsCount > 0 ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"
-                )}
-            >
-                 <Link href={ROUTES.DASHBOARD_COMPANY_PROJECTS} className="w-full h-full flex flex-col items-center justify-center gap-1">
-                    <Briefcase className="h-5 w-5 text-primary-foreground" />
-                    <span className="text-xs font-medium leading-tight">Progetti</span>
-                    {loadingCounts ? <Loader2 className="h-3 w-3 animate-spin text-primary-foreground/80" /> :
-                        <span className="text-base text-primary-foreground font-bold">{animatedActiveProjects}</span>
-                    }
-                </Link>
-            </Button>
-            </div>
-            <div className="animate-fade-in opacity-0 animate-stagger-3">
-             <Button
-                asChild
-                size="sm"
-                className={cn(
-                    "w-full aspect-square max-h-32 flex flex-col items-center justify-center p-2 text-center text-primary-foreground transition-all duration-300 hover:-translate-y-1 hover:shadow-xl rounded-lg",
-                    loadingCounts ? "bg-secondary hover:bg-secondary/80" :
-                    newCandidatesCount && newCandidatesCount > 0 ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"
-                )}
-            >
-                <Link href={`${ROUTES.DASHBOARD_COMPANY_PROJECTS}?filter=candidates`} className="w-full h-full flex flex-col items-center justify-center gap-1">
-                    <Users className="h-5 w-5 text-primary-foreground" />
-                    <span className="text-xs font-medium leading-tight">Candidati</span>
-                     {loadingCounts ? <Loader2 className="h-3 w-3 animate-spin text-primary-foreground/80" /> :
-                        <span className="text-base text-primary-foreground font-bold">{animatedNewCandidates}</span>
-                    }
-                </Link>
-            </Button>
-            </div>
-            <div className="animate-fade-in opacity-0 animate-stagger-4">
-            <Button
-                asChild
-                size="sm"
-                className={cn(
-                    "w-full aspect-square max-h-32 flex flex-col items-center justify-center p-2 text-center text-primary-foreground transition-all duration-300 hover:-translate-y-1 hover:shadow-xl rounded-lg",
-                    loadingCounts ? "bg-secondary hover:bg-secondary/80" :
-                    (acceptedMatchesCount && acceptedMatchesCount > 0
-                        ? "bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 hover:opacity-90"
-                        : "bg-muted-foreground hover:bg-muted-foreground/80")
-                )}
-            >
-                <Link href={`${ROUTES.DASHBOARD_COMPANY_PROJECTS}?filter=active_collaborations`} className="w-full h-full flex flex-col items-center justify-center gap-1">
-                    <Star className="h-5 w-5 text-primary-foreground" />
-                    <span className="text-xs font-medium leading-tight">BIMatch</span>
-                     {loadingCounts ? <Loader2 className="h-3 w-3 animate-spin text-primary-foreground/80" /> :
-                        <span className="text-base text-primary-foreground font-bold">{animatedAcceptedMatches}</span>
-                    }
-                </Link>
-            </Button>
-            </div>
-            <div className="animate-fade-in opacity-0 animate-stagger-5">
-            <Button
-                asChild
-                size="sm"
-                className={cn(
-                    "w-full aspect-square max-h-32 flex flex-col items-center justify-center p-2 text-center text-primary-foreground transition-all duration-300 hover:-translate-y-1 hover:shadow-xl rounded-lg",
-                    loadingCounts ? "bg-secondary hover:bg-secondary/80" :
-                    unreadCompanyNotificationsCount && unreadCompanyNotificationsCount > 0 ? "bg-orange-500 hover:bg-orange-600" : "bg-muted-foreground hover:bg-muted-foreground/80"
-                )}
-            >
-                <Link href={ROUTES.DASHBOARD_COMPANY_NOTIFICATIONS} className="w-full h-full flex flex-col items-center justify-center gap-1">
-                    <Bell className="h-5 w-5 text-primary-foreground" />
-                    <span className="text-xs font-medium leading-tight">Notifiche</span>
-                     {loadingCounts ? <Loader2 className="h-3 w-3 animate-spin text-primary-foreground/80" /> :
-                        <span className="text-base text-primary-foreground font-bold">{animatedUnreadNotifications}</span>
-                    }
-                </Link>
-            </Button>
-            </div>
-            </div>
-        </CardContent>
+      {/* Error Display */}
+      {errorCounts && (
+        <Card className="border border-gray-200 bg-white">
+          <CardContent className="p-8 flex items-center gap-4">
+            <WifiOff className="h-4 w-4 text-gray-600 flex-shrink-0" />
+            <p className="text-sm text-gray-900 font-medium">{errorCounts}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* Nuovo Progetto */}
+        <Link href={ROUTES.DASHBOARD_COMPANY_POST_PROJECT}>
+          <Card className="border border-gray-200 bg-white hover:border-[#008080] transition-colors cursor-pointer h-full">
+            <CardContent className="p-8">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm text-gray-600 mb-2">Azione Rapida</p>
+                  <div className="flex items-center gap-2">
+                    <FolderPlus className="h-5 w-5 text-[#008080]" />
+                    <h3 className="text-sm font-semibold text-gray-900">Nuovo Progetto</h3>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
           </Card>
-        </div>
+        </Link>
 
-        {/* Right Column - Profile Card */}
-        <div className="lg:col-span-1">
-          <Card className="shadow-xl w-full h-full border-2 border-primary/10 bg-gradient-to-b from-background to-muted/20">
-            <CardHeader className="p-3 bg-gradient-to-r from-primary/5 to-transparent">
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                <div className="h-6 w-1 bg-primary rounded-full"></div>
-                Profilo Aziendale
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 flex flex-col justify-between h-[calc(100%-3.5rem)]">
-              <div className="space-y-3">
-                {/* Avatar */}
-                <div className="flex items-center justify-center pt-2">
-                  <div className="relative">
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center ring-4 ring-primary/20">
-                      <Building className="h-8 w-8 text-primary-foreground" />
-                    </div>
-                    {isProfileComplete && (
-                      <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-1.5 ring-2 ring-background">
-                        <Star className="h-4 w-4 text-white" />
-                      </div>
+        {/* Progetti Attivi */}
+        <Link href={ROUTES.DASHBOARD_COMPANY_PROJECTS}>
+          <Card className="border border-gray-200 bg-white hover:border-[#008080] transition-colors cursor-pointer h-full">
+            <CardContent className="p-8">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm text-gray-600 mb-2">Progetti Attivi</p>
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="h-5 w-5 text-gray-700" />
+                    {loadingCounts ? (
+                      <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                    ) : (
+                      <h3 className="text-2xl font-bold text-gray-900">{animatedActiveProjects}</h3>
                     )}
                   </div>
                 </div>
-
-                {/* Info */}
-                <div className="text-center space-y-2">
-                  <p className="text-lg font-bold break-words">{userProfile.companyName || userProfile.displayName}</p>
-                  <p className="text-xs text-muted-foreground">
-                    <span className={isProfileComplete ? "font-semibold text-green-600" : "font-semibold text-yellow-600"}>{isProfileComplete ? "✓ Profilo Completo" : "⚠ Profilo Incompleto"}</span>
-                  </p>
-                </div>
-
-                {/* Industry */}
-                {userProfile.industry ? (
-                  <div className="space-y-2">
-                    <p className="text-xs font-semibold text-center text-muted-foreground uppercase tracking-wide">Settore</p>
-                    <div className="text-center">
-                      <span className="inline-block text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full font-medium">{userProfile.industry}</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
-                    <p className="text-xs text-yellow-800 dark:text-yellow-200 text-center">Aggiungi il settore aziendale per attirare professionisti</p>
-                  </div>
-                )}
-
-                {/* Company Size */}
-                {userProfile.companySize && (
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground mb-1">Dimensione</p>
-                    <span className="inline-block text-xs bg-accent/30 text-accent-foreground px-3 py-1 rounded-full font-medium">{userProfile.companySize}</span>
-                  </div>
-                )}
-
-                {/* Location */}
-                {(userProfile as any)?.locations && ((userProfile as any).locations || []).length > 0 && (
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground mb-1">Sede</p>
-                    <span className="inline-block text-xs bg-muted text-muted-foreground px-3 py-1 rounded-full">{(userProfile as any).locations[0]}</span>
-                  </div>
-                )}
               </div>
+            </CardContent>
+          </Card>
+        </Link>
 
-              <Link href={ROUTES.DASHBOARD_COMPANY_PROFILE} className="w-full mt-4">
-                <Button variant="default" size="default" className="w-full">
-                  <Edit2 className="mr-2 h-4 w-4" /> Modifica Profilo
-                </Button>
-              </Link>
+        {/* Candidati */}
+        <Link href={`${ROUTES.DASHBOARD_COMPANY_PROJECTS}?filter=candidates`}>
+          <Card className="border border-gray-200 bg-white hover:border-[#008080] transition-colors cursor-pointer h-full">
+            <CardContent className="p-8">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm text-gray-600 mb-2">Nuovi Candidati</p>
+                  <div className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-gray-700" />
+                    {loadingCounts ? (
+                      <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                    ) : (
+                      <h3 className="text-2xl font-bold text-gray-900">{animatedNewCandidates}</h3>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        {/* BIMatch */}
+        <Link href={`${ROUTES.DASHBOARD_COMPANY_PROJECTS}?filter=active_collaborations`}>
+          <Card className="border border-gray-200 bg-white hover:border-[#008080] transition-colors cursor-pointer h-full">
+            <CardContent className="p-8">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm text-gray-600 mb-2">BIMatch</p>
+                  <div className="flex items-center gap-2">
+                    <Star className="h-5 w-5 text-gray-700" />
+                    {loadingCounts ? (
+                      <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                    ) : (
+                      <h3 className="text-2xl font-bold text-gray-900">{animatedAcceptedMatches}</h3>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        {/* Notifiche */}
+        <Link href={ROUTES.DASHBOARD_COMPANY_NOTIFICATIONS}>
+          <Card className="border border-gray-200 bg-white hover:border-[#008080] transition-colors cursor-pointer h-full">
+            <CardContent className="p-8">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm text-gray-600 mb-2">Notifiche</p>
+                  <div className="flex items-center gap-2">
+                    <Bell className="h-5 w-5 text-gray-700" />
+                    {loadingCounts ? (
+                      <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                    ) : (
+                      <h3 className="text-2xl font-bold text-gray-900">{animatedUnreadNotifications}</h3>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
+
+      {/* Analytics Section */}
+      {loadingAnalytics ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Card className="border border-gray-200 bg-white">
+            <CardContent className="p-8">
+              <Skeleton className="h-6 w-1/2 mb-4" />
+              <Skeleton className="h-[380px] w-full" />
+            </CardContent>
+          </Card>
+          <Card className="border border-gray-200 bg-white">
+            <CardContent className="p-8">
+              <Skeleton className="h-6 w-1/2 mb-4" />
+              <Skeleton className="h-[380px] w-full" />
             </CardContent>
           </Card>
         </div>
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Applications Timeline */}
+          {timelineData.length > 0 && (
+            <ApplicationsTimelineChart data={timelineData} title="Candidature Ultime 8 Settimane" />
+          )}
 
-      {/* Error Display - Fixed at bottom */}
-      {errorCounts && (
-        <Card className="shadow-md bg-destructive/10 border-destructive flex-shrink-0">
-            <CardContent className="p-2 text-center text-destructive flex items-center justify-center gap-2">
-                <WifiOff className="h-4 w-4" />
-                <p className="font-semibold text-xs">{errorCounts}</p>
-            </CardContent>
+          {/* Top Skills */}
+          {topSkillsData.length > 0 && (
+            <TopSkillsChart data={topSkillsData} title="Skills Più Richieste" />
+          )}
+        </div>
+      )}
+
+      {/* Recent Projects */}
+      {!loadingAnalytics && recentProjects.length > 0 && (
+        <Card className="border border-gray-200 bg-white">
+          <CardContent className="p-8">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-base font-semibold text-gray-900">Progetti Recenti</h3>
+              <Link href={ROUTES.DASHBOARD_COMPANY_PROJECTS}>
+                <Button variant="outline" size="sm">
+                  Vedi Tutti
+                </Button>
+              </Link>
+            </div>
+            <div className="space-y-4">
+              {recentProjects.map((project) => (
+                <div
+                  key={project.id}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-gray-200 rounded-lg hover:border-[#008080] transition-colors"
+                >
+                  <div className="flex-1">
+                    <Link href={ROUTES.PROJECT_DETAILS(project.id!)}>
+                      <h4 className="text-sm font-semibold text-gray-900 hover:text-[#008080] transition-colors">
+                        {project.title}
+                      </h4>
+                    </Link>
+                    <p className="text-xs text-gray-600 mt-1">
+                      {project.location} • Pubblicato il {project.postedAt ? format((project.postedAt as Timestamp).toDate(), 'dd MMM yyyy', { locale: it }) : 'N/A'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={project.status === 'attivo' ? 'default' : 'secondary'} className="text-xs">
+                      {project.status}
+                    </Badge>
+                    <Link href={ROUTES.PROJECT_DETAILS(project.id!)}>
+                      <Button variant="outline" size="sm">
+                        Dettagli
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
         </Card>
       )}
-      </div>
+
+      {/* Empty State */}
+      {!loadingAnalytics && recentProjects.length === 0 && topSkillsData.length === 0 && (
+        <Card className="border border-gray-200 bg-white">
+          <CardContent className="p-16 text-center">
+            <BarChart3 className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <h3 className="text-base font-semibold text-gray-900 mb-2">Nessun dato disponibile</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              Pubblica il tuo primo progetto per visualizzare statistiche e analisi.
+            </p>
+            <Link href={ROUTES.DASHBOARD_COMPANY_POST_PROJECT}>
+              <Button className="bg-[#008080] hover:bg-[#006666]">
+                <FolderPlus className="mr-2 h-4 w-4" />
+                Pubblica Progetto
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
+
     </div>
   );
 }

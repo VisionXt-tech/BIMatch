@@ -1,0 +1,119 @@
+# Compiled output
+/dist
+/tmp
+/out-tsc
+/bazel-out
+
+# Node - Manteniamo node_modules root ma lasciamo che Firebase gestisca quelli delle functions
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+# Miscellaneous
+/.angular/cache
+.sass-cache/
+/connect.lock
+/coverage
+/libpeerconnection.log
+testem.log
+/typings
+
+# System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Firebase - Non deployare la cache locale
+.firebaserc
+
+# Environment - MAI deployare secrets
+.env
+.env.local
+.env*.local
+.env.production.local
+
+# Next.js - Cache e build locale
+.next/
+out/
+
+# Build locale
+build/
+dist/
+
+# Logs
+*.log
+logs/
+
+# Testing
+coverage/
+.nyc_output/
+__tests__/
+*.test.js
+*.test.ts
+*.test.jsx
+*.test.tsx
+*.spec.js
+*.spec.ts
+
+# Miscellaneous development files
+*.swp
+*.swo
+*~
+.cache/
+
+# Source files - Non necessari in produzione (già compilati)
+src/
+scripts/
+public/
+*.md
+!README.md
+
+# Config files - Non necessari in produzione
+tsconfig.json
+tsconfig.*.json
+next.config.ts
+tailwind.config.ts
+postcss.config.mjs
+components.json
+eslint.config.mjs
+.prettierrc
+.prettierignore
+.editorconfig
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Package managers
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Large dependencies che non servono in produzione
+node_modules/@types/
+node_modules/typescript/
+node_modules/eslint/
+node_modules/@typescript-eslint/
+node_modules/prettier/
+node_modules/tailwindcss/
+node_modules/autoprefixer/
+node_modules/postcss/

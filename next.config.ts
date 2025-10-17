@@ -9,7 +9,8 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
 
-  // Output configuration
+  // Output configuration - Standalone per ridurre dimensione deployment
+  output: 'standalone',
   outputFileTracingRoot: 'c:\\Users\\lucar\\Projects\\BIM\\BIMatch',
 
   // Production optimizations

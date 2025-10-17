@@ -30,7 +30,18 @@
       "Bash(then echo \"✓ .env.local exists\")",
       "Bash(else echo \"✗ .env.local not found\")",
       "Bash(fi)",
-      "Bash(firebase functions:log:*)"
+      "Bash(firebase functions:log:*)",
+      "Bash(rm:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(Get-Process)",
+      "Bash(Where-Object {$_rocessName -eq \"node\"})",
+      "Bash(Select-Object Id,ProcessName,StartTime)",
+      "Bash(Format-Table)",
+      "Bash(timeout 15 bash -c 'until curl -s http://localhost:9002 > /dev/null; do sleep 1; done && echo \"\"Server ready\"\"')",
+      "Bash(timeout 20 bash -c 'until curl -s http://localhost:9002 > /dev/null; do sleep 1; done && echo \"\"Server ready\"\"')",
+      "Bash(cmd.exe //c \"taskkill //PID 12164 //F\")",
+      "Bash(cmd.exe /c \"taskkill /PID 12164 /F\")",
+      "Bash(powershell -Command \"Stop-Process -Id 12164 -Force\")"
     ],
     "deny": [],
     "ask": []

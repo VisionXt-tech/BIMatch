@@ -225,23 +225,26 @@ export default function AdminMatchesPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
+    <div className="space-y-4 w-full max-w-7xl mx-auto px-4 bg-gray-50">
+      <Card className="border border-gray-200 bg-white">
+        <CardContent className="p-8">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <HandHeart className="h-6 w-6 text-primary" />
+            <div className="flex items-center gap-4">
+              <HandHeart className="h-6 w-6 text-[#008080]" />
               <div>
-                <CardTitle>Gestione Match e Candidature</CardTitle>
-                <CardDescription>Visualizza e gestisci tutte le candidature tra professionisti e aziende.</CardDescription>
+                <h1 className="text-lg font-semibold text-gray-900">Gestione Match e Candidature</h1>
+                <p className="text-sm text-gray-600">Visualizza e gestisci tutte le candidature tra professionisti e aziende.</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
               <span>Totale: {filteredApplications.length}</span>
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
+        </CardContent>
+      </Card>
+
+      <Card className="border border-gray-200 bg-white">
+        <CardContent className="p-8">
           {/* Filters */}
           <div className="flex gap-4 mb-6">
             <div className="flex-1">

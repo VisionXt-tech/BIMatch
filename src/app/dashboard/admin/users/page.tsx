@@ -100,23 +100,26 @@ export default function AdminUsersPage() {
   );
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
+    <div className="space-y-4 w-full max-w-7xl mx-auto px-4 bg-gray-50">
+      <Card className="border border-gray-200 bg-white">
+        <CardContent className="p-8">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Users className="h-6 w-6 text-primary" />
+            <div className="flex items-center gap-4">
+              <Users className="h-6 w-6 text-[#008080]" />
               <div>
-                <CardTitle>Gestione Utenti</CardTitle>
-                <CardDescription>Visualizza e gestisci tutti gli utenti registrati sulla piattaforma.</CardDescription>
+                <h1 className="text-lg font-semibold text-gray-900">Gestione Utenti</h1>
+                <p className="text-sm text-gray-600">Visualizza e gestisci tutti gli utenti registrati sulla piattaforma.</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
               <span>Totale: {filteredUsers.length}</span>
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
+        </CardContent>
+      </Card>
+
+      <Card className="border border-gray-200 bg-white">
+        <CardContent className="p-8">
           {/* Filters */}
           <div className="flex gap-4 mb-6">
             <div className="flex-1">

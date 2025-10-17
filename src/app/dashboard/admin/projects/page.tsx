@@ -65,18 +65,21 @@ export default function AdminProjectsPage() {
   );
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <Briefcase className="h-6 w-6 text-primary" />
+    <div className="space-y-4 w-full max-w-7xl mx-auto px-4 bg-gray-50">
+      <Card className="border border-gray-200 bg-white">
+        <CardContent className="p-8">
+          <div className="flex items-center gap-4">
+            <Briefcase className="h-6 w-6 text-[#008080]" />
             <div>
-              <CardTitle>Gestione Progetti</CardTitle>
-              <CardDescription>Visualizza e gestisci tutti i progetti pubblicati sulla piattaforma.</CardDescription>
+              <h1 className="text-lg font-semibold text-gray-900">Gestione Progetti</h1>
+              <p className="text-sm text-gray-600">Visualizza e gestisci tutti i progetti pubblicati sulla piattaforma.</p>
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
+        </CardContent>
+      </Card>
+
+      <Card className="border border-gray-200 bg-white">
+        <CardContent className="p-8">
           <Table>
             <TableHeader>
               <TableRow>

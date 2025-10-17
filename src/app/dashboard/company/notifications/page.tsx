@@ -250,11 +250,13 @@ export default function CompanyNotificationsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <CardTitle className="text-2xl font-bold">
-             {selectedProjectGroupKey ? `Notifiche per: ${selectedProjectGroupKey}` : "Notifiche Aziendali"}
-        </CardTitle>
+    <div className="space-y-4 w-full max-w-7xl mx-auto px-4">
+      <Card className="border border-gray-200 bg-white">
+      <CardHeader className="p-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <CardTitle className="text-lg font-semibold text-gray-900">
+            {selectedProjectGroupKey ? `Notifiche: ${selectedProjectGroupKey}` : "Notifiche"}
+          </CardTitle>
          <div className="flex gap-2 items-center self-start sm:self-center">
             {selectedProjectGroupKey && (
                 <Button variant="outline" size="sm" onClick={() => setSelectedProjectGroupKey(null)}>
@@ -268,16 +270,15 @@ export default function CompanyNotificationsPage() {
                 </Button>
             )}
         </div>
-      </div>
-
+        </div>
+      </CardHeader>
+      <CardContent className="pt-6">
       {groupedNotifications.size === 0 ? (
-        <Card className="shadow-sm">
-          <CardContent className="py-10 text-center">
+          <div className="py-10 text-center">
             <Info className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-lg font-semibold">Nessuna notifica.</p>
             <p className="text-sm text-muted-foreground">Non hai ancora ricevuto notifiche.</p>
-          </CardContent>
-        </Card>
+          </div>
       ) : !selectedProjectGroupKey ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from(groupedNotifications.entries()).map(([groupKey, notificationsInGroup]) => (
@@ -343,9 +344,11 @@ export default function CompanyNotificationsPage() {
                 </CardContent>
             </Card>
          ) : (
-             <Card className="shadow-sm"><CardContent className="py-10 text-center"><Info className="mx-auto h-12 w-12 text-muted-foreground mb-4" /><p className="text-lg font-semibold">Nessuna notifica per questo progetto.</p></CardContent></Card>
+             <div className="py-10 text-center"><Info className="mx-auto h-12 w-12 text-muted-foreground mb-4" /><p className="text-lg font-semibold">Nessuna notifica per questo progetto.</p></div>
          )
       )}
+      </CardContent>
+    </Card>
     </div>
   );
 }
