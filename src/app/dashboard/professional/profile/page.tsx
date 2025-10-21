@@ -55,6 +55,14 @@ const professionalProfileSchema = z.object({
   uniSelfCertified: z.boolean().optional(),
   otherCertificationsUrl: z.string().url({ message: 'URL non valido.' }).optional().or(z.literal('')),
   otherCertificationsSelfCertified: z.boolean().optional(),
+  // Fiscal data fields (required for AI contract generation)
+  fiscalCode: z.string().regex(/^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$/, { message: 'Codice Fiscale non valido (16 caratteri)' }).optional().or(z.literal('')),
+  partitaIva: z.string().regex(/^\d{11}$/, { message: 'P.IVA deve contenere 11 cifre' }).optional().or(z.literal('')),
+  taxRegime: z.enum(['ordinario', 'forfettario', 'semplificato']).optional().or(z.literal('') as any),
+  fiscalAddress: z.string().max(200, "L'indirizzo non può superare i 200 caratteri.").optional().or(z.literal('')),
+  fiscalCity: z.string().max(100).optional().or(z.literal('')),
+  fiscalCAP: z.string().regex(/^\d{5}$/, { message: 'CAP deve contenere 5 cifre' }).optional().or(z.literal('')),
+  fiscalProvince: z.string().max(2).optional().or(z.literal('')),
 });
 
 type ProfessionalProfileFormData = z.infer<typeof professionalProfileSchema>;
@@ -82,6 +90,14 @@ const mapProfileToFormData = (profile?: FullProfessionalProfile | null): Profess
     uniSelfCertified: p.uniSelfCertified || false,
     otherCertificationsUrl: p.otherCertificationsUrl || '',
     otherCertificationsSelfCertified: p.otherCertificationsSelfCertified || false,
+    // Fiscal data
+    fiscalCode: p.fiscalCode || '',
+    partitaIva: p.partitaIva || '',
+    taxRegime: p.taxRegime || '' as any,
+    fiscalAddress: p.fiscalAddress || '',
+    fiscalCity: p.fiscalCity || '',
+    fiscalCAP: p.fiscalCAP || '',
+    fiscalProvince: p.fiscalProvince || '',
   };
 };
 
@@ -593,8 +609,9 @@ export default function ProfessionalProfilePage() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
                <Tabs defaultValue="personal-info" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-3 h-auto">
+                <TabsList className="grid w-full grid-cols-4 mb-3 h-auto">
                   <TabsTrigger value="personal-info" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Info Personali</TabsTrigger>
+                  <TabsTrigger value="fiscal-data" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Dati Fiscali</TabsTrigger>
                   <TabsTrigger value="skills-details" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Competenze</TabsTrigger>
                   <TabsTrigger value="certifications" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">CV e Certificazioni</TabsTrigger>
                 </TabsList>
@@ -768,6 +785,96 @@ export default function ProfessionalProfilePage() {
                       options={MONTHLY_RATE_OPTIONS}
                       placeholder="Seleziona la fascia retributiva"
                     />
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="fiscal-data" className="space-y-6">
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <p className="text-sm text-yellow-800 font-medium">
+                      🔒 Dati Fiscali e Contrattuali
+                    </p>
+                    <p className="text-xs text-yellow-700 mt-2">
+                      Questi dati sono richiesti per la generazione automatica dei contratti. Sono visibili solo a te e agli amministratori, mai pubblici sul marketplace.
+                    </p>
+                  </div>
+
+                  {/* Codice Fiscale e P.IVA */}
+                  <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-900">Dati Fiscali</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <FormInput
+                        control={form.control}
+                        name="fiscalCode"
+                        label="Codice Fiscale"
+                        placeholder="RSSMRA80A01H501Z"
+                        description="16 caratteri (es. RSSMRA80A01H501Z)"
+                      />
+                      <FormInput
+                        control={form.control}
+                        name="partitaIva"
+                        label="Partita IVA"
+                        placeholder="12345678901"
+                        description="11 cifre"
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="taxRegime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Regime Fiscale</FormLabel>
+                          <FormControl>
+                            <select
+                              className="w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:border-primary"
+                              value={field.value || ''}
+                              onChange={e => field.onChange(e.target.value)}
+                            >
+                              <option value="">-- Seleziona regime fiscale --</option>
+                              <option value="forfettario">Forfettario</option>
+                              <option value="ordinario">Ordinario</option>
+                              <option value="semplificato">Semplificato</option>
+                            </select>
+                          </FormControl>
+                          <FormDescription className="text-xs">Regime fiscale applicato alla tua attività</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Indirizzo Fiscale */}
+                  <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-900">Indirizzo Sede Fiscale</h3>
+                    <FormInput
+                      control={form.control}
+                      name="fiscalAddress"
+                      label="Indirizzo Completo"
+                      placeholder="Via Roma 1"
+                      description="Indirizzo della sede fiscale/residenza"
+                    />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <FormInput
+                        control={form.control}
+                        name="fiscalCity"
+                        label="Città"
+                        placeholder="Milano"
+                      />
+                      <FormInput
+                        control={form.control}
+                        name="fiscalCAP"
+                        label="CAP"
+                        placeholder="20100"
+                        description="5 cifre"
+                      />
+                      <FormInput
+                        control={form.control}
+                        name="fiscalProvince"
+                        label="Provincia"
+                        placeholder="MI"
+                        description="Sigla provincia (2 lettere)"
+                      />
+                    </div>
                   </div>
                 </TabsContent>
 

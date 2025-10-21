@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm start` - Start production server
 - `npm run lint` - Run ESLint
 - `npm run typecheck` - Run TypeScript compiler check without emitting files
-- `npm run genkit:dev` - Start Genkit development server
+- `npm run genkit:dev` - Start Genkit development server (required for AI contract generation)
 - `npm run genkit:watch` - Start Genkit with watch mode
 
 ## Project Architecture
@@ -51,6 +51,14 @@ The app follows a role-based architecture with three user types:
   - `gdpr/` - Privacy utilities
 - `src/constants/` - Application constants (routes, roles, BIM skills, software options)
 - `src/hooks/` - Custom React hooks (useRateLimit, useSessionTimeout)
+- `src/ai/` - Genkit AI flows and prompts
+  - `genkit.ts` - Genkit configuration with Gemini 2.0 Flash
+  - `flows/` - AI flows (contract generation)
+  - `prompts/` - Prompt engineering templates
+- `docs/` - Documentation files
+  - `CONTRACTS_AI_GUIDE.md` - Complete guide for AI contract generation
+  - `CONTRACTS_QUICK_START.md` - Quick start tutorial
+  - `CONTRACTS_AI_IMPLEMENTATION_SUMMARY.md` - Technical implementation summary
 - `scripts/` - Utility and deployment scripts
   - `deployment/` - Deployment automation (deploy.ps1, use-node-20.ps1)
   - `utils/` - Utility scripts (cleanup-user-data.js, find-user-uid.js, security-test-script.js)
@@ -170,3 +178,13 @@ User profiles extend a base interface with role-specific fields:
 - Users redirected to `/verify-email` if email not verified
 - Resend email available after 60-second cooldown
 - Check Firebase Console > Authentication > Templates for email customization
+
+**AI Contract Generation**:
+- Admin-only feature accessible at `/dashboard/admin/contracts`
+- Requires applications in interview stage
+- Genkit must be running for development: `npm run genkit:dev`
+- See `docs/CONTRACTS_AI_GUIDE.md` for complete documentation
+- Common issues:
+  - "Application not found": Check Firestore path `jobs/{jobId}/applications/{applicationId}`
+  - "Must be in interview stage": Update application status to `colloquio_accettato_prof`
+  - Timeout: Check Gemini API quota in Google Cloud Console

@@ -17,22 +17,22 @@ const Footer = () => {
                        pathname.includes('/candidates') ||
                        pathname.includes('/edit');
     if (isHomePage) {
-      return "backdrop-blur-md text-white/80 py-8 homepage-transparent";
+      return "backdrop-blur-md text-white/80 py-4 sm:py-6 md:py-8 homepage-transparent";
     }
     if (isDashboard && !needsScroll) {
-      return "bg-gray-50 text-gray-600 py-4";
+      return "bg-gray-50 text-gray-600 py-3 sm:py-4";
     }
     if (isDashboard && needsScroll) {
-      return "bg-gray-50 text-gray-600 py-4 mt-4";
+      return "bg-gray-50 text-gray-600 py-3 sm:py-4 mt-3 sm:mt-4";
     }
-    return "bg-gray-50 text-gray-600 py-8";
+    return "bg-gray-50 text-gray-600 py-4 sm:py-6 md:py-8";
   };
 
   const getLinkClasses = () => {
     if (isHomePage) {
-      return "text-sm text-white/80";
+      return "text-xs sm:text-sm text-white/80 hover:text-white transition-colors";
     }
-    return "text-sm text-gray-600";
+    return "text-xs sm:text-sm text-gray-600 hover:text-gray-900 transition-colors";
   };
 
   const customFooterStyle = isHomePage ? {
@@ -43,15 +43,15 @@ const Footer = () => {
   } as React.CSSProperties : undefined;
 
   return (
-    <footer 
+    <footer
       className={getFooterClasses()}
       style={customFooterStyle}
     >
-      <div className="container mx-auto px-4 text-center">
-        <p className="text-sm">
+      <div className="container mx-auto px-3 sm:px-4 text-center">
+        <p className="text-xs sm:text-sm">
           &copy; 2025 VisionXt. Tutti i diritti riservati.
         </p>
-        <div className="mt-2 space-x-4">
+        <div className="mt-2 flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-4 gap-y-1">
           <Link href={ROUTES.PRIVACY_POLICY} className={getLinkClasses()}>
             Privacy Policy
           </Link>

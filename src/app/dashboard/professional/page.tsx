@@ -158,24 +158,24 @@ export default function ProfessionalDashboardPage() {
 
   if (authLoading) {
     return (
-  <div className="py-4 space-y-4 w-full max-w-7xl mx-auto px-4 bg-gray-50">
+  <div className="p-4 sm:p-6 md:p-8 space-y-4 w-full max-w-7xl mx-auto px-4 bg-gray-50">
         <Card className="border border-gray-200 bg-white">
-          <CardContent className="p-8">
-            <Skeleton className="h-8 w-3/4" />
-            <Skeleton className="h-4 w-1/2 mt-4" />
+          <CardContent className="p-4 sm:p-6 md:p-8">
+            <Skeleton className="h-6 sm:h-8 w-3/4" />
+            <Skeleton className="h-3 sm:h-4 w-1/2 mt-3 sm:mt-4" />
           </CardContent>
         </Card>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-32 w-full" />
+            <Skeleton key={i} className="h-28 sm:h-32 w-full" />
           ))}
         </div>
         <Card className="border border-gray-200 bg-white">
-          <CardHeader className="p-8">
-            <Skeleton className="h-8 w-1/4" />
+          <CardHeader className="p-4 sm:p-6 md:p-8">
+            <Skeleton className="h-6 sm:h-8 w-1/4" />
           </CardHeader>
-          <CardContent className="p-8">
-            <Skeleton className="h-8 w-1/3" />
+          <CardContent className="p-4 sm:p-6 md:p-8">
+            <Skeleton className="h-6 sm:h-8 w-1/3" />
           </CardContent>
         </Card>
       </div>
@@ -183,25 +183,25 @@ export default function ProfessionalDashboardPage() {
   }
 
   return (
-  <div className="p-8 space-y-4 w-full max-w-7xl mx-auto px-4 bg-gray-50">
+  <div className="p-4 sm:p-6 md:p-8 space-y-4 w-full max-w-7xl mx-auto px-4 bg-gray-50">
       {/* Hero Section - Welcome Card */}
       <Card className="border border-gray-200 bg-white">
-  <CardContent className="p-8">
-          <div className="flex flex-col md:flex-row items-start justify-between gap-8">
+  <CardContent className="p-4 sm:p-6 md:p-8">
+          <div className="flex flex-col md:flex-row items-start justify-between gap-4 sm:gap-6 md:gap-8">
             {/* User Info */}
-            <div className="flex-1 space-y-4">
+            <div className="flex-1 space-y-2 sm:space-y-3 md:space-y-4">
               <div>
-                <h1 className="text-lg font-semibold text-gray-900">
+                <h1 className="text-base sm:text-lg font-semibold text-gray-900">
                   {`Ciao, ${profile.displayName}`}
                 </h1>
-                <p className="text-sm text-gray-600">Completamento profilo: {strengthData.totalStrength}%</p>
+                <p className="text-xs sm:text-sm text-gray-600">Completamento profilo: {strengthData.totalStrength}%</p>
               </div>
             </div>
 
             {/* Action Button */}
-            <div className="flex-shrink-0">
-              <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROFILE}>
-                <Button size="lg" className="gap-2 bg-[#008080] hover:bg-[#006666] text-white">
+            <div className="flex-shrink-0 w-full md:w-auto">
+              <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROFILE} className="block w-full md:w-auto">
+                <Button size="lg" className="gap-2 bg-[#008080] hover:bg-[#006666] text-white w-full md:w-auto">
                   <Edit2 className="h-4 w-4" />
                   Modifica Profilo
                 </Button>
@@ -214,16 +214,16 @@ export default function ProfessionalDashboardPage() {
       {/* Profile Incomplete Alert */}
       {!isComplete && (
         <Card className="border border-gray-200 bg-white">
-          <CardContent className="p-8">
-            <div className="flex items-start justify-between gap-8">
+          <CardContent className="p-4 sm:p-6 md:p-8">
+            <div className="flex flex-col sm:flex-row items-start justify-between gap-4 sm:gap-6 md:gap-8">
               <div className="flex-1">
-                <p className="font-semibold text-sm text-gray-900">Completa il tuo profilo</p>
-                <p className="text-sm text-gray-600 mt-4">
+                <p className="font-semibold text-xs sm:text-sm text-gray-900">Completa il tuo profilo</p>
+                <p className="text-xs sm:text-sm text-gray-600 mt-2 sm:mt-3 md:mt-4">
                   Aumenta la visibilità aggiungendo competenze.
                 </p>
               </div>
-              <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROFILE}>
-                <Button size="sm" className="bg-[#008080] hover:bg-[#006666] text-white">Completa ora</Button>
+              <Link href={ROUTES.DASHBOARD_PROFESSIONAL_PROFILE} className="w-full sm:w-auto">
+                <Button size="sm" className="bg-[#008080] hover:bg-[#006666] text-white w-full sm:w-auto">Completa ora</Button>
               </Link>
             </div>
           </CardContent>
@@ -233,15 +233,15 @@ export default function ProfessionalDashboardPage() {
       {/* Error Display */}
       {errorCounts && (
         <Card className="border border-gray-200 bg-white">
-          <CardContent className="p-8 flex items-center gap-4">
+          <CardContent className="p-4 sm:p-6 md:p-8 flex items-center gap-3 sm:gap-4">
             <WifiOff className="h-4 w-4 text-gray-600 flex-shrink-0" />
-            <p className="text-sm text-gray-900 font-medium">{errorCounts}</p>
+            <p className="text-xs sm:text-sm text-gray-900 font-medium">{errorCounts}</p>
           </CardContent>
         </Card>
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Progetti Disponibili */}
         <DashboardStat
           icon={Search}
@@ -281,7 +281,7 @@ export default function ProfessionalDashboardPage() {
 
       {/* Skills Charts */}
       {(profile.bimSkills || profile.softwareProficiency) && (
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 sm:gap-4">
           <div className="lg:col-span-2">
             <SkillsChart
               title="Competenze BIM"
@@ -302,8 +302,8 @@ export default function ProfessionalDashboardPage() {
       {/* Empty State for Skills */}
       {!profile.bimSkills?.length && !profile.softwareProficiency?.length && (
         <Card className="border border-gray-200 bg-white">
-          <CardContent className="p-8 text-center">
-            <p className="text-sm text-gray-600">
+          <CardContent className="p-6 sm:p-8 text-center">
+            <p className="text-xs sm:text-sm text-gray-600">
               Aggiungi le tue competenze BIM e software per visualizzare le statistiche.
             </p>
           </CardContent>

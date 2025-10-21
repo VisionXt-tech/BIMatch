@@ -53,9 +53,9 @@ export function TopSkillsChart({ data, title = "Skills Più Richieste" }: TopSki
     if (active && payload && payload.length) {
       const fullLabel = getSkillLabel(payload[0].payload.name);
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded shadow-lg max-w-xs">
-          <p className="font-semibold text-sm break-words">{fullLabel}</p>
-          <p className="text-[#008080] text-sm">{`Richiesta in ${payload[0].value} ${payload[0].value === 1 ? 'progetto' : 'progetti'}`}</p>
+        <div className="bg-white p-2 sm:p-3 border border-gray-200 rounded shadow-lg max-w-xs">
+          <p className="font-semibold text-xs sm:text-sm break-words">{fullLabel}</p>
+          <p className="text-[#008080] text-xs sm:text-sm">{`Richiesta in ${payload[0].value} ${payload[0].value === 1 ? 'progetto' : 'progetti'}`}</p>
         </div>
       );
     }
@@ -64,19 +64,19 @@ export function TopSkillsChart({ data, title = "Skills Più Richieste" }: TopSki
 
   return (
     <Card className="border border-gray-200 bg-white">
-      <CardHeader className="p-6 pb-3">
-        <CardTitle className="text-base font-semibold text-gray-900">{title}</CardTitle>
+      <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
+        <CardTitle className="text-sm sm:text-base font-semibold text-gray-900">{title}</CardTitle>
       </CardHeader>
-      <CardContent className="p-6 pt-3 pb-8">
-        <div style={{ marginLeft: '-24px', marginRight: '-24px' }}>
-          <ResponsiveContainer width="100%" height={380}>
+      <CardContent className="p-4 sm:p-6 pt-2 sm:pt-3 pb-4 sm:pb-8">
+        <div className="overflow-x-auto -mx-4 sm:mx-0" style={{ marginLeft: 'max(-1rem, -24px)', marginRight: 'max(-1rem, -24px)' }}>
+          <ResponsiveContainer width="100%" height={380} className="min-w-[300px]">
             <BarChart
               data={data}
               layout="vertical"
               margin={{
                 top: 10,
-                right: 70,
-                left: -90,
+                right: 40,
+                left: -70,
                 bottom: 10,
               }}
             >
@@ -85,7 +85,7 @@ export function TopSkillsChart({ data, title = "Skills Più Richieste" }: TopSki
                 type="number"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 12, fill: '#6B7280' }}
+                tick={{ fontSize: 10, fill: '#6B7280' }}
                 allowDecimals={false}
               />
               <YAxis
@@ -94,7 +94,7 @@ export function TopSkillsChart({ data, title = "Skills Più Richieste" }: TopSki
                 axisLine={false}
                 tickLine={false}
                 tick={<CustomYAxisTick />}
-                width={250}
+                width={180}
               />
             <Tooltip content={<CustomTooltip />} />
             <Bar dataKey="count" radius={[0, 4, 4, 0]}>
@@ -105,7 +105,7 @@ export function TopSkillsChart({ data, title = "Skills Più Richieste" }: TopSki
                 dataKey="count"
                 position="right"
                 formatter={(value: number) => value}
-                style={{ fontSize: 11, fontWeight: 'bold', fill: '#374151' }}
+                style={{ fontSize: 10, fontWeight: 'bold', fill: '#374151' }}
               />
             </Bar>
           </BarChart>

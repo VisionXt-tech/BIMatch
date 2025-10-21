@@ -26,6 +26,8 @@ export const ROUTES = {
   DASHBOARD_ADMIN: '/dashboard/admin',
   DASHBOARD_ADMIN_USERS: '/dashboard/admin/users',
   DASHBOARD_ADMIN_PROJECTS: '/dashboard/admin/projects',
+  DASHBOARD_ADMIN_MATCHES: '/dashboard/admin/matches',
+  DASHBOARD_ADMIN_CONTRACTS: '/dashboard/admin/contracts',
 };
 
 export const ROLES = {

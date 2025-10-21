@@ -57,6 +57,15 @@ export interface ProfessionalProfile extends BaseUserProfile {
   uniSelfCertified?: boolean;
   otherCertificationsUrl?: string; // URL to PDF
   otherCertificationsSelfCertified?: boolean;
+
+  // NEW: Fiscal and contract data (required for AI contract generation)
+  fiscalCode?: string; // Codice Fiscale (RSSMRA80A01H501Z)
+  partitaIva?: string; // Partita IVA (12345678901)
+  taxRegime?: 'ordinario' | 'forfettario' | 'semplificato'; // Regime fiscale
+  fiscalAddress?: string; // Indirizzo sede fiscale/residenza (Via Roma 1, 20100 Milano MI)
+  fiscalCity?: string; // Città sede fiscale
+  fiscalCAP?: string; // CAP
+  fiscalProvince?: string; // Provincia (MI, RM, etc.)
 }
 
 // Profile for Companies
@@ -71,8 +80,16 @@ export interface CompanyProfile extends BaseUserProfile {
   companyDescription?: string;
   logoUrl?: string; // Link to logo in Firebase Storage
   contactPerson?: string;
-  contactEmail?: string; 
+  contactEmail?: string;
   contactPhone?: string;
+
+  // NEW: Detailed fiscal address for contracts
+  legalAddress?: string; // Sede legale completa (Via Dante 10, 20100 Milano MI)
+  legalCity?: string; // Città sede legale
+  legalCAP?: string; // CAP
+  legalProvince?: string; // Provincia
+  legalRepresentative?: string; // Rappresentante legale (nome completo)
+  legalRepresentativeRole?: string; // Ruolo (es. "Amministratore Delegato")
 }
 
 export type UserProfile = ProfessionalProfile | CompanyProfile;

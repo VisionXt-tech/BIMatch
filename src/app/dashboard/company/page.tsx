@@ -211,16 +211,16 @@ function CompanyDashboardPage() {
 
   if (authLoading && !userProfile) {
      return (
-      <div className="p-8 space-y-4 w-full max-w-7xl mx-auto px-4 bg-gray-50">
+      <div className="p-4 sm:p-6 md:p-8 space-y-4 w-full max-w-7xl mx-auto px-4 bg-gray-50">
         <Card className="border border-gray-200 bg-white">
-          <CardContent className="p-8">
-            <Skeleton className="h-8 w-3/4" />
-            <Skeleton className="h-4 w-1/2 mt-4" />
+          <CardContent className="p-4 sm:p-6 md:p-8">
+            <Skeleton className="h-6 sm:h-8 w-3/4" />
+            <Skeleton className="h-3 sm:h-4 w-1/2 mt-3 sm:mt-4" />
           </CardContent>
         </Card>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
           {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} className="h-32 w-full" />
+            <Skeleton key={i} className="h-28 sm:h-32 w-full" />
           ))}
         </div>
       </div>
@@ -234,25 +234,25 @@ function CompanyDashboardPage() {
   const isProfileComplete = userProfile.companyDescription && userProfile.industry;
 
   return (
-    <div className="p-8 space-y-4 w-full max-w-7xl mx-auto px-4 bg-gray-50">
+    <div className="p-4 sm:p-6 md:p-8 space-y-4 w-full max-w-7xl mx-auto px-4 bg-gray-50">
       {/* Hero Section - Welcome Card */}
       <Card className="border border-gray-200 bg-white">
-        <CardContent className="p-8">
-          <div className="flex flex-col md:flex-row items-start justify-between gap-8">
+        <CardContent className="p-4 sm:p-6 md:p-8">
+          <div className="flex flex-col md:flex-row items-start justify-between gap-4 sm:gap-6 md:gap-8">
             {/* User Info */}
-            <div className="flex-1 space-y-4">
+            <div className="flex-1 space-y-2 sm:space-y-3 md:space-y-4">
               <div>
-                <h1 className="text-lg font-semibold text-gray-900">
+                <h1 className="text-base sm:text-lg font-semibold text-gray-900">
                   {`Ciao, ${userProfile.companyName || userProfile.displayName}`}
                 </h1>
-                <p className="text-sm text-gray-600">Dashboard aziendale BIMatch</p>
+                <p className="text-xs sm:text-sm text-gray-600">Dashboard aziendale BIMatch</p>
               </div>
             </div>
 
             {/* Action Button */}
-            <div className="flex-shrink-0">
-              <Link href={ROUTES.DASHBOARD_COMPANY_PROFILE}>
-                <Button size="lg" className="gap-2 bg-[#008080] hover:bg-[#006666] text-white">
+            <div className="flex-shrink-0 w-full md:w-auto">
+              <Link href={ROUTES.DASHBOARD_COMPANY_PROFILE} className="block w-full md:w-auto">
+                <Button size="lg" className="gap-2 bg-[#008080] hover:bg-[#006666] text-white w-full md:w-auto">
                   <Edit2 className="h-4 w-4" />
                   Modifica Profilo
                 </Button>
@@ -265,16 +265,16 @@ function CompanyDashboardPage() {
       {/* Profile Incomplete Alert */}
       {!isProfileComplete && (
         <Card className="border border-gray-200 bg-white">
-          <CardContent className="p-8">
-            <div className="flex items-start justify-between gap-8">
+          <CardContent className="p-4 sm:p-6 md:p-8">
+            <div className="flex flex-col sm:flex-row items-start justify-between gap-4 sm:gap-6 md:gap-8">
               <div className="flex-1">
-                <p className="font-semibold text-sm text-gray-900">Completa il tuo profilo</p>
-                <p className="text-sm text-gray-600 mt-4">
+                <p className="font-semibold text-xs sm:text-sm text-gray-900">Completa il tuo profilo</p>
+                <p className="text-xs sm:text-sm text-gray-600 mt-2 sm:mt-3 md:mt-4">
                   Aumenta la visibilità aggiungendo informazioni aziendali.
                 </p>
               </div>
-              <Link href={ROUTES.DASHBOARD_COMPANY_PROFILE}>
-                <Button size="sm" className="bg-[#008080] hover:bg-[#006666] text-white">Completa ora</Button>
+              <Link href={ROUTES.DASHBOARD_COMPANY_PROFILE} className="w-full sm:w-auto">
+                <Button size="sm" className="bg-[#008080] hover:bg-[#006666] text-white w-full sm:w-auto">Completa ora</Button>
               </Link>
             </div>
           </CardContent>
@@ -284,25 +284,25 @@ function CompanyDashboardPage() {
       {/* Error Display */}
       {errorCounts && (
         <Card className="border border-gray-200 bg-white">
-          <CardContent className="p-8 flex items-center gap-4">
+          <CardContent className="p-4 sm:p-6 md:p-8 flex items-center gap-3 sm:gap-4">
             <WifiOff className="h-4 w-4 text-gray-600 flex-shrink-0" />
-            <p className="text-sm text-gray-900 font-medium">{errorCounts}</p>
+            <p className="text-xs sm:text-sm text-gray-900 font-medium">{errorCounts}</p>
           </CardContent>
         </Card>
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         {/* Nuovo Progetto */}
         <Link href={ROUTES.DASHBOARD_COMPANY_POST_PROJECT}>
           <Card className="border border-gray-200 bg-white hover:border-[#008080] transition-colors cursor-pointer h-full">
-            <CardContent className="p-8">
+            <CardContent className="p-4 sm:p-6 md:p-8">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm text-gray-600 mb-2">Azione Rapida</p>
+                  <p className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2">Azione Rapida</p>
                   <div className="flex items-center gap-2">
-                    <FolderPlus className="h-5 w-5 text-[#008080]" />
-                    <h3 className="text-sm font-semibold text-gray-900">Nuovo Progetto</h3>
+                    <FolderPlus className="h-4 w-4 sm:h-5 sm:w-5 text-[#008080]" />
+                    <h3 className="text-xs sm:text-sm font-semibold text-gray-900">Nuovo Progetto</h3>
                   </div>
                 </div>
               </div>
@@ -313,16 +313,16 @@ function CompanyDashboardPage() {
         {/* Progetti Attivi */}
         <Link href={ROUTES.DASHBOARD_COMPANY_PROJECTS}>
           <Card className="border border-gray-200 bg-white hover:border-[#008080] transition-colors cursor-pointer h-full">
-            <CardContent className="p-8">
+            <CardContent className="p-4 sm:p-6 md:p-8">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm text-gray-600 mb-2">Progetti Attivi</p>
+                  <p className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2">Progetti Attivi</p>
                   <div className="flex items-center gap-2">
-                    <Briefcase className="h-5 w-5 text-gray-700" />
+                    <Briefcase className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
                     {loadingCounts ? (
-                      <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                      <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin text-gray-400" />
                     ) : (
-                      <h3 className="text-2xl font-bold text-gray-900">{animatedActiveProjects}</h3>
+                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900">{animatedActiveProjects}</h3>
                     )}
                   </div>
                 </div>
@@ -334,16 +334,16 @@ function CompanyDashboardPage() {
         {/* Candidati */}
         <Link href={`${ROUTES.DASHBOARD_COMPANY_PROJECTS}?filter=candidates`}>
           <Card className="border border-gray-200 bg-white hover:border-[#008080] transition-colors cursor-pointer h-full">
-            <CardContent className="p-8">
+            <CardContent className="p-4 sm:p-6 md:p-8">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm text-gray-600 mb-2">Nuovi Candidati</p>
+                  <p className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2">Nuovi Candidati</p>
                   <div className="flex items-center gap-2">
-                    <Users className="h-5 w-5 text-gray-700" />
+                    <Users className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
                     {loadingCounts ? (
-                      <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                      <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin text-gray-400" />
                     ) : (
-                      <h3 className="text-2xl font-bold text-gray-900">{animatedNewCandidates}</h3>
+                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900">{animatedNewCandidates}</h3>
                     )}
                   </div>
                 </div>
@@ -355,16 +355,16 @@ function CompanyDashboardPage() {
         {/* BIMatch */}
         <Link href={`${ROUTES.DASHBOARD_COMPANY_PROJECTS}?filter=active_collaborations`}>
           <Card className="border border-gray-200 bg-white hover:border-[#008080] transition-colors cursor-pointer h-full">
-            <CardContent className="p-8">
+            <CardContent className="p-4 sm:p-6 md:p-8">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm text-gray-600 mb-2">BIMatch</p>
+                  <p className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2">BIMatch</p>
                   <div className="flex items-center gap-2">
-                    <Star className="h-5 w-5 text-gray-700" />
+                    <Star className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
                     {loadingCounts ? (
-                      <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                      <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin text-gray-400" />
                     ) : (
-                      <h3 className="text-2xl font-bold text-gray-900">{animatedAcceptedMatches}</h3>
+                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900">{animatedAcceptedMatches}</h3>
                     )}
                   </div>
                 </div>
@@ -376,16 +376,16 @@ function CompanyDashboardPage() {
         {/* Notifiche */}
         <Link href={ROUTES.DASHBOARD_COMPANY_NOTIFICATIONS}>
           <Card className="border border-gray-200 bg-white hover:border-[#008080] transition-colors cursor-pointer h-full">
-            <CardContent className="p-8">
+            <CardContent className="p-4 sm:p-6 md:p-8">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm text-gray-600 mb-2">Notifiche</p>
+                  <p className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2">Notifiche</p>
                   <div className="flex items-center gap-2">
-                    <Bell className="h-5 w-5 text-gray-700" />
+                    <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
                     {loadingCounts ? (
-                      <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                      <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin text-gray-400" />
                     ) : (
-                      <h3 className="text-2xl font-bold text-gray-900">{animatedUnreadNotifications}</h3>
+                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900">{animatedUnreadNotifications}</h3>
                     )}
                   </div>
                 </div>
@@ -397,22 +397,22 @@ function CompanyDashboardPage() {
 
       {/* Analytics Section */}
       {loadingAnalytics ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
           <Card className="border border-gray-200 bg-white">
-            <CardContent className="p-8">
-              <Skeleton className="h-6 w-1/2 mb-4" />
-              <Skeleton className="h-[380px] w-full" />
+            <CardContent className="p-4 sm:p-6 md:p-8">
+              <Skeleton className="h-5 sm:h-6 w-1/2 mb-3 sm:mb-4" />
+              <Skeleton className="h-[320px] sm:h-[380px] w-full" />
             </CardContent>
           </Card>
           <Card className="border border-gray-200 bg-white">
-            <CardContent className="p-8">
-              <Skeleton className="h-6 w-1/2 mb-4" />
-              <Skeleton className="h-[380px] w-full" />
+            <CardContent className="p-4 sm:p-6 md:p-8">
+              <Skeleton className="h-5 sm:h-6 w-1/2 mb-3 sm:mb-4" />
+              <Skeleton className="h-[320px] sm:h-[380px] w-full" />
             </CardContent>
           </Card>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
           {/* Applications Timeline */}
           {timelineData.length > 0 && (
             <ApplicationsTimelineChart data={timelineData} title="Candidature Ultime 8 Settimane" />
@@ -428,37 +428,37 @@ function CompanyDashboardPage() {
       {/* Recent Projects */}
       {!loadingAnalytics && recentProjects.length > 0 && (
         <Card className="border border-gray-200 bg-white">
-          <CardContent className="p-8">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-base font-semibold text-gray-900">Progetti Recenti</h3>
+          <CardContent className="p-4 sm:p-6 md:p-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+              <h3 className="text-sm sm:text-base font-semibold text-gray-900">Progetti Recenti</h3>
               <Link href={ROUTES.DASHBOARD_COMPANY_PROJECTS}>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="w-full sm:w-auto">
                   Vedi Tutti
                 </Button>
               </Link>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {recentProjects.map((project) => (
                 <div
                   key={project.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-gray-200 rounded-lg hover:border-[#008080] transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4 border border-gray-200 rounded-lg hover:border-[#008080] transition-colors"
                 >
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <Link href={ROUTES.PROJECT_DETAILS(project.id!)}>
-                      <h4 className="text-sm font-semibold text-gray-900 hover:text-[#008080] transition-colors">
+                      <h4 className="text-xs sm:text-sm font-semibold text-gray-900 hover:text-[#008080] transition-colors truncate">
                         {project.title}
                       </h4>
                     </Link>
-                    <p className="text-xs text-gray-600 mt-1">
+                    <p className="text-xs text-gray-600 mt-1 truncate">
                       {project.location} • Pubblicato il {project.postedAt ? format((project.postedAt as Timestamp).toDate(), 'dd MMM yyyy', { locale: it }) : 'N/A'}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <Badge variant={project.status === 'attivo' ? 'default' : 'secondary'} className="text-xs">
                       {project.status}
                     </Badge>
                     <Link href={ROUTES.PROJECT_DETAILS(project.id!)}>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" className="text-xs">
                         Dettagli
                       </Button>
                     </Link>
@@ -473,14 +473,14 @@ function CompanyDashboardPage() {
       {/* Empty State */}
       {!loadingAnalytics && recentProjects.length === 0 && topSkillsData.length === 0 && (
         <Card className="border border-gray-200 bg-white">
-          <CardContent className="p-16 text-center">
-            <BarChart3 className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-base font-semibold text-gray-900 mb-2">Nessun dato disponibile</h3>
-            <p className="text-sm text-gray-600 mb-6">
+          <CardContent className="p-8 sm:p-12 md:p-16 text-center">
+            <BarChart3 className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mb-3 sm:mb-4" />
+            <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-2">Nessun dato disponibile</h3>
+            <p className="text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6">
               Pubblica il tuo primo progetto per visualizzare statistiche e analisi.
             </p>
             <Link href={ROUTES.DASHBOARD_COMPANY_POST_PROJECT}>
-              <Button className="bg-[#008080] hover:bg-[#006666]">
+              <Button className="bg-[#008080] hover:bg-[#006666] w-full sm:w-auto">
                 <FolderPlus className="mr-2 h-4 w-4" />
                 Pubblica Progetto
               </Button>

@@ -45,9 +45,9 @@ export function ApplicationsTimelineChart({ data, title = "Candidature Ricevute"
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded shadow-lg">
-          <p className="font-semibold text-sm">Settimana: {label}</p>
-          <p className="text-[#008080] text-sm font-semibold">{`${payload[0].value} ${payload[0].value === 1 ? 'candidatura' : 'candidature'}`}</p>
+        <div className="bg-white p-2 sm:p-3 border border-gray-200 rounded shadow-lg">
+          <p className="font-semibold text-xs sm:text-sm">Settimana: {label}</p>
+          <p className="text-[#008080] text-xs sm:text-sm font-semibold">{`${payload[0].value} ${payload[0].value === 1 ? 'candidatura' : 'candidature'}`}</p>
         </div>
       );
     }
@@ -56,46 +56,49 @@ export function ApplicationsTimelineChart({ data, title = "Candidature Ricevute"
 
   return (
     <Card className="border border-gray-200 bg-white">
-      <CardHeader className="p-6 pb-3">
-        <CardTitle className="text-base font-semibold text-gray-900">{title}</CardTitle>
+      <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
+        <CardTitle className="text-sm sm:text-base font-semibold text-gray-900">{title}</CardTitle>
       </CardHeader>
-      <CardContent className="p-6 pt-3 pb-3">
-        <ResponsiveContainer width="100%" height={380}>
-          <LineChart
-            data={data}
-            margin={{
-              top: 20,
-              right: 20,
-              left: -10,
-              bottom: -15,
-            }}
-          >
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-            <XAxis
-              dataKey="date"
-              axisLine={false}
-              tickLine={false}
-              tick={<CustomXAxisTick />}
-              height={70}
-              interval={0}
-            />
-            <YAxis
-              axisLine={true}
-              tickLine={false}
-              tick={{ fontSize: 12, fill: '#6B7280' }}
-              allowDecimals={false}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Line
-              type="monotone"
-              dataKey="count"
-              stroke="#008080"
-              strokeWidth={2.5}
-              dot={{ fill: '#008080', r: 5, strokeWidth: 2, stroke: '#fff' }}
-              activeDot={{ r: 10, strokeWidth: 2 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+      <CardContent className="p-4 sm:p-6 pt-2 sm:pt-3 pb-2 sm:pb-3">
+        <div className="overflow-x-auto -mx-4 sm:mx-0">
+          <ResponsiveContainer width="100%" height={320} className="min-w-[320px] sm:min-w-0" minWidth={320}>
+            <LineChart
+              data={data}
+              margin={{
+                top: 20,
+                right: 10,
+                left: -15,
+                bottom: -15,
+              }}
+            >
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+              <XAxis
+                dataKey="date"
+                axisLine={false}
+                tickLine={false}
+                tick={<CustomXAxisTick />}
+                height={70}
+                interval={0}
+              />
+              <YAxis
+                axisLine={true}
+                tickLine={false}
+                tick={{ fontSize: 10, fill: '#6B7280' }}
+                allowDecimals={false}
+                width={30}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Line
+                type="monotone"
+                dataKey="count"
+                stroke="#008080"
+                strokeWidth={2}
+                dot={{ fill: '#008080', r: 4, strokeWidth: 1.5, stroke: '#fff' }}
+                activeDot={{ r: 8, strokeWidth: 2 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   );

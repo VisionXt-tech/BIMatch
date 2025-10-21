@@ -21,9 +21,9 @@ export function SkillsChart({ data, title, barColor }: SkillsChartProps) {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded shadow-lg">
-          <p className="font-semibold text-sm">{label}</p>
-          <p style={{ color: payload[0].fill }} className="text-sm">{`Completamento: ${payload[0].value}%`}</p>
+        <div className="bg-white p-2 sm:p-3 border border-gray-200 rounded shadow-lg">
+          <p className="font-semibold text-xs sm:text-sm">{label}</p>
+          <p style={{ color: payload[0].fill }} className="text-xs sm:text-sm">{`Completamento: ${payload[0].value}%`}</p>
         </div>
       );
     }
@@ -32,22 +32,22 @@ export function SkillsChart({ data, title, barColor }: SkillsChartProps) {
 
   return (
     <Card className="border border-gray-200 bg-white h-full">
-      <CardHeader className="p-6 pb-3">
-        <CardTitle className="text-base font-semibold text-gray-900">{title}</CardTitle>
+      <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
+        <CardTitle className="text-sm sm:text-base font-semibold text-gray-900">{title}</CardTitle>
       </CardHeader>
-      <CardContent className="p-6 pt-3 pb-4">
-        <div style={{ marginLeft: '-24px', marginRight: '-24px' }}>
-          <ResponsiveContainer width="100%" height={250}>
+      <CardContent className="p-4 sm:p-6 pt-2 sm:pt-3 pb-3 sm:pb-4">
+        <div className="overflow-x-auto -mx-4 sm:mx-0" style={{ marginLeft: 'max(-1rem, -24px)', marginRight: 'max(-1rem, -24px)' }}>
+          <ResponsiveContainer width="100%" height={250} className="min-w-[280px]">
             <BarChart
               data={data}
               margin={{
                 top: 16,
-                right: 40,
-                left: 60,
+                right: 20,
+                left: 20,
                 bottom: 8,
               }}
-              barGap={10}
-              barCategoryGap="20%"
+              barGap={8}
+              barCategoryGap="15%"
             >
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
               <XAxis
@@ -61,9 +61,9 @@ export function SkillsChart({ data, title, barColor }: SkillsChartProps) {
               <YAxis
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 12, fill: '#6B7280' }}
+                tick={{ fontSize: 10, fill: '#6B7280' }}
                 domain={[0, 100]}
-                width={50}
+                width={35}
                 tickFormatter={(value) => `${value}%`}
               />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(243, 244, 246, 0.5)' }} />
@@ -72,7 +72,7 @@ export function SkillsChart({ data, title, barColor }: SkillsChartProps) {
                   dataKey="percentage"
                   position="top"
                   formatter={(value: number) => (value > 0 ? `${value}%` : '')}
-                  style={{ fontSize: 12, fontWeight: 'bold', fill: barColor }}
+                  style={{ fontSize: 10, fontWeight: 'bold', fill: barColor }}
                 />
               </Bar>
             </BarChart>

@@ -20,6 +20,31 @@ export interface Project {
   updatedAt: Timestamp | Date | any; // Firestore serverTimestamp
   applicationDeadline?: Timestamp | Date | null; // Optional deadline for applications
   applicationsCount?: number; // Number of applications received (denormalized or calculated)
+
+  // NEW: Contract-specific details (for AI contract generation)
+  deliverables?: string[]; // Lista deliverables specifici (es. "Modello BIM LOD 300", "Clash detection report")
+  budgetAmount?: number; // Importo preciso in euro (es. 5000)
+  budgetCurrency?: 'EUR'; // Valuta
+  startDate?: string; // Data inizio prevista (YYYY-MM-DD)
+  endDate?: string; // Data fine prevista (YYYY-MM-DD)
+  workMode?: 'remoto' | 'ibrido' | 'presenza'; // Modalità lavoro
+  paymentTerms?: string; // Termini pagamento (es. "30 giorni dalla fattura")
+
+  // Milestone di pagamento (opzionale)
+  paymentMilestones?: Array<{
+    phase: string;
+    percentage: number;
+    amount: number;
+    description?: string;
+  }>;
+
+  // Condizioni speciali
+  specialConditions?: {
+    ndaRequired?: boolean; // NDA richiesto
+    insuranceRequired?: boolean; // Assicurazione RC obbligatoria
+    travelExpenses?: boolean; // Spese viaggio rimborsabili
+    equipmentProvided?: boolean; // Attrezzatura fornita
+  };
 }
 
 export interface ProjectApplication {
@@ -55,6 +80,10 @@ export interface ProjectApplication {
   professionalResponseReason?: string; // Motivo se rifiuta o per riprogrammare
   professionalNewDateProposal?: Timestamp | Date | null; // Nuova data proposta dal professionista
 
-  updatedAt?: Timestamp | Date | any; 
+  // Riferimento al contratto (se generato dall'admin)
+  contractId?: string;
+  contractStatus?: 'pending_generation' | 'generated' | 'approved' | 'rejected';
+
+  updatedAt?: Timestamp | Date | any;
 }
 

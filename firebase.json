@@ -12,10 +12,38 @@
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "**/*.md",
+      "scripts/**",
+      "docs/**",
+      "reports/**",
+      ".vscode/**",
+      ".idea/**",
+      "*.backup",
+      "*_old.*",
+      "*.log",
+      ".env*",
+      "service-account*.json",
+      "firebase-adminsdk*.json",
+      "CLAUDE.md",
+      "README.md",
+      "tsconfig.json",
+      "next.config.ts",
+      "tailwind.config.ts",
+      "postcss.config.mjs",
+      ".gitignore",
+      ".eslintrc.json",
+      "package.json",
+      "package-lock.json"
     ],
     "frameworksBackend": {
-      "region": "us-central1"
+      "region": "us-central1",
+      "minInstances": 0,
+      "maxInstances": 10,
+      "concurrency": 100,
+      "cpu": 1,
+      "memory": "1GiB",
+      "timeoutSeconds": 60
     },
     "headers": [
       {

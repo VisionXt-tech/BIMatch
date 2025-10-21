@@ -37,6 +37,18 @@ const projectSchema = z.object({
   duration: z.string().optional().or(z.literal('')),
   budgetRange: z.string().optional().or(z.literal('')),
   applicationDeadline: z.string().optional().refine(val => !val || !isNaN(Date.parse(val)) || val === '', { message: "Data non valida" }),
+  // Contract-specific fields
+  deliverables: z.string().optional().or(z.literal('')),
+  budgetAmount: z.string().optional().or(z.literal('')),
+  budgetCurrency: z.enum(['EUR']).optional().or(z.literal('') as any),
+  startDate: z.string().optional().refine(val => !val || !isNaN(Date.parse(val)) || val === '', { message: "Data non valida" }),
+  endDate: z.string().optional().refine(val => !val || !isNaN(Date.parse(val)) || val === '', { message: "Data non valida" }),
+  workMode: z.enum(['remoto', 'ibrido', 'presenza']).optional().or(z.literal('') as any),
+  paymentTerms: z.string().optional().or(z.literal('')),
+  ndaRequired: z.boolean().optional(),
+  insuranceRequired: z.boolean().optional(),
+  travelExpenses: z.boolean().optional(),
+  equipmentProvided: z.boolean().optional(),
 });
 
 type ProjectFormData = z.infer<typeof projectSchema>;
@@ -83,6 +95,18 @@ export default function EditProjectPage() {
       duration: '',
       budgetRange: '',
       applicationDeadline: '',
+      // Contract fields
+      deliverables: '',
+      budgetAmount: '',
+      budgetCurrency: 'EUR' as any,
+      startDate: '',
+      endDate: '',
+      workMode: '' as any,
+      paymentTerms: '',
+      ndaRequired: false,
+      insuranceRequired: false,
+      travelExpenses: false,
+      equipmentProvided: false,
     },
   });
 
@@ -166,6 +190,12 @@ export default function EditProjectPage() {
         const project = projectDocSnap.data() as Project;
         setProjectTitle(project.title);
         setCurrentProjectImageUrl(project.projectImage || null); // Load current image
+
+        // Convert deliverables array to string (one per line)
+        const deliverablesString = Array.isArray(project.deliverables)
+          ? project.deliverables.join('\n')
+          : '';
+
         const formData: ProjectFormData = {
           title: project.title || '',
           location: project.location || '',
@@ -176,6 +206,18 @@ export default function EditProjectPage() {
           duration: project.duration || '',
           budgetRange: project.budgetRange || '',
           applicationDeadline: formatDateForInput(project.applicationDeadline),
+          // Contract fields
+          deliverables: deliverablesString,
+          budgetAmount: project.budgetAmount ? String(project.budgetAmount) : '',
+          budgetCurrency: (project.budgetCurrency || 'EUR') as any,
+          startDate: project.startDate || '',
+          endDate: project.endDate || '',
+          workMode: (project.workMode || '') as any,
+          paymentTerms: project.paymentTerms || '',
+          ndaRequired: project.specialConditions?.ndaRequired || false,
+          insuranceRequired: project.specialConditions?.insuranceRequired || false,
+          travelExpenses: project.specialConditions?.travelExpenses || false,
+          equipmentProvided: project.specialConditions?.equipmentProvided || false,
         };
         setInitialProjectData(formData);
         form.reset(formData); // Populate the form
@@ -237,12 +279,36 @@ export default function EditProjectPage() {
         setUploadingImage(false);
       }
 
+      // Process deliverables (split by newlines)
+      const deliverablesArray = data.deliverables
+        ? data.deliverables.split('\n').filter(d => d.trim() !== '')
+        : [];
+
+      // Process budget amount
+      const budgetAmountNumber = data.budgetAmount && data.budgetAmount !== ''
+        ? parseFloat(data.budgetAmount)
+        : undefined;
+
       const projectRef = doc(db, "projects", projectId);
       const dataToUpdate: Partial<Project> = {
         ...data,
         projectImage: projectImageUrl || undefined, // Add updated image URL
         applicationDeadline: data.applicationDeadline && data.applicationDeadline !== '' ? new Date(data.applicationDeadline) : null,
         updatedAt: serverTimestamp(),
+        // Process contract-specific fields
+        deliverables: deliverablesArray.length > 0 ? deliverablesArray : undefined,
+        budgetAmount: budgetAmountNumber,
+        budgetCurrency: budgetAmountNumber ? 'EUR' : undefined,
+        startDate: data.startDate && data.startDate !== '' ? data.startDate : undefined,
+        endDate: data.endDate && data.endDate !== '' ? data.endDate : undefined,
+        workMode: data.workMode && data.workMode !== '' ? data.workMode : undefined,
+        paymentTerms: data.paymentTerms && data.paymentTerms !== '' ? data.paymentTerms : undefined,
+        specialConditions: {
+          ndaRequired: data.ndaRequired || false,
+          insuranceRequired: data.insuranceRequired || false,
+          travelExpenses: data.travelExpenses || false,
+          equipmentProvided: data.equipmentProvided || false,
+        },
       };
 
       await updateDoc(projectRef, dataToUpdate);
@@ -312,21 +378,23 @@ export default function EditProjectPage() {
   
 
   return (
-    <div className="space-y-4">
-       <Button variant="outline" size="sm" onClick={() => router.push(ROUTES.DASHBOARD_COMPANY_PROJECTS)} className="mb-0">
-        <ArrowLeft className="mr-2 h-4 w-4" /> Torna ai Miei Progetti
-      </Button>
-      <Card className="shadow-xl">
-        <CardHeader className="p-4">
-          <div className="flex items-center space-x-3">
-            <Edit3 className="h-6 w-6 text-primary" />
-            <div>
-              <CardTitle className="text-2xl font-bold">Modifica Progetto: {projectTitle}</CardTitle>
-              <CardDescription className="text-xs">Aggiorna i dettagli del tuo progetto BIM.</CardDescription>
+    <div className="space-y-4 w-full max-w-7xl mx-auto px-4">
+      <Card className="border border-gray-200 bg-white">
+        <CardContent className="p-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="flex-1">
+              <h1 className="text-lg font-semibold text-gray-900">Modifica Progetto: {projectTitle}</h1>
+              <p className="text-sm text-gray-600 mt-1">Aggiorna i dettagli del tuo progetto BIM</p>
             </div>
+            <Button variant="outline" onClick={() => router.push(ROUTES.DASHBOARD_COMPANY_PROJECTS)}>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Torna ai Progetti
+            </Button>
           </div>
-        </CardHeader>
-        <CardContent className="p-4 pt-2">
+        </CardContent>
+      </Card>
+
+      <Card className="border border-gray-200 bg-white">
+        <CardContent className="p-8">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <Tabs defaultValue="info-principali" className="w-full">
@@ -437,7 +505,16 @@ export default function EditProjectPage() {
                   />
                 </TabsContent>
 
-                <TabsContent value="dettagli-contratto" className="space-y-4">
+                <TabsContent value="dettagli-contratto" className="space-y-6">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-sm text-blue-800 font-medium">
+                      💡 Dettagli Contrattuali per Generazione AI
+                    </p>
+                    <p className="text-xs text-blue-700 mt-2">
+                      Compilare questi campi faciliterà la generazione automatica dei contratti tramite AI. Più informazioni fornisci, più preciso sarà il contratto generato.
+                    </p>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormSingleSelect
                       key={`projectType-${form.watch('projectType') || 'initial'}`}
@@ -449,16 +526,100 @@ export default function EditProjectPage() {
                     />
                     <FormInput control={form.control} name="duration" label="Durata Progetto/Contratto (Opzionale)" placeholder="Es. 6 mesi, Indeterminato" />
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormInput control={form.control} name="budgetRange" label="Range di Budget/RAL (Opzionale)" placeholder="Es. €30k-€40k RAL, €40-€60/ora" />
+
+                  {/* Budget Details */}
+                  <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-900">Budget e Compenso</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormInput control={form.control} name="budgetRange" label="Range di Budget (Pubblico)" placeholder="Es. €30k-€40k, €40-€60/ora" />
+                      <FormInput control={form.control} name="budgetAmount" label="Importo Preciso (Privato, per contratti)" placeholder="Es. 5000" type="number" />
+                    </div>
+                    <FormInput control={form.control} name="paymentTerms" label="Termini di Pagamento (Opzionale)" placeholder="Es. 30 giorni dalla fattura" />
+                  </div>
+
+                  {/* Project Dates and Deliverables */}
+                  <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-900">Date e Deliverables</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormInput control={form.control} name="startDate" label="Data Inizio Prevista (Opzionale)" type="date" />
+                      <FormInput control={form.control} name="endDate" label="Data Fine Prevista (Opzionale)" type="date" />
+                    </div>
                     <FormInput control={form.control} name="applicationDeadline" label="Scadenza Candidature (Opzionale)" type="date" />
+                    <FormTextarea
+                      control={form.control}
+                      name="deliverables"
+                      label="Deliverables Specifici (Opzionale, uno per riga)"
+                      placeholder="Es.&#10;Modello BIM architettonico LOD 300 formato IFC&#10;Elaborati grafici 2D estratti da modello&#10;Clash detection report"
+                      rows={5}
+                    />
+                  </div>
+
+                  {/* Work Mode */}
+                  <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-900">Modalità Lavoro</h3>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Modalità (Opzionale)</label>
+                      <select
+                        className="w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:border-primary"
+                        value={form.watch('workMode') || ''}
+                        onChange={e => form.setValue('workMode', e.target.value as any)}
+                      >
+                        <option value="">-- Seleziona modalità --</option>
+                        <option value="remoto">Remoto</option>
+                        <option value="ibrido">Ibrido</option>
+                        <option value="presenza">Presenza</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Special Conditions */}
+                  <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-900">Condizioni Speciali (Opzionali)</h3>
+                    <div className="space-y-2">
+                      <label className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={form.watch('ndaRequired') || false}
+                          onChange={e => form.setValue('ndaRequired', e.target.checked)}
+                          className="rounded border-gray-300"
+                        />
+                        <span className="text-sm">NDA Richiesto</span>
+                      </label>
+                      <label className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={form.watch('insuranceRequired') || false}
+                          onChange={e => form.setValue('insuranceRequired', e.target.checked)}
+                          className="rounded border-gray-300"
+                        />
+                        <span className="text-sm">Assicurazione RC Obbligatoria</span>
+                      </label>
+                      <label className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={form.watch('travelExpenses') || false}
+                          onChange={e => form.setValue('travelExpenses', e.target.checked)}
+                          className="rounded border-gray-300"
+                        />
+                        <span className="text-sm">Spese Viaggio Rimborsabili</span>
+                      </label>
+                      <label className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={form.watch('equipmentProvided') || false}
+                          onChange={e => form.setValue('equipmentProvided', e.target.checked)}
+                          className="rounded border-gray-300"
+                        />
+                        <span className="text-sm">Attrezzatura Fornita</span>
+                      </label>
+                    </div>
                   </div>
                 </TabsContent>
               </Tabs>
 
-              <Button type="submit" className="w-full md:w-auto mt-6" size="sm" disabled={form.formState.isSubmitting || loadingData}>
-                <Save className="mr-2 h-4 w-4" />
-                {form.formState.isSubmitting ? 'Salvataggio in corso...' : 'Salva Modifiche Progetto'}
+              <Button type="submit" className="w-full md:w-auto mt-3 bg-[#008080] hover:bg-[#006666]" size="default" disabled={form.formState.isSubmitting || loadingData || uploadingImage}>
+                <Save className="mr-2 h-5 w-5" />
+                {uploadingImage ? 'Caricamento Immagine...' : (form.formState.isSubmitting ? 'Salvataggio...' : 'Salva Modifiche Progetto')}
               </Button>
             </form>
           </Form>

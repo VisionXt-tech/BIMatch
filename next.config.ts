@@ -17,6 +17,16 @@ const nextConfig: NextConfig = {
   compress: true, // Enable gzip compression
   poweredByHeader: false, // Remove X-Powered-By header for security
 
+  // Reduce bundle size
+  modularizeImports: {
+    'lucide-react': {
+      transform: 'lucide-react/dist/esm/icons/{{kebabCase member}}',
+    },
+    'recharts': {
+      transform: 'recharts/es6/{{member}}',
+    },
+  },
+
   // Image optimization
   images: {
     formats: ['image/avif', 'image/webp'], // Modern formats for better compression
@@ -59,8 +69,21 @@ const nextConfig: NextConfig = {
 
   // Experimental optimizations
   experimental: {
-    optimizePackageImports: ['@radix-ui/react-icons', 'lucide-react', 'firebase', '@firebase/app', '@firebase/auth', '@firebase/firestore'],
+    optimizePackageImports: [
+      '@radix-ui/react-icons',
+      'lucide-react',
+      'firebase',
+      '@firebase/app',
+      '@firebase/auth',
+      '@firebase/firestore',
+      'recharts',
+      'framer-motion',
+      'date-fns'
+    ],
   },
+
+  // Reduce server-side bundle size (moved from experimental)
+  serverExternalPackages: ['firebase-admin', 'genkit', '@genkit-ai/googleai'],
   turbopack: {
     rules: {
       '*.svg': {

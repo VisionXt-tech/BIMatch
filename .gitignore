@@ -15,6 +15,7 @@
 
 # production
 /build
+/dist
 
 # misc
 .DS_Store
@@ -31,6 +32,15 @@ pnpm-debug.log*
 .env.development.local
 .env.test.local
 .env.production.local
+.env.deploy
+
+# IMPORTANT: Never commit these sensitive files
+.env
+.env.production
+service-account*.json
+firebase-adminsdk*.json
+firebase-service-account.json
+firebase-admin-key.json
 
 # vercel
 .vercel
@@ -48,6 +58,9 @@ firebase-debug.log*
 firestore-debug.log*
 ui-debug.log*
 .firebaserc.local
+functions/node_modules/
+functions/lib/
+.runtimeconfig.json
 
 # IDEs and editors
 .vscode/*
@@ -131,3 +144,17 @@ NUL
 # Claude Code commands and subagents
 .claude/commands/
 .claude/subagents/
+
+# Old files and backups
+*_old.tsx
+*_old.ts
+*_old.js
+*.backup
+*.bak
+
+# Reports (optional - can be committed if needed for documentation)
+reports/
+
+# Documentation test files
+docs/mailtest.html
+docs/**/*.test.html

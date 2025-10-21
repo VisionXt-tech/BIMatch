@@ -34,6 +34,13 @@ const companyProfileSchema = z.object({
   contactPerson: z.string().min(2, "Il nome della persona di riferimento è richiesto."),
   contactEmail: z.string().email("L'email di contatto è richiesta e deve essere valida."),
   contactPhone: z.string().regex(/^\+?[0-9\s-()]{7,20}$/, "Il numero di telefono di contatto è richiesto e deve essere valido."),
+  // Legal data for contracts
+  legalAddress: z.string().max(200, "L'indirizzo non può superare i 200 caratteri.").optional().or(z.literal('')),
+  legalCity: z.string().max(100).optional().or(z.literal('')),
+  legalCAP: z.string().regex(/^\d{5}$/, { message: 'CAP deve contenere 5 cifre' }).optional().or(z.literal('')),
+  legalProvince: z.string().max(2).optional().or(z.literal('')),
+  legalRepresentative: z.string().max(200).optional().or(z.literal('')),
+  legalRepresentativeRole: z.string().max(100).optional().or(z.literal('')),
 });
 
 type CompanyProfileFormData = z.infer<typeof companyProfileSchema>;
@@ -51,6 +58,13 @@ const mapProfileToFormData = (profile?: CompanyProfile | null): CompanyProfileFo
     contactPerson: p.contactPerson || '',
     contactEmail: p.contactEmail || '',
     contactPhone: p.contactPhone || '',
+    // Legal data
+    legalAddress: p.legalAddress || '',
+    legalCity: p.legalCity || '',
+    legalCAP: p.legalCAP || '',
+    legalProvince: p.legalProvince || '',
+    legalRepresentative: p.legalRepresentative || '',
+    legalRepresentativeRole: p.legalRepresentativeRole || '',
   };
 };
 
@@ -260,8 +274,9 @@ export default function CompanyProfilePage() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <Tabs defaultValue="base-info" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-6">
+                <TabsList className="grid w-full grid-cols-4 mb-6">
                   <TabsTrigger value="base-info">Logo e Info Base</TabsTrigger>
+                  <TabsTrigger value="legal-data">Dati Legali</TabsTrigger>
                   <TabsTrigger value="details">Dettagli Azienda</TabsTrigger>
                   <TabsTrigger value="contacts">Contatti</TabsTrigger>
                 </TabsList>
@@ -313,6 +328,72 @@ export default function CompanyProfilePage() {
                   </FormItem>
                    <FormInput control={form.control} name="companyName" label="Nome Azienda" placeholder="La Mia Azienda S.r.l." />
                    <FormInput control={form.control} name="companyVat" label="Partita IVA" placeholder="12345678901" />
+                </TabsContent>
+
+                <TabsContent value="legal-data" className="space-y-6">
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <p className="text-sm text-yellow-800 font-medium">
+                      🔒 Dati Legali e Contrattuali
+                    </p>
+                    <p className="text-xs text-yellow-700 mt-2">
+                      Questi dati sono richiesti per la generazione automatica dei contratti. Sono visibili solo a voi e agli amministratori, mai pubblici sul marketplace.
+                    </p>
+                  </div>
+
+                  {/* Rappresentante Legale */}
+                  <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-900">Rappresentante Legale</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <FormInput
+                        control={form.control}
+                        name="legalRepresentative"
+                        label="Nome Completo"
+                        placeholder="Giuseppe Verdi"
+                        description="Nome del rappresentante legale dell'azienda"
+                      />
+                      <FormInput
+                        control={form.control}
+                        name="legalRepresentativeRole"
+                        label="Ruolo"
+                        placeholder="Amministratore Delegato"
+                        description="Es. Amministratore Delegato, Presidente"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Sede Legale */}
+                  <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-900">Sede Legale</h3>
+                    <FormInput
+                      control={form.control}
+                      name="legalAddress"
+                      label="Indirizzo Completo"
+                      placeholder="Via Dante 10"
+                      description="Indirizzo della sede legale (può differire dalla sede operativa)"
+                    />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <FormInput
+                        control={form.control}
+                        name="legalCity"
+                        label="Città"
+                        placeholder="Milano"
+                      />
+                      <FormInput
+                        control={form.control}
+                        name="legalCAP"
+                        label="CAP"
+                        placeholder="20100"
+                        description="5 cifre"
+                      />
+                      <FormInput
+                        control={form.control}
+                        name="legalProvince"
+                        label="Provincia"
+                        placeholder="MI"
+                        description="Sigla provincia (2 lettere)"
+                      />
+                    </div>
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="details" className="space-y-4">

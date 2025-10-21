@@ -180,6 +180,76 @@ service cloud.firestore {
       allow delete: if hasRole('admin');
     }
 
+    // Jobs collection with nested applications
+    match /jobs/{jobId} {
+      allow read: if isAuthenticated();
+      allow list: if isAuthenticated();
+
+      allow create: if isAuthenticated() &&
+        hasRole('company') &&
+        request.resource.data.companyId == request.auth.uid;
+
+      allow update: if isAuthenticated() &&
+        (resource.data.companyId == request.auth.uid || hasRole('admin'));
+
+      allow delete: if isAuthenticated() &&
+        (resource.data.companyId == request.auth.uid || hasRole('admin'));
+
+      // Nested applications subcollection
+      match /applications/{applicationId} {
+        // Read: Professional, company owner, or admin
+        allow read: if isAuthenticated() &&
+          (resource.data.professionalId == request.auth.uid ||
+           resource.data.companyId == request.auth.uid ||
+           hasRole('admin'));
+
+        allow list: if isAuthenticated();
+
+        // Create: Only professionals can apply
+        allow create: if isAuthenticated() &&
+          hasRole('professional') &&
+          request.resource.data.professionalId == request.auth.uid;
+
+        // Update: Professional, company, or admin
+        allow update: if isAuthenticated() &&
+          (resource.data.professionalId == request.auth.uid ||
+           resource.data.companyId == request.auth.uid ||
+           hasRole('admin'));
+
+        // Delete: Company owner or admin
+        allow delete: if isAuthenticated() &&
+          (resource.data.companyId == request.auth.uid || hasRole('admin'));
+      }
+    }
+
+    // Contracts collection - admin creates, parties can read
+    match /contracts/{contractId} {
+      // Read: Admin, or parties involved (professional/company)
+      allow read: if isAuthenticated() &&
+        (hasRole('admin') ||
+         resource.data.professionalId == request.auth.uid ||
+         resource.data.companyId == request.auth.uid);
+
+      // List: Admin only (to prevent enumeration)
+      allow list: if hasRole('admin');
+
+      // Create: Admin only
+      allow create: if hasRole('admin') &&
+        request.resource.data.keys().hasAll([
+          'jobId', 'applicationId', 'companyId', 'professionalId',
+          'status', 'generatedText', 'generatedAt', 'generatedBy',
+          'aiModel', 'aiPromptVersion', 'contractData', 'createdAt', 'updatedAt'
+        ]) &&
+        request.resource.data.status in ['DRAFT', 'GENERATED', 'PENDING_REVIEW', 'APPROVED', 'REJECTED', 'ARCHIVED'] &&
+        request.resource.data.generatedBy == request.auth.uid;
+
+      // Update: Admin only (for now)
+      allow update: if hasRole('admin');
+
+      // Delete: Admin only
+      allow delete: if hasRole('admin');
+    }
+
     // Admin-only collections
     match /admin/{document=**} {
       allow read, write: if hasRole('admin');
