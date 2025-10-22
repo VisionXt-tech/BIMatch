@@ -193,29 +193,28 @@ export function ContractGenerationModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={resetAndClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto w-[calc(100%-2rem)] sm:w-full">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="text-lg font-semibold flex items-center gap-2">
             <FileText className="h-5 w-5 text-[#008080]" />
             Genera Contratto AI
           </DialogTitle>
-          <DialogDescription>
-            Genera un contratto di collaborazione personalizzato per{' '}
-            <strong>{professional.displayName}</strong> e{' '}
-            <strong>{company.companyName}</strong>
+          <DialogDescription className="text-sm">
+            Contratto per <strong>{professional.displayName}</strong> e <strong>{company.companyName}</strong>
           </DialogDescription>
         </DialogHeader>
 
         {step === 'form' && (
-          <div className="space-y-6 py-4">
+          <div className="space-y-8 py-4">
             {/* Dati Professionista */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-gray-900">Dati Professionista</h3>
-              <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">Dati Professionista</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="prof-name">Nome Completo *</Label>
+                  <Label htmlFor="prof-name" className="text-sm">Nome *</Label>
                   <Input
                     id="prof-name"
+                    className="text-sm"
                     value={contractData.professional.name}
                     onChange={(e) =>
                       setContractData((prev) => ({
@@ -226,9 +225,10 @@ export function ContractGenerationModal({
                   />
                 </div>
                 <div>
-                  <Label htmlFor="prof-piva">Partita IVA *</Label>
+                  <Label htmlFor="prof-piva" className="text-sm">Partita IVA *</Label>
                   <Input
                     id="prof-piva"
+                    className="text-sm"
                     placeholder="12345678901"
                     value={contractData.professional.piva}
                     onChange={(e) =>
@@ -240,9 +240,10 @@ export function ContractGenerationModal({
                   />
                 </div>
                 <div>
-                  <Label htmlFor="prof-cf">Codice Fiscale *</Label>
+                  <Label htmlFor="prof-cf" className="text-sm">Codice Fiscale *</Label>
                   <Input
                     id="prof-cf"
+                    className="text-sm"
                     placeholder="RSSMRA80A01H501Z"
                     value={contractData.professional.fiscalCode}
                     onChange={(e) =>
@@ -254,7 +255,7 @@ export function ContractGenerationModal({
                   />
                 </div>
                 <div>
-                  <Label htmlFor="prof-regime">Regime Fiscale *</Label>
+                  <Label htmlFor="prof-regime" className="text-sm">Regime Fiscale *</Label>
                   <Select
                     value={contractData.professional.taxRegime}
                     onValueChange={(value: 'ordinario' | 'forfettario' | 'semplificato') =>
@@ -264,20 +265,21 @@ export function ContractGenerationModal({
                       }))
                     }
                   >
-                    <SelectTrigger id="prof-regime">
+                    <SelectTrigger id="prof-regime" className="text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="forfettario">Forfettario (L. 190/2014)</SelectItem>
-                      <SelectItem value="ordinario">Ordinario</SelectItem>
-                      <SelectItem value="semplificato">Semplificato</SelectItem>
+                      <SelectItem value="forfettario" className="text-sm">Forfettario (L. 190/2014)</SelectItem>
+                      <SelectItem value="ordinario" className="text-sm">Ordinario</SelectItem>
+                      <SelectItem value="semplificato" className="text-sm">Semplificato</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="col-span-2">
-                  <Label htmlFor="prof-address">Indirizzo *</Label>
+                  <Label htmlFor="prof-address" className="text-sm">Indirizzo *</Label>
                   <Input
                     id="prof-address"
+                    className="text-sm"
                     placeholder="Via Roma 1, Milano MI"
                     value={contractData.professional.address}
                     onChange={(e) =>
@@ -292,13 +294,14 @@ export function ContractGenerationModal({
             </div>
 
             {/* Dati Azienda */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-gray-900">Dati Azienda</h3>
-              <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">Dati Azienda</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="comp-name">Ragione Sociale *</Label>
+                  <Label htmlFor="comp-name" className="text-sm">Ragione Sociale *</Label>
                   <Input
                     id="comp-name"
+                    className="text-sm"
                     value={contractData.company.businessName}
                     onChange={(e) =>
                       setContractData((prev) => ({
@@ -309,9 +312,10 @@ export function ContractGenerationModal({
                   />
                 </div>
                 <div>
-                  <Label htmlFor="comp-piva">Partita IVA *</Label>
+                  <Label htmlFor="comp-piva" className="text-sm">Partita IVA *</Label>
                   <Input
                     id="comp-piva"
+                    className="text-sm"
                     value={contractData.company.piva}
                     onChange={(e) =>
                       setContractData((prev) => ({
@@ -322,9 +326,10 @@ export function ContractGenerationModal({
                   />
                 </div>
                 <div className="col-span-2">
-                  <Label htmlFor="comp-address">Sede Legale *</Label>
+                  <Label htmlFor="comp-address" className="text-sm">Sede Legale *</Label>
                   <Input
                     id="comp-address"
+                    className="text-sm"
                     value={contractData.company.address}
                     onChange={(e) =>
                       setContractData((prev) => ({
@@ -335,9 +340,10 @@ export function ContractGenerationModal({
                   />
                 </div>
                 <div>
-                  <Label htmlFor="comp-legal">Rappresentante Legale *</Label>
+                  <Label htmlFor="comp-legal" className="text-sm">Rappresentante Legale *</Label>
                   <Input
                     id="comp-legal"
+                    className="text-sm"
                     value={contractData.company.legalRepresentative}
                     onChange={(e) =>
                       setContractData((prev) => ({
@@ -351,14 +357,15 @@ export function ContractGenerationModal({
             </div>
 
             {/* Dettagli Progetto */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-gray-900">Dettagli Progetto</h3>
-              <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">Dettagli Progetto</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="proj-start">Data Inizio *</Label>
+                  <Label htmlFor="proj-start" className="text-sm">Data Inizio *</Label>
                   <Input
                     id="proj-start"
                     type="date"
+                    className="text-sm"
                     value={contractData.project.startDate}
                     onChange={(e) =>
                       setContractData((prev) => ({
@@ -369,10 +376,11 @@ export function ContractGenerationModal({
                   />
                 </div>
                 <div>
-                  <Label htmlFor="proj-end">Data Fine *</Label>
+                  <Label htmlFor="proj-end" className="text-sm">Data Fine *</Label>
                   <Input
                     id="proj-end"
                     type="date"
+                    className="text-sm"
                     value={contractData.project.endDate}
                     onChange={(e) =>
                       setContractData((prev) => ({
@@ -383,7 +391,7 @@ export function ContractGenerationModal({
                   />
                 </div>
                 <div>
-                  <Label htmlFor="proj-workmode">Modalità Lavoro *</Label>
+                  <Label htmlFor="proj-workmode" className="text-sm">Modalità Lavoro *</Label>
                   <Select
                     value={contractData.project.workMode}
                     onValueChange={(value: 'remoto' | 'ibrido' | 'presenza') =>
@@ -393,20 +401,21 @@ export function ContractGenerationModal({
                       }))
                     }
                   >
-                    <SelectTrigger id="proj-workmode">
+                    <SelectTrigger id="proj-workmode" className="text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="remoto">Remoto</SelectItem>
-                      <SelectItem value="ibrido">Ibrido</SelectItem>
-                      <SelectItem value="presenza">In Sede</SelectItem>
+                      <SelectItem value="remoto" className="text-sm">Remoto</SelectItem>
+                      <SelectItem value="ibrido" className="text-sm">Ibrido</SelectItem>
+                      <SelectItem value="presenza" className="text-sm">In Sede</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="col-span-2">
-                  <Label htmlFor="proj-deliverables">Deliverables (uno per riga) *</Label>
+                  <Label htmlFor="proj-deliverables" className="text-sm">Deliverables (uno per riga) *</Label>
                   <Textarea
                     id="proj-deliverables"
+                    className="text-sm"
                     placeholder="Modello BIM LOD 300&#10;Elaborati grafici 2D&#10;Relazione tecnica"
                     rows={3}
                     value={contractData.project.deliverables.join('\n')}
@@ -425,16 +434,17 @@ export function ContractGenerationModal({
             </div>
 
             {/* Pagamento */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-gray-900">Pagamento</h3>
-              <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">Pagamento</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="payment-amount">Importo Totale (€) *</Label>
+                  <Label htmlFor="payment-amount" className="text-sm">Importo Totale (€) *</Label>
                   <Input
                     id="payment-amount"
                     type="number"
                     min="0"
                     step="100"
+                    className="text-sm font-mono tabular-nums"
                     value={contractData.payment.totalAmount}
                     onChange={(e) =>
                       setContractData((prev) => ({
@@ -445,9 +455,10 @@ export function ContractGenerationModal({
                   />
                 </div>
                 <div>
-                  <Label htmlFor="payment-terms">Termini Pagamento *</Label>
+                  <Label htmlFor="payment-terms" className="text-sm">Termini Pagamento *</Label>
                   <Input
                     id="payment-terms"
+                    className="text-sm"
                     placeholder="30 giorni dalla fattura"
                     value={contractData.payment.paymentTerms}
                     onChange={(e) =>
@@ -462,9 +473,9 @@ export function ContractGenerationModal({
             </div>
 
             {/* Condizioni Speciali */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-gray-900">Condizioni Speciali</h3>
-              <div className="space-y-2">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">Condizioni Speciali</h3>
+              <div className="space-y-4">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="nda"
@@ -525,11 +536,11 @@ export function ContractGenerationModal({
         )}
 
         {step === 'generating' && (
-          <div className="py-12 flex flex-col items-center justify-center space-y-4">
+          <div className="py-12 flex flex-col items-center justify-center space-y-4 transition-opacity duration-300">
             <Loader2 className="h-12 w-12 animate-spin text-[#008080]" />
             <div className="text-center">
               <p className="text-lg font-semibold text-gray-900">Generazione contratto in corso...</p>
-              <p className="text-sm text-gray-600 mt-2">
+              <p className="text-sm text-gray-600 mt-4">
                 L'AI sta analizzando i dati e creando il contratto personalizzato
               </p>
             </div>
@@ -537,37 +548,37 @@ export function ContractGenerationModal({
         )}
 
         {step === 'success' && (
-          <div className="py-12 flex flex-col items-center justify-center space-y-4">
+          <div className="py-12 flex flex-col items-center justify-center space-y-4 transition-opacity duration-300">
             <CheckCircle2 className="h-16 w-16 text-green-600" />
             <div className="text-center">
               <p className="text-lg font-semibold text-gray-900">Contratto generato con successo!</p>
-              <p className="text-sm text-gray-600 mt-2">
-                ID Contratto: <code className="bg-gray-100 px-2 py-1 rounded">{generatedContractId}</code>
+              <p className="text-sm text-gray-600 mt-4">
+                ID Contratto: <code className="bg-gray-100 px-2 py-1 rounded text-sm">{generatedContractId}</code>
               </p>
             </div>
           </div>
         )}
 
         {step === 'error' && (
-          <div className="py-12 flex flex-col items-center justify-center space-y-4">
+          <div className="py-12 flex flex-col items-center justify-center space-y-4 transition-opacity duration-300">
             <AlertCircle className="h-16 w-16 text-red-600" />
             <div className="text-center">
               <p className="text-lg font-semibold text-gray-900">Errore nella generazione</p>
-              <p className="text-sm text-red-600 mt-2">{error}</p>
+              <p className="text-sm text-red-600 mt-4">{error}</p>
             </div>
           </div>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="flex flex-col sm:flex-row gap-2">
           {step === 'form' && (
             <>
-              <Button variant="outline" onClick={resetAndClose} disabled={loading}>
+              <Button variant="outline" onClick={resetAndClose} disabled={loading} className="text-sm min-h-[44px] w-full sm:w-auto">
                 Annulla
               </Button>
               <Button
                 onClick={handleGenerate}
                 disabled={loading}
-                className="bg-[#008080] hover:bg-[#006666]"
+                className="bg-[#008080] hover:bg-[#006666] text-sm min-h-[44px] w-full sm:w-auto"
               >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Genera Contratto
@@ -575,7 +586,7 @@ export function ContractGenerationModal({
             </>
           )}
           {(step === 'success' || step === 'error') && (
-            <Button onClick={resetAndClose} className="bg-[#008080] hover:bg-[#006666]">
+            <Button onClick={resetAndClose} className="bg-[#008080] hover:bg-[#006666] text-sm min-h-[44px] w-full sm:w-auto">
               Chiudi
             </Button>
           )}

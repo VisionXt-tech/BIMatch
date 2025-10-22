@@ -225,128 +225,212 @@ export default function AdminMatchesPage() {
   };
 
   return (
-    <div className="space-y-4 w-full max-w-7xl mx-auto px-4 bg-gray-50">
-      <Card className="border border-gray-200 bg-white">
-        <CardContent className="p-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <HandHeart className="h-6 w-6 text-[#008080]" />
-              <div>
-                <h1 className="text-lg font-semibold text-gray-900">Gestione Match e Candidature</h1>
-                <p className="text-sm text-gray-600">Visualizza e gestisci tutte le candidature tra professionisti e aziende.</p>
+    <div className="space-y-4 w-full min-w-0 max-w-7xl mx-auto px-4 py-4">
+      <Card className="border border-gray-200 rounded-lg min-w-0">
+        <CardContent className="p-4 sm:p-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 min-w-0">
+            <div className="flex items-center gap-4 min-w-0">
+              <HandHeart className="h-6 w-6 text-[#008080] shrink-0" />
+              <div className="min-w-0">
+                <h1 className="text-lg font-semibold text-gray-900">Gestione Candidature</h1>
+                <p className="text-sm text-gray-600 truncate">Visualizza e gestisci tutte le candidature tra professionisti e aziende.</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 text-sm text-gray-600">
+            <div className="flex items-center gap-2 text-sm text-gray-600 shrink-0">
               <span>Totale: {filteredApplications.length}</span>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="border border-gray-200 bg-white">
-        <CardContent className="p-8">
+      <Card className="border border-gray-200 rounded-lg min-w-0">
+        <CardContent className="p-4 sm:p-8">
           {/* Filters */}
-          <div className="flex gap-4 mb-6">
-            <div className="flex-1">
+          <div className="flex flex-col sm:flex-row gap-4 mb-4 sm:mb-6 min-w-0">
+            <div className="flex-1 min-w-0">
               <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400 shrink-0" />
                 <Input
-                  placeholder="Cerca per progetto, professionista o azienda..."
+                  placeholder="Cerca candidature..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8"
+                  className="pl-8 text-sm w-full min-w-0"
                 />
               </div>
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Filtra per stato" />
+              <SelectTrigger className="w-full sm:w-[180px] text-sm min-w-0">
+                <Filter className="h-4 w-4 mr-2 shrink-0" />
+                <SelectValue placeholder="Filtra" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tutti gli stati</SelectItem>
-                <SelectItem value="pending">In Attesa</SelectItem>
-                <SelectItem value="accepted">Accettate</SelectItem>
-                <SelectItem value="rejected">Rifiutate</SelectItem>
+                <SelectItem value="all" className="text-sm">Tutti gli stati</SelectItem>
+                <SelectItem value="pending" className="text-sm">In Attesa</SelectItem>
+                <SelectItem value="accepted" className="text-sm">Accettate</SelectItem>
+                <SelectItem value="rejected" className="text-sm">Rifiutate</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Progetto</TableHead>
-                <TableHead>Professionista</TableHead>
-                <TableHead>Azienda</TableHead>
-                <TableHead>Stato</TableHead>
-                <TableHead>Data Candidatura</TableHead>
-                <TableHead className="text-right">Azioni</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? renderSkeleton() : filteredApplications.map((application) => (
-                <TableRow key={application.id}>
-                  <TableCell className="font-medium">
-                    {application.projectTitle || `Progetto #${application.projectId}`}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      {application.professionalName || 'Professionista sconosciuto'}
+          {/* Mobile Card Layout */}
+          <div className="md:hidden space-y-3">
+            {loading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-48 w-full" />
+                <Skeleton className="h-48 w-full" />
+                <Skeleton className="h-48 w-full" />
+              </div>
+            ) : filteredApplications.map((application) => (
+              <Card key={application.id} className="border border-gray-200">
+                <CardContent className="p-3">
+                  <div className="space-y-2">
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-semibold text-sm text-gray-900 flex-1 min-w-0 break-words leading-tight">
+                          {application.projectTitle || `Progetto #${application.projectId}`}
+                        </h3>
+                        <Badge variant={getStatusBadgeVariant(application.status)} className="text-xs shrink-0 whitespace-nowrap">
+                          {getStatusText(application.status)}
+                        </Badge>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <User className="h-3 w-3 shrink-0" />
+                          <span className="truncate text-xs">{application.professionalName || 'Sconosciuto'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Building className="h-3 w-3 shrink-0" />
+                          <span className="truncate text-xs">{application.companyName || 'Sconosciuta'}</span>
+                        </div>
+                      </div>
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Building className="h-4 w-4 text-muted-foreground" />
-                      {application.companyName || 'Azienda sconosciuta'}
+                    <div className="pt-2 border-t border-gray-100">
+                      <span className="text-xs text-gray-500 block mb-2">
+                        {application.appliedAt?.toDate?.()?.toLocaleDateString('it-IT') || 'N/D'}
+                      </span>
+                      <div className="flex flex-col gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewDetails(application)}
+                          className="min-h-[44px] text-sm w-full"
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          Dettagli
+                        </Button>
+                        {application.status === 'pending' && (
+                          <div className="grid grid-cols-2 gap-2">
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => handleStatusChange(application.id, 'accepted')}
+                              disabled={actionLoading}
+                              className="min-h-[44px] text-sm bg-[#008080] hover:bg-[#006666]"
+                            >
+                              <Check className="h-4 w-4 mr-1" />
+                              <span className="text-xs">Accetta</span>
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleStatusChange(application.id, 'rejected')}
+                              disabled={actionLoading}
+                              className="min-h-[44px] text-sm"
+                            >
+                              <X className="h-4 w-4 mr-1" />
+                              <span className="text-xs">Rifiuta</span>
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusBadgeVariant(application.status)}>
-                      {getStatusText(application.status)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {application.appliedAt?.toDate?.()?.toLocaleDateString('it-IT') || 'N/D'}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleViewDetails(application)}
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        Dettagli
-                      </Button>
-                      {application.status === 'pending' && (
-                        <>
-                          <Button
-                            variant="default"
-                            size="sm"
-                            onClick={() => handleStatusChange(application.id, 'accepted')}
-                            disabled={actionLoading}
-                          >
-                            <Check className="h-4 w-4 mr-1" />
-                            Accetta
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleStatusChange(application.id, 'rejected')}
-                            disabled={actionLoading}
-                          >
-                            <X className="h-4 w-4 mr-1" />
-                            Rifiuta
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </TableCell>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Desktop Table Layout */}
+          <div className="hidden md:block overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Progetto</TableHead>
+                  <TableHead>Professionista</TableHead>
+                  <TableHead>Azienda</TableHead>
+                  <TableHead>Stato</TableHead>
+                  <TableHead>Data Candidatura</TableHead>
+                  <TableHead className="text-right">Azioni</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {loading ? renderSkeleton() : filteredApplications.map((application) => (
+                  <TableRow key={application.id}>
+                    <TableCell className="font-medium text-sm">
+                      {application.projectTitle || `Progetto #${application.projectId}`}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-gray-400" />
+                        {application.professionalName || 'Sconosciuto'}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      <div className="flex items-center gap-2">
+                        <Building className="h-4 w-4 text-gray-400" />
+                        {application.companyName || 'Sconosciuta'}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusBadgeVariant(application.status)} className="text-sm">
+                        {getStatusText(application.status)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {application.appliedAt?.toDate?.()?.toLocaleDateString('it-IT') || 'N/D'}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewDetails(application)}
+                          className="text-sm"
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          Dettagli
+                        </Button>
+                        {application.status === 'pending' && (
+                          <>
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => handleStatusChange(application.id, 'accepted')}
+                              disabled={actionLoading}
+                              className="text-sm bg-[#008080] hover:bg-[#006666]"
+                            >
+                              <Check className="h-4 w-4 mr-1" />
+                              Accetta
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleStatusChange(application.id, 'rejected')}
+                              disabled={actionLoading}
+                              className="text-sm"
+                            >
+                              <X className="h-4 w-4 mr-1" />
+                              Rifiuta
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 

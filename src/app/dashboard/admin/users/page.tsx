@@ -100,88 +100,134 @@ export default function AdminUsersPage() {
   );
 
   return (
-    <div className="space-y-4 w-full max-w-7xl mx-auto px-4 bg-gray-50">
-      <Card className="border border-gray-200 bg-white">
-        <CardContent className="p-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Users className="h-6 w-6 text-[#008080]" />
-              <div>
+    <div className="space-y-4 w-full min-w-0 max-w-7xl mx-auto px-4 py-4">
+      <Card className="border border-gray-200 rounded-lg min-w-0">
+        <CardContent className="p-4 sm:p-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 min-w-0">
+            <div className="flex items-center gap-4 min-w-0">
+              <Users className="h-6 w-6 text-[#008080] shrink-0" />
+              <div className="min-w-0">
                 <h1 className="text-lg font-semibold text-gray-900">Gestione Utenti</h1>
-                <p className="text-sm text-gray-600">Visualizza e gestisci tutti gli utenti registrati sulla piattaforma.</p>
+                <p className="text-sm text-gray-600 truncate">Visualizza e gestisci tutti gli utenti registrati sulla piattaforma.</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 text-sm text-gray-600">
+            <div className="flex items-center gap-2 text-sm text-gray-600 shrink-0">
               <span>Totale: {filteredUsers.length}</span>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="border border-gray-200 bg-white">
-        <CardContent className="p-8">
+      <Card className="border border-gray-200 rounded-lg min-w-0">
+        <CardContent className="p-4 sm:p-8">
           {/* Filters */}
-          <div className="flex gap-4 mb-6">
-            <div className="flex-1">
+          <div className="flex flex-col sm:flex-row gap-4 mb-4 sm:mb-6 min-w-0">
+            <div className="flex-1 min-w-0">
               <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400 shrink-0" />
                 <Input
-                  placeholder="Cerca per nome o email..."
+                  placeholder="Cerca utenti..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8"
+                  className="pl-8 text-sm w-full min-w-0"
                 />
               </div>
             </div>
             <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-[180px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Filtra per ruolo" />
+              <SelectTrigger className="w-full sm:w-[180px] text-sm min-w-0">
+                <Filter className="h-4 w-4 mr-2 shrink-0" />
+                <SelectValue placeholder="Filtra" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tutti i ruoli</SelectItem>
-                <SelectItem value="professional">Professionisti</SelectItem>
-                <SelectItem value="company">Aziende</SelectItem>
-                <SelectItem value="admin">Amministratori</SelectItem>
+                <SelectItem value="all" className="text-sm">Tutti i ruoli</SelectItem>
+                <SelectItem value="professional" className="text-sm">Professionisti</SelectItem>
+                <SelectItem value="company" className="text-sm">Aziende</SelectItem>
+                <SelectItem value="admin" className="text-sm">Amministratori</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome / Nome Azienda</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Ruolo</TableHead>
-                <TableHead>Data Registrazione</TableHead>
-                <TableHead className="text-right">Azioni</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? renderSkeleton() : filteredUsers.map((user) => (
-                <TableRow key={user.uid}>
-                  <TableCell className="font-medium">{user.displayName || (user.role === 'professional' ? `${(user as ProfessionalProfile).firstName} ${(user as ProfessionalProfile).lastName}`: (user as CompanyProfile).companyName)}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>
-                    <Badge variant={(user.role as any) === 'professional' ? 'secondary' : (user.role as any) === 'admin' ? 'destructive' : 'default'}>
-                      {user.role === 'professional' && <User className="mr-1 h-3 w-3" />}
-                      {user.role === 'company' && <Building className="mr-1 h-3 w-3" />}
-                      {user.role}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {user.createdAt && (user.createdAt as Timestamp).toDate
-                      ? (user.createdAt as Timestamp).toDate().toLocaleDateString('it-IT')
-                      : 'N/D'}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="outline" size="sm" onClick={() => handleViewUser(user)}>
-                      <Eye className="h-4 w-4 mr-1"/> Visualizza
-                    </Button>
-                  </TableCell>
+          {/* Mobile Card Layout */}
+          <div className="md:hidden space-y-3">
+            {loading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-32 w-full" />
+              </div>
+            ) : filteredUsers.map((user) => (
+              <Card key={user.uid} className="border border-gray-200">
+                <CardContent className="p-3">
+                  <div className="space-y-2">
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-semibold text-sm text-gray-900 flex-1 min-w-0 break-words">
+                          {user.displayName || (user.role === 'professional' ? `${(user as ProfessionalProfile).firstName} ${(user as ProfessionalProfile).lastName}`: (user as CompanyProfile).companyName)}
+                        </h3>
+                        <Badge variant={(user.role as any) === 'professional' ? 'secondary' : (user.role as any) === 'admin' ? 'destructive' : 'default'} className="text-xs shrink-0 whitespace-nowrap">
+                          {user.role === 'professional' && <User className="mr-1 h-3 w-3" />}
+                          {user.role === 'company' && <Building className="mr-1 h-3 w-3" />}
+                          {user.role}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 break-all leading-tight">{user.email}</p>
+                    </div>
+                    <div className="flex flex-col gap-2 pt-2 border-t border-gray-100">
+                      <span className="text-xs text-gray-500">
+                        {user.createdAt && (user.createdAt as Timestamp).toDate
+                          ? (user.createdAt as Timestamp).toDate().toLocaleDateString('it-IT')
+                          : 'N/D'}
+                      </span>
+                      <Button variant="outline" size="sm" onClick={() => handleViewUser(user)} className="min-h-[44px] text-sm w-full">
+                        <Eye className="h-4 w-4 mr-2"/>
+                        Visualizza
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Desktop Table Layout */}
+          <div className="hidden md:block overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Ruolo</TableHead>
+                  <TableHead>Data Registrazione</TableHead>
+                  <TableHead className="text-right">Azioni</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {loading ? renderSkeleton() : filteredUsers.map((user) => (
+                  <TableRow key={user.uid}>
+                    <TableCell className="font-medium text-sm">{user.displayName || (user.role === 'professional' ? `${(user as ProfessionalProfile).firstName} ${(user as ProfessionalProfile).lastName}`: (user as CompanyProfile).companyName)}</TableCell>
+                    <TableCell className="text-sm">{user.email}</TableCell>
+                    <TableCell>
+                      <Badge variant={(user.role as any) === 'professional' ? 'secondary' : (user.role as any) === 'admin' ? 'destructive' : 'default'} className="text-sm">
+                        {user.role === 'professional' && <User className="mr-1 h-3 w-3" />}
+                        {user.role === 'company' && <Building className="mr-1 h-3 w-3" />}
+                        {user.role}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {user.createdAt && (user.createdAt as Timestamp).toDate
+                        ? (user.createdAt as Timestamp).toDate().toLocaleDateString('it-IT')
+                        : 'N/D'}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="outline" size="sm" onClick={() => handleViewUser(user)} className="text-sm">
+                        <Eye className="h-4 w-4 mr-1"/>
+                        Visualizza
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 

@@ -78,8 +78,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="it">
-      <body className={`${figtree.variable} font-sans antialiased flex flex-col min-h-screen`}>
+    <html lang="it" className="overflow-x-hidden">
+      <body className={`${figtree.variable} font-sans antialiased flex flex-col min-h-screen overflow-x-hidden w-full`}>
         <ClientLayout>
           {children}
         </ClientLayout>

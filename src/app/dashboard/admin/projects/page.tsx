@@ -65,55 +65,101 @@ export default function AdminProjectsPage() {
   );
 
   return (
-    <div className="space-y-4 w-full max-w-7xl mx-auto px-4 bg-gray-50">
-      <Card className="border border-gray-200 bg-white">
-        <CardContent className="p-8">
-          <div className="flex items-center gap-4">
-            <Briefcase className="h-6 w-6 text-[#008080]" />
-            <div>
+    <div className="space-y-4 w-full min-w-0 max-w-7xl mx-auto px-4 py-4">
+      <Card className="border border-gray-200 rounded-lg min-w-0">
+        <CardContent className="p-4 sm:p-8">
+          <div className="flex items-center gap-4 min-w-0">
+            <Briefcase className="h-6 w-6 text-[#008080] shrink-0" />
+            <div className="min-w-0">
               <h1 className="text-lg font-semibold text-gray-900">Gestione Progetti</h1>
-              <p className="text-sm text-gray-600">Visualizza e gestisci tutti i progetti pubblicati sulla piattaforma.</p>
+              <p className="text-sm text-gray-600 truncate">Visualizza e gestisci tutti i progetti pubblicati sulla piattaforma.</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="border border-gray-200 bg-white">
-        <CardContent className="p-8">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Titolo Progetto</TableHead>
-                <TableHead>Azienda</TableHead>
-                <TableHead>Data Pubblicazione</TableHead>
-                <TableHead>Stato</TableHead>
-                <TableHead className="text-right">Azioni</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? renderSkeleton() : projects.map((project) => (
-                <TableRow key={project.id}>
-                  <TableCell className="font-medium">{project.title}</TableCell>
-                  <TableCell>{project.companyName}</TableCell>
-                  <TableCell>
-                    {project.postedAt && (project.postedAt as Timestamp).toDate
-                      ? (project.postedAt as Timestamp).toDate().toLocaleDateString('it-IT')
-                      : 'N/D'}
-                  </TableCell>
-                  <TableCell>
-                     <Badge variant={getStatusBadgeVariant(project.status)} className="capitalize">{project.status}</Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button asChild variant="outline" size="sm">
-                      <Link href={ROUTES.PROJECT_DETAILS(project.id!)} target="_blank">
-                        <ExternalLink className="h-4 w-4 mr-1" /> Vedi Progetto
-                      </Link>
-                    </Button>
-                  </TableCell>
+      <Card className="border border-gray-200 rounded-lg min-w-0">
+        <CardContent className="p-4 sm:p-8">
+          {/* Mobile Card Layout */}
+          <div className="md:hidden space-y-3">
+            {loading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-32 w-full" />
+              </div>
+            ) : projects.map((project) => (
+              <Card key={project.id} className="border border-gray-200">
+                <CardContent className="p-3">
+                  <div className="space-y-2">
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-semibold text-sm text-gray-900 flex-1 min-w-0 break-words leading-tight">
+                          {project.title}
+                        </h3>
+                        <Badge variant={getStatusBadgeVariant(project.status)} className="capitalize text-xs shrink-0 whitespace-nowrap">
+                          {project.status}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 break-words leading-tight">{project.companyName}</p>
+                    </div>
+                    <div className="flex flex-col gap-2 pt-2 border-t border-gray-100">
+                      <span className="text-xs text-gray-500">
+                        {project.postedAt && (project.postedAt as Timestamp).toDate
+                          ? (project.postedAt as Timestamp).toDate().toLocaleDateString('it-IT')
+                          : 'N/D'}
+                      </span>
+                      <Button asChild variant="outline" size="sm" className="min-h-[44px] text-sm w-full">
+                        <Link href={ROUTES.PROJECT_DETAILS(project.id!)} target="_blank">
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Vedi Progetto
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Desktop Table Layout */}
+          <div className="hidden md:block overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Titolo Progetto</TableHead>
+                  <TableHead>Azienda</TableHead>
+                  <TableHead>Data Pubblicazione</TableHead>
+                  <TableHead>Stato</TableHead>
+                  <TableHead className="text-right">Azioni</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {loading ? renderSkeleton() : projects.map((project) => (
+                  <TableRow key={project.id}>
+                    <TableCell className="font-medium text-sm">{project.title}</TableCell>
+                    <TableCell className="text-sm">{project.companyName}</TableCell>
+                    <TableCell className="text-sm">
+                      {project.postedAt && (project.postedAt as Timestamp).toDate
+                        ? (project.postedAt as Timestamp).toDate().toLocaleDateString('it-IT')
+                        : 'N/D'}
+                    </TableCell>
+                    <TableCell>
+                       <Badge variant={getStatusBadgeVariant(project.status)} className="capitalize text-sm">{project.status}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button asChild variant="outline" size="sm" className="text-sm">
+                        <Link href={ROUTES.PROJECT_DETAILS(project.id!)} target="_blank">
+                          <ExternalLink className="h-4 w-4 mr-1" />
+                          Vedi Progetto
+                        </Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -47,8 +47,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="w-full">
-      <div className="p-4 space-y-6">
+    <div className="w-full min-w-0 overflow-x-hidden">
+      <div className="w-full min-w-0">
         {children}
       </div>
     </div>

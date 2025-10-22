@@ -168,12 +168,12 @@ export function ContractViewer({ contractId, showFullText = true, onContractUpda
   }
 
   const statusColors: Record<string, string> = {
-    DRAFT: 'bg-gray-500',
-    GENERATED: 'bg-blue-500',
-    PENDING_REVIEW: 'bg-yellow-500',
-    APPROVED: 'bg-green-500',
-    REJECTED: 'bg-red-500',
-    ARCHIVED: 'bg-gray-400',
+    DRAFT: 'bg-gray-100 text-gray-700 border border-gray-200',
+    GENERATED: 'bg-gray-100 text-gray-700 border border-gray-200',
+    PENDING_REVIEW: 'bg-[#008080] text-white',
+    APPROVED: 'bg-gray-100 text-gray-700 border border-gray-200',
+    REJECTED: 'bg-red-50 text-red-700 border border-red-200',
+    ARCHIVED: 'bg-gray-100 text-gray-700 border border-gray-200',
   };
 
   const statusLabels: Record<string, string> = {
@@ -186,52 +186,43 @@ export function ContractViewer({ contractId, showFullText = true, onContractUpda
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-8">
       {/* Header con metadata */}
-      <Card>
+      <Card className="border border-gray-200">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <CardTitle className="text-lg font-semibold flex items-center gap-2">
               <FileText className="h-5 w-5 text-[#008080]" />
-              Contratto di Collaborazione
+              <span className="break-words">Contratto di Collaborazione</span>
             </CardTitle>
-            <Badge className={statusColors[contract.status]}>
+            <Badge className={`${statusColors[contract.status]} whitespace-nowrap self-start sm:self-auto`}>
               {statusLabels[contract.status] || contract.status}
             </Badge>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-8">
           {/* Info base */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-gray-500" />
-              <div>
-                <p className="text-xs text-gray-500">Professionista</p>
-                <p className="font-medium">{contract.contractData.professional.name}</p>
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <p className="text-sm text-gray-500">Professionista</p>
+              <p className="font-semibold text-sm mt-2">{contract.contractData.professional.name}</p>
             </div>
-            <div className="flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-gray-500" />
-              <div>
-                <p className="text-xs text-gray-500">Azienda</p>
-                <p className="font-medium">{contract.contractData.company.businessName}</p>
-              </div>
+            <div>
+              <p className="text-sm text-gray-500">Azienda</p>
+              <p className="font-semibold text-sm mt-2">{contract.contractData.company.businessName}</p>
             </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-gray-500" />
-              <div>
-                <p className="text-xs text-gray-500">Data Generazione</p>
-                <p className="font-medium">
-                  {contract.generatedAt
-                    ? new Date(contract.generatedAt.seconds * 1000).toLocaleDateString('it-IT')
-                    : 'N/D'}
-                </p>
-              </div>
+            <div>
+              <p className="text-sm text-gray-500">Data Generazione</p>
+              <p className="font-semibold text-sm mt-2">
+                {contract.generatedAt
+                  ? new Date(contract.generatedAt.seconds * 1000).toLocaleDateString('it-IT')
+                  : 'N/D'}
+              </p>
             </div>
           </div>
 
           {/* Metadata AI */}
-          <div className="bg-gray-50 p-3 rounded-md text-xs space-y-1">
+          <div className="bg-gray-50 p-4 rounded-md text-sm space-y-2 border border-gray-200">
             <p>
               <strong>Modello AI:</strong> {contract.aiModel}
             </p>
@@ -239,11 +230,10 @@ export function ContractViewer({ contractId, showFullText = true, onContractUpda
               <strong>Versione Prompt:</strong> {contract.aiPromptVersion}
             </p>
             <p>
-              <strong>Importo:</strong> €{contract.contractData.payment.totalAmount.toLocaleString('it-IT')}
+              <strong>Importo:</strong> <span className="font-mono tabular-nums">€{contract.contractData.payment.totalAmount.toLocaleString('it-IT')}</span>
             </p>
             <p>
-              <strong>Durata:</strong> {contract.contractData.project.startDate} -{' '}
-              {contract.contractData.project.endDate}
+              <strong>Durata:</strong> {contract.contractData.project.startDate} - {contract.contractData.project.endDate}
             </p>
           </div>
 
@@ -255,7 +245,7 @@ export function ContractViewer({ contractId, showFullText = true, onContractUpda
                   onClick={handleEdit}
                   variant="outline"
                   size="sm"
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 text-sm min-h-[40px] sm:min-h-[36px]"
                   disabled={contract.status === 'APPROVED' || contract.status === 'ARCHIVED'}
                 >
                   <Edit3 className="h-4 w-4" />
@@ -265,7 +255,7 @@ export function ContractViewer({ contractId, showFullText = true, onContractUpda
                   onClick={handlePrint}
                   variant="outline"
                   size="sm"
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 text-sm min-h-[40px] sm:min-h-[36px]"
                 >
                   <Eye className="h-4 w-4" />
                   Stampa
@@ -274,7 +264,7 @@ export function ContractViewer({ contractId, showFullText = true, onContractUpda
                   onClick={handleDownloadPDF}
                   variant="outline"
                   size="sm"
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 text-sm min-h-[40px] sm:min-h-[36px]"
                 >
                   <Download className="h-4 w-4" />
                   Scarica PDF
@@ -287,7 +277,7 @@ export function ContractViewer({ contractId, showFullText = true, onContractUpda
                 <Button
                   onClick={handleSaveEdit}
                   size="sm"
-                  className="flex items-center gap-2 bg-[#008080] hover:bg-[#006666]"
+                  className="flex items-center gap-2 bg-[#008080] hover:bg-[#006666] text-sm min-h-[40px] sm:min-h-[36px]"
                   disabled={isSaving}
                 >
                   {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
@@ -297,7 +287,7 @@ export function ContractViewer({ contractId, showFullText = true, onContractUpda
                   onClick={handleCancelEdit}
                   variant="outline"
                   size="sm"
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 text-sm min-h-[40px] sm:min-h-[36px]"
                   disabled={isSaving}
                 >
                   <X className="h-4 w-4" />
@@ -308,11 +298,11 @@ export function ContractViewer({ contractId, showFullText = true, onContractUpda
 
             {!isEditing && (contract.status === 'DRAFT' || contract.status === 'GENERATED') && (
               <>
-                <div className="w-full sm:w-auto flex gap-2">
+                <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-2">
                   <Button
                     onClick={() => handleSendNotifications('both')}
                     size="sm"
-                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                    className="flex items-center gap-2 bg-[#008080] hover:bg-[#006666] text-sm min-h-[40px] sm:min-h-[36px] justify-center"
                     disabled={isSending}
                   >
                     {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
@@ -322,17 +312,19 @@ export function ContractViewer({ contractId, showFullText = true, onContractUpda
                     onClick={() => handleSendNotifications('company')}
                     variant="outline"
                     size="sm"
+                    className="text-sm min-h-[40px] sm:min-h-[36px] justify-center"
                     disabled={isSending}
                   >
-                    Invia all'Azienda
+                    Invia Azienda
                   </Button>
                   <Button
                     onClick={() => handleSendNotifications('professional')}
                     variant="outline"
                     size="sm"
+                    className="text-sm min-h-[40px] sm:min-h-[36px] justify-center"
                     disabled={isSending}
                   >
-                    Invia al Professionista
+                    Invia Professionista
                   </Button>
                 </div>
               </>
@@ -343,16 +335,16 @@ export function ContractViewer({ contractId, showFullText = true, onContractUpda
 
       {/* Testo del contratto con layout professionale */}
       {showFullText && (
-        <Card className="print:shadow-none">
+        <Card className="print:shadow-none border border-gray-200">
           <CardContent className="p-0">
             {/* Carta intestata BIMatch */}
-            <div className="bg-gradient-to-r from-[#008080] to-[#006666] text-white px-8 py-6 print:bg-[#008080]">
-              <div className="flex items-center justify-between">
+            <div className="bg-[#008080] text-white px-4 sm:px-8 py-8 border-b-4 border-[#006666]">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <h1 className="text-2xl font-bold tracking-tight">BIMatch</h1>
-                  <p className="text-sm opacity-90 mt-1">Connecting BIM Professionals & Companies</p>
+                  <h1 className="text-lg font-semibold tracking-tight">BIMatch</h1>
+                  <p className="text-sm mt-2">Piattaforma per professionisti BIM</p>
                 </div>
-                <div className="text-right text-xs opacity-90">
+                <div className="text-left sm:text-right text-sm">
                   <p>www.bimatch.it</p>
                   <p>info@bimatch.it</p>
                 </div>
@@ -361,9 +353,9 @@ export function ContractViewer({ contractId, showFullText = true, onContractUpda
 
             {/* Contenuto del contratto */}
             {isEditing ? (
-              <div className="p-8">
-                <div className="mb-3 text-sm text-gray-600 bg-blue-50 p-3 rounded-md border border-blue-200">
-                  <p className="font-semibold mb-1">💡 Modalità Modifica HTML</p>
+              <div className="p-4 sm:p-8">
+                <div className="mb-4 text-sm text-gray-600 bg-blue-50 p-4 rounded-md border border-blue-200">
+                  <p className="font-semibold mb-2">Modalità Modifica HTML</p>
                   <p>Puoi modificare il testo del contratto. Usa i tag HTML per la formattazione se necessario.</p>
                 </div>
                 <Textarea
@@ -522,9 +514,9 @@ export function ContractViewer({ contractId, showFullText = true, onContractUpda
             )}
 
             {/* Footer con watermark */}
-            <div className="border-t border-gray-200 bg-gray-50 px-8 py-4 text-center text-xs text-gray-500 print:bg-white">
+            <div className="border-t border-gray-200 bg-gray-50 px-4 sm:px-8 py-4 text-center text-sm text-gray-500 print:bg-white">
               <p>Documento generato da BIMatch - Piattaforma per professionisti BIM</p>
-              <p className="mt-1">Generato il {contract.generatedAt ? new Date(contract.generatedAt.seconds * 1000).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' }) : 'N/D'} con AI ({contract.aiModel})</p>
+              <p className="mt-2">Generato il {contract.generatedAt ? new Date(contract.generatedAt.seconds * 1000).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' }) : 'N/D'} con AI ({contract.aiModel})</p>
             </div>
           </CardContent>
         </Card>
@@ -532,9 +524,9 @@ export function ContractViewer({ contractId, showFullText = true, onContractUpda
 
       {/* Note admin (se presenti) */}
       {contract.adminNotes && (
-        <Card>
+        <Card className="border border-gray-200">
           <CardHeader>
-            <CardTitle className="text-sm">Note Admin</CardTitle>
+            <CardTitle className="text-lg font-semibold">Note Admin</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-700">{contract.adminNotes}</p>

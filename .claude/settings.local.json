@@ -71,7 +71,8 @@
       "Bash(then echo \"✓ File exists\")",
       "Bash(else echo \"✗ File not found\")",
       "Bash(npm run genkit:watch:*)",
-      "Bash(npx depcheck:*)"
+      "Bash(npx depcheck:*)",
+      "Bash(cmd.exe /c \"for /f \"\"tokens=5\"\" %a in (''netstat -ano ^| findstr :9002'') do taskkill /F /PID %a\")"
     ],
     "deny": [],
     "ask": []
