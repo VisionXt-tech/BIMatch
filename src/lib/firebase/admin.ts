@@ -7,29 +7,29 @@
  * OPTIMIZED: Lazy initialization to reduce Cloud Function cold start time
  */
 
-import type * as admin from 'firebase-admin';
+import type * as AdminNamespace from 'firebase-admin';
 
-let adminApp: admin.app.App | undefined;
-let adminDbInstance: admin.firestore.Firestore | undefined;
-let adminAuthInstance: admin.auth.Auth | undefined;
+let adminApp: AdminNamespace.app.App | undefined;
+let adminDbInstance: AdminNamespace.firestore.Firestore | undefined;
+let adminAuthInstance: AdminNamespace.auth.Auth | undefined;
 
 /**
  * Initialize Firebase Admin SDK (lazy initialization)
  */
-function initializeAdmin(): admin.app.App {
+function initializeAdmin(): AdminNamespace.app.App {
   if (adminApp) {
     return adminApp;
   }
 
   // Dynamically import firebase-admin only when needed
-  const admin = require('firebase-admin');
+  const adminModule = require('firebase-admin');
 
   try {
-    if (!admin.apps.length) {
+    if (!adminModule.apps.length) {
       // Option 1: Use service account key from environment variables
       if (process.env.FIREBASE_ADMIN_PRIVATE_KEY && process.env.FIREBASE_ADMIN_CLIENT_EMAIL) {
-        adminApp = admin.initializeApp({
-          credential: admin.credential.cert({
+        adminApp = adminModule.initializeApp({
+          credential: adminModule.credential.cert({
             projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
             clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
             // Private key stored in environment variable (with escaped newlines)
@@ -46,8 +46,8 @@ function initializeAdmin(): admin.app.App {
         const serviceAccountPath = path.resolve(process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH);
         if (fs.existsSync(serviceAccountPath)) {
           const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
-          adminApp = admin.initializeApp({
-            credential: admin.credential.cert(serviceAccount),
+          adminApp = adminModule.initializeApp({
+            credential: adminModule.credential.cert(serviceAccount),
           });
           console.log('[Firebase Admin] Initialized with service account key file:', serviceAccountPath);
         } else {
@@ -56,66 +56,66 @@ function initializeAdmin(): admin.app.App {
       }
       // Option 3: Fallback for production (uses application default credentials in Firebase environment)
       else {
-        adminApp = admin.initializeApp({
+        adminApp = adminModule.initializeApp({
           projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
         });
         console.log('[Firebase Admin] Initialized with default credentials (production mode)');
       }
     } else {
-      adminApp = admin.apps[0];
+      adminApp = adminModule.apps[0];
     }
   } catch (error) {
     console.error('[Firebase Admin] Initialization error:', error);
     throw error;
   }
 
-  return adminApp;
+  return adminApp!;
 }
 
 /**
  * Get Firestore instance (lazy initialization)
  */
-export function getAdminDb(): admin.firestore.Firestore {
+export function getAdminDb(): AdminNamespace.firestore.Firestore {
   if (!adminDbInstance) {
     const app = initializeAdmin();
-    const admin = require('firebase-admin');
-    adminDbInstance = admin.firestore(app);
+    const adminModule = require('firebase-admin');
+    adminDbInstance = adminModule.firestore(app);
   }
-  return adminDbInstance;
+  return adminDbInstance!;
 }
 
 /**
  * Get Auth instance (lazy initialization)
  */
-export function getAdminAuth(): admin.auth.Auth {
+export function getAdminAuth(): AdminNamespace.auth.Auth {
   if (!adminAuthInstance) {
     const app = initializeAdmin();
-    const admin = require('firebase-admin');
-    adminAuthInstance = admin.auth(app);
+    const adminModule = require('firebase-admin');
+    adminAuthInstance = adminModule.auth(app);
   }
-  return adminAuthInstance;
+  return adminAuthInstance!;
 }
 
 // Export legacy instances for backward compatibility
-export const adminDb = new Proxy({} as admin.firestore.Firestore, {
+export const adminDb = new Proxy({} as AdminNamespace.firestore.Firestore, {
   get(target, prop) {
-    return getAdminDb()[prop as keyof admin.firestore.Firestore];
+    return getAdminDb()[prop as keyof AdminNamespace.firestore.Firestore];
   }
 });
 
-export const adminAuth = new Proxy({} as admin.auth.Auth, {
+export const adminAuth = new Proxy({} as AdminNamespace.auth.Auth, {
   get(target, prop) {
-    return getAdminAuth()[prop as keyof admin.auth.Auth];
+    return getAdminAuth()[prop as keyof AdminNamespace.auth.Auth];
   }
 });
 
 // Export the admin app getter
-export function getAdmin(): admin.app.App {
+export function getAdmin(): AdminNamespace.app.App {
   return initializeAdmin();
 }
 
 // Backward compatibility
-export const admin = new Proxy({} as typeof admin, {
+export const admin = new Proxy({} as typeof AdminNamespace, {
   get(target, prop) {
     if (prop === 'firestore') {
       return () => getAdminDb();
@@ -124,6 +124,6 @@ export const admin = new Proxy({} as typeof admin, {
       return () => getAdminAuth();
     }
     const adminModule = require('firebase-admin');
-    return adminModule[prop as keyof typeof admin];
+    return adminModule[prop as keyof typeof AdminNamespace];
   }
 });

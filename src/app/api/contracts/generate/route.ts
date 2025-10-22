@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebase/admin';
-import { generateContractFlow } from '@/ai/flows/generateContractFlow';
 import type { ProfessionalProfile, CompanyProfile } from '@/types/auth';
 import type { Project, ProjectApplication } from '@/types/project';
 import type { ContractData } from '@/types/contract';
@@ -98,8 +97,10 @@ export async function POST(request: NextRequest) {
     const professional = professionalSnap.data() as ProfessionalProfile;
     const company = companySnap.data() as CompanyProfile;
 
-    // 4. Chiama il Genkit flow per generare il contratto
+    // 4. Chiama il Genkit flow per generare il contratto (lazy import per ottimizzare cold start)
     console.log('[API /contracts/generate] Calling Genkit flow...');
+
+    const { generateContractFlow } = await import('@/ai/flows/generateContractFlow');
 
     const result = await generateContractFlow({
       professional: {

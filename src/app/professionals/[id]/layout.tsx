@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 
 // Define the props for the page and layout, including params
 type Props = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
   children: ReactNode; // Children prop for layout
 };
 
@@ -15,8 +15,8 @@ export async function generateMetadata(
   { params }: Props,
   parent: ResolvingMetadata // Optional: access metadata from parent segments
 ): Promise<Metadata> {
-  // Access params.id directly.
-  const id = params.id;
+  // Access params.id directly - await params in Next.js 15
+  const { id } = await params;
 
   // In a real application, you might fetch data based on the id
   // to set a more descriptive title, e.g., the professional's name.

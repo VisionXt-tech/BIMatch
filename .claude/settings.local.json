@@ -70,7 +70,8 @@
       "Bash(if [ -f \"firebase-admin-key.json\" ])",
       "Bash(then echo \"✓ File exists\")",
       "Bash(else echo \"✗ File not found\")",
-      "Bash(npm run genkit:watch:*)"
+      "Bash(npm run genkit:watch:*)",
+      "Bash(npx depcheck:*)"
     ],
     "deny": [],
     "ask": []
